@@ -975,7 +975,13 @@ onSnapshot(collection(db,'registros'),snap=>{
   setConn(true);
   window._records=[];
   snap.forEach(d=>window._records.push({id:d.id,...d.data()}));
-  if(window._appReady){window.renderTable();window.renderDashboard&&document.getElementById('page-dash').classList.contains('active')&&window.renderDashboard();}
+  // Renderizar siempre que la app esté lista, usando la referencia más actual
+  if(window._appReady){
+    const fn=window.renderTable||function(){};
+    fn();
+    const dash=document.getElementById('page-dash');
+    if(dash&&dash.classList.contains('active')&&window.renderDashboard) window.renderDashboard();
+  }
 },err=>{setConn(false);console.error(err);});
 
 onSnapshot(collection(db,'usuarios'),snap=>{
@@ -1292,12 +1298,24 @@ function toggleAccordion(rowId){
 
 async function changeEstado(id,tipo,sel){
   if(!isAdmin()){const r=(window._records||[]).find(x=>x.id===id);if(r)sel.value=r.estado;return;}
-  const est=getEstado(tipo,sel.value);
+  const nuevoEstado=sel.value;
+  const est=getEstado(tipo,nuevoEstado);
   sel.className=`status-badge ${est.css}`;
   sel.style.cssText='border:none;cursor:pointer;font-size:11px;font-weight:600;border-radius:20px;padding:3px 8px;outline:none;';
+  // Actualizar local inmediatamente
+  const r=(window._records||[]).find(x=>x.id===id);
+  const estadoAnterior=r?.estado;
+  if(r) r.estado=nuevoEstado;
   showSyncToast('Guardando estado...');
-  await window._updateEstado(id,sel.value);
-  showSyncToast('✅ Estado actualizado');
+  try{
+    await window._updateEstado(id,nuevoEstado);
+    showSyncToast('✅ Estado actualizado');
+  } catch(err){
+    // Revertir si falla
+    if(r&&estadoAnterior) r.estado=estadoAnterior;
+    renderTable();
+    showSyncToast('❌ Error al actualizar',3000);
+  }
 }
 
 /* ═══ SEMÁFORO DE VENCIMIENTO ═══ */
@@ -1399,17 +1417,55 @@ async function saveRecord(){
     updatedBy:currentUser?.name||'',
     updatedAt:new Date().toISOString(),
   };
+
+  // ── Actualizar estado local INMEDIATAMENTE sin esperar Firebase ──
+  if(editingId){
+    const idx=(window._records||[]).findIndex(r=>r.id===editingId);
+    if(idx>=0) window._records[idx]=data;
+    else window._records=[...(window._records||[]),data];
+  } else {
+    window._records=[...(window._records||[]),data];
+  }
+  closeModal();
+  renderTable();
   showSyncToast('Guardando en la nube ☁️...',3000);
-  try{await window._saveRecord(data);showSyncToast('✅ Guardado');closeModal();}
-  catch(err){alert('Error: '+err.message);showSyncToast('❌ Error',3000);}
+
+  // ── Luego sincronizar con Firebase en segundo plano ──
+  try{
+    await window._saveRecord(data);
+    showSyncToast('✅ Guardado en Firebase');
+  } catch(err){
+    // Si falla Firebase, revertir el cambio local
+    if(editingId){
+      const idx=(window._records||[]).findIndex(r=>r.id===data.id);
+      if(idx>=0&&existing) window._records[idx]=existing;
+    } else {
+      window._records=(window._records||[]).filter(r=>r.id!==data.id);
+    }
+    renderTable();
+    alert('Error al guardar en Firebase: '+err.message+'\nVerifica tu conexión a internet.');
+    showSyncToast('❌ Error al guardar',3000);
+  }
 }
 function editRecord(id){openModal(id);}
 async function deleteRecord(id){
   if(!isAdmin())return;
   if(!confirm('¿Eliminar este registro y su bitácora?'))return;
+  // Eliminar localmente de inmediato
+  const deleted=(window._records||[]).find(r=>r.id===id);
+  window._records=(window._records||[]).filter(r=>r.id!==id);
+  renderTable();
   showSyncToast('Eliminando...');
-  await window._deleteRecord(id);
-  showSyncToast('✅ Eliminado');
+  try{
+    await window._deleteRecord(id);
+    showSyncToast('✅ Eliminado');
+  } catch(err){
+    // Revertir si falla
+    if(deleted) window._records=[...(window._records||[]),deleted];
+    renderTable();
+    alert('Error al eliminar: '+err.message);
+    showSyncToast('❌ Error',3000);
+  }
 }
 
 /* ═══ BITÁCORA ═══ */
