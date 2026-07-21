@@ -1151,34 +1151,58 @@ function startLockout(){
 /* ═══ LOGIN ═══ */
 let currentUser=null;
 async function doLogin(){
-  if(isLockedOut())return;
+  if(isLockedOut()) return;
   const uIn=document.getElementById('login-user').value.trim().toLowerCase();
   const pIn=document.getElementById('login-pass').value;
-  document.getElementById('login-error').style.display='none';
+  const errEl=document.getElementById('login-error');
+  errEl.style.display='none';
   ['login-user','login-pass'].forEach(id=>document.getElementById(id).classList.remove('input-error'));
-  if(!uIn||!pIn){showLoginErr();return;}
-  document.getElementById('login-btn').disabled=true;
-  document.getElementById('login-btn').textContent='Verificando...';
+  if(!uIn||!pIn){
+    errEl.textContent='⚠️ Ingresa tu usuario y contraseña.';
+    errEl.style.display='block';
+    return;
+  }
+  const btn=document.getElementById('login-btn');
+  btn.disabled=true;
+  btn.textContent='Verificando...';
   try{
     const hash=await sha256(pIn);
     const users=loadUsers();
     const user=users.find(u=>u.username===uIn&&u.pwHash===hash)||null;
     if(!user){
       failedAttempts++;
-      if(failedAttempts>=MAX_ATTEMPTS)startLockout();
-      else document.getElementById('attempts-info').textContent=`Intentos restantes: ${MAX_ATTEMPTS-failedAttempts}`;
-      showLoginErr();return;
+      const rem=MAX_ATTEMPTS-failedAttempts;
+      if(failedAttempts>=MAX_ATTEMPTS){
+        startLockout();
+      } else {
+        document.getElementById('attempts-info').textContent=
+          `⚠️ Intento ${failedAttempts}/${MAX_ATTEMPTS} — ${rem} restante${rem!==1?'s':''}`;
+      }
+      showLoginErr('❌ Usuario o contraseña incorrectos.');
+      return;
     }
-    failedAttempts=0;currentUser=user;
+    // Login exitoso
+    failedAttempts=0;
+    currentUser=user;
     document.getElementById('login-pass').value='';
     document.getElementById('attempts-info').textContent='';
-    sessionStorage.setItem('sec_session',JSON.stringify({userId:user.id,ts:Date.now()}));
+    sessionStorage.setItem('sec_session',JSON.stringify({
+      userId:user.id, ts:Date.now(), role:user.role
+    }));
     launchApp();
-  }catch(err){console.error(err);showLoginErr();}
-  finally{document.getElementById('login-btn').disabled=false;document.getElementById('login-btn').textContent='Ingresar →';}
+  } catch(err){
+    console.error('Login error:',err);
+    showLoginErr('❌ Error al verificar credenciales. Intenta de nuevo.');
+  } finally{
+    btn.disabled=false;
+    btn.textContent='Ingresar →';
+  }
 }
-function showLoginErr(){
-  document.getElementById('login-error').style.display='block';
+
+function showLoginErr(msg='❌ Usuario o contraseña incorrectos.'){
+  const errEl=document.getElementById('login-error');
+  errEl.textContent=msg;
+  errEl.style.display='block';
   ['login-user','login-pass'].forEach(id=>document.getElementById(id).classList.add('input-error'));
   document.getElementById('login-pass').value='';
 }
@@ -1189,48 +1213,96 @@ function launchApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
   applyUserUI();
+  // Renovar timestamp de sesión
+  try{
+    const s=JSON.parse(sessionStorage.getItem('sec_session')||'{}');
+    sessionStorage.setItem('sec_session',JSON.stringify({...s,ts:Date.now()}));
+  }catch{}
   sessionExpiry=Date.now()+30*60*1000;
-  startSessionTimer();resetInactivity();
-  ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
+  startSessionTimer();
+  resetInactivity();
+  ['mousemove','keydown','click','touchstart'].forEach(e=>
+    document.addEventListener(e,resetInactivity,{passive:true}));
+  // Pre-registrar funciones globales antes de Firebase
   window._appReady=true;
   window.renderTable=renderTable;
   window.renderDashboard=renderDashboard;
   window.renderAdminPanel=renderAdminPanel;
-  if(window._dbReady){renderTable();}
-  else{
+  if(window._dbReady){
+    renderTable();
+  } else {
+    // Skeleton mientras carga Firebase
+    const tbody=document.getElementById('table-body');
+    if(tbody){
+      const sk=`<div style="height:14px;background:linear-gradient(90deg,#E2E8F0 25%,#F1F5F9 50%,#E2E8F0 75%);background-size:200%;animation:shimmer 1.5s infinite;border-radius:4px;"></div>`;
+      tbody.innerHTML=Array(4).fill(`<tr>${Array(13).fill(`<td style="padding:11px 14px;">${sk}</td>`).join('')}</tr>`).join('');
+    }
     let tries=0;
-    const poll=setInterval(()=>{tries++;if(window._dbReady||tries>30){clearInterval(poll);renderTable();}},300);
+    const poll=setInterval(()=>{
+      tries++;
+      if(window._dbReady||tries>40){clearInterval(poll);renderTable();}
+    },250);
   }
 }
+
 function startSessionTimer(){
   clearInterval(sessionInterval);
   sessionInterval=setInterval(()=>{
     const rem=Math.max(0,sessionExpiry-Date.now());
     const m=Math.floor(rem/60000),s=Math.floor((rem%60000)/1000);
-    document.getElementById('session-timer').textContent=`${m}:${s.toString().padStart(2,'0')}`;
-    if(rem<=0)logout(true);
+    const el=document.getElementById('session-timer');
+    if(el) el.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    // Aviso 5 min antes de expirar
+    if(rem>0&&rem<=5*60*1000&&el) el.style.color='#F59E0B';
+    else if(el) el.style.color='';
+    if(rem<=0) logout(true);
   },1000);
 }
+
 function resetInactivity(){
-  clearTimeout(inactivityTimer);clearInterval(inactivityWarning);
-  document.getElementById('inactivity-overlay').classList.remove('open');
+  clearTimeout(inactivityTimer);
+  clearInterval(inactivityWarning);
+  const ov=document.getElementById('inactivity-overlay');
+  if(ov) ov.classList.remove('open');
+  // Renovar expiración de sesión con actividad
+  sessionExpiry=Date.now()+30*60*1000;
   inactivityTimer=setTimeout(()=>{
-    inactCountdown=30;document.getElementById('inact-count').textContent=30;
-    document.getElementById('inactivity-overlay').classList.add('open');
-    inactivityWarning=setInterval(()=>{inactCountdown--;document.getElementById('inact-count').textContent=inactCountdown;if(inactCountdown<=0)logout(true);},1000);
+    inactCountdown=30;
+    const ct=document.getElementById('inact-count');
+    if(ct) ct.textContent=30;
+    if(ov) ov.classList.add('open');
+    inactivityWarning=setInterval(()=>{
+      inactCountdown--;
+      if(ct) ct.textContent=inactCountdown;
+      if(inactCountdown<=0) logout(true);
+    },1000);
   },15*60*1000);
 }
+
 function logout(auto=false){
-  clearInterval(sessionInterval);clearTimeout(inactivityTimer);clearInterval(inactivityWarning);
-  ['mousemove','keydown','click','touchstart'].forEach(e=>document.removeEventListener(e,resetInactivity));
-  sessionStorage.removeItem('sec_session');currentUser=null;window._appReady=false;
-  window._records=[];window._fbUsers=[];
+  clearInterval(sessionInterval);
+  clearTimeout(inactivityTimer);
+  clearInterval(inactivityWarning);
+  ['mousemove','keydown','click','touchstart'].forEach(e=>
+    document.removeEventListener(e,resetInactivity));
+  // Limpiar sesión y datos en memoria
+  sessionStorage.removeItem('sec_session');
+  currentUser=null;
+  window._appReady=false;
+  window._records=[];
+  window._fbUsers=[];
+  // Resetear UI
   document.getElementById('app-screen').style.display='none';
   document.getElementById('login-screen').style.display='flex';
-  ['login-user','login-pass'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.classList.remove('input-error');}});
+  ['login-user','login-pass'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.value='';el.classList.remove('input-error');}
+  });
   document.getElementById('login-error').style.display='none';
-  document.getElementById('inactivity-overlay').classList.remove('open');
-  if(auto)setTimeout(()=>alert('⚠️ Sesión cerrada por inactividad.'),100);
+  document.getElementById('attempts-info').textContent='';
+  const ov=document.getElementById('inactivity-overlay');
+  if(ov) ov.classList.remove('open');
+  if(auto) setTimeout(()=>alert('⚠️ Sesión cerrada por inactividad.'),150);
 }
 
 /* ═══ UI POR ROL ═══ */
@@ -1829,44 +1901,6 @@ function renderPromedioAbogado(records){
       </td>
     </tr>`;
   }).join('');
-}
-
-function drawStateBar(canvasId,title,records,estados,colors){
-  const canvas=document.getElementById(canvasId);if(!canvas)return;
-  const dpr=window.devicePixelRatio||1;
-  const W=canvas.parentElement.clientWidth-8,H=200;
-  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
-  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
-  if(!records.length){ctx.fillStyle='#94A3B8';ctx.font='13px IBM Plex Sans,sans-serif';ctx.textAlign='center';ctx.fillText('Sin datos',W/2,H/2);return;}
-  const counts=estados.map(e=>records.filter(r=>r.estado===e.value).length);
-  const maxVal=Math.max(...counts,1);
-  const PAD_L=30,PAD_R=20,PAD_T=40,PAD_B=44;
-  const cW=W-PAD_L-PAD_R,cH=H-PAD_T-PAD_B;
-  const gW=cW/estados.length,bW=Math.min(gW*0.55,60);
-  // Cuadrícula
-  for(let i=0;i<=4;i++){const y=PAD_T+cH-(cH*i/4);ctx.beginPath();ctx.strokeStyle='#E2E8F0';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.moveTo(PAD_L,y);ctx.lineTo(W-PAD_R,y);ctx.stroke();ctx.setLineDash([]);}
-  counts.forEach((v,i)=>{
-    const x=PAD_L+gW*i+(gW-bW)/2;
-    const bh=v===0?3:Math.max((v/maxVal)*cH,4);
-    const y=PAD_T+cH-bh;
-    ctx.fillStyle=colors[i]||'#93C5FD';
-    ctx.shadowColor='rgba(0,0,0,.08)';ctx.shadowBlur=5;ctx.shadowOffsetY=2;
-    // Barras redondeadas arriba
-    ctx.beginPath();ctx.moveTo(x+5,y);ctx.lineTo(x+bW-5,y);ctx.quadraticCurveTo(x+bW,y,x+bW,y+5);ctx.lineTo(x+bW,y+bh);ctx.lineTo(x,y+bh);ctx.lineTo(x,y+5);ctx.quadraticCurveTo(x,y,x+5,y);ctx.closePath();ctx.fill();
-    ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
-    // Número
-    ctx.fillStyle='#0F1F3D';ctx.font='bold 13px IBM Plex Mono,monospace';ctx.textAlign='center';ctx.fillText(v,x+bW/2,y-8);
-    // Etiqueta
-    const lbl=estados[i].label.length>12?estados[i].label.slice(0,10)+'…':estados[i].label;
-    ctx.fillStyle='#64748B';ctx.font='10px IBM Plex Sans,sans-serif';
-    ctx.save();ctx.translate(x+bW/2,PAD_T+cH+10);ctx.rotate(-0.4);ctx.fillText(lbl,0,0);ctx.restore();
-  });
-}
-
-function renderSumTable(tbodyId,names,byData){
-  const tbody=document.getElementById(tbodyId);if(!tbody)return;
-  if(!names.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin datos</td></tr>';return;}
-  tbody.innerHTML=names.map(n=>{const d=byData[n];return`<tr><td style="font-weight:500;color:var(--navy)">${escHtml(n)}</td><td class="nc" style="text-align:center;">${d.total}</td><td style="text-align:center;color:var(--purple);font-family:var(--mono);font-weight:600;">${d.asesoria||0}</td><td style="text-align:center;color:var(--teal);font-family:var(--mono);font-weight:600;">${d.contractual||0}</td></tr>`;}).join('');
 }
 
 /* ═══ BITÁCORA GENERAL ═══ */
