@@ -1414,6 +1414,12 @@ function launchApp(){
     document.addEventListener(e,resetInactivity,{passive:true}));
   // _appReady = true al final
   window._appReady=true;
+  // Resetear filtros al hacer login para mostrar todos los procesos
+  activeTipo='all';
+  vencimientoFilter=null;
+  document.querySelectorAll('.tipo-chip').forEach(c=>c.className='tipo-chip');
+  document.getElementById('chip-all')?.classList.add('active-all');
+  const si=document.getElementById('search-input');if(si)si.value='';
   // Render inmediato
   renderTable();
   // Re-renders adicionales para conexiones lentas (especialmente móvil)
@@ -1557,10 +1563,13 @@ function renderTable(){
   });
   data.sort((a,b)=>{let va=(a[sortField]||'').toLowerCase(),vb=(b[sortField]||'').toLowerCase();return va<vb?(sortDir==='asc'?-1:1):va>vb?(sortDir==='asc'?1:-1):0;});
   const adm=isAdmin();
-  const tbody=document.getElementById('table-body');if(!tbody)return;
-  if(!data.length){
-    tbody.innerHTML=`<tr><td colspan="12"><div class="empty-state"><div class="big-icon">📂</div><p>${q?'Sin resultados':'Sin registros. Haz clic en <strong>+ Nuevo Registro</strong>.'}</p></div></td></tr>`;
-  } else {
+
+  // ── Tabla desktop ──
+  const tbody=document.getElementById('table-body');
+  if(tbody){
+    if(!data.length){
+      tbody.innerHTML=`<tr><td colspan="12"><div class="empty-state"><div class="big-icon">📂</div><p>${q?'Sin resultados':'Sin registros.'}</p></div></td></tr>`;
+    } else {
     tbody.innerHTML=data.map(r=>{
       const est=getEstado(r.tipo,r.estado);
       const nE=(r.bitacora||[]).length;
@@ -1618,7 +1627,10 @@ function renderTable(){
         </td>
       </tr>`;
     }).join('');
-  }
+    } // cierre else desktop
+  } // cierre if(tbody)
+
+  // Siempre renderizar: stats y tarjetas móvil (independiente de si hay tabla o no)
   updateStats(records);
   renderMobileCards(data);
 }
@@ -1630,12 +1642,21 @@ function renderMobileCards(data){
   const abogadoFiltro=getAbogadoFiltro();
 
   if(!data.length){
-    const msg=abogadoFiltro&&!(window._records||[]).length
-      ? `<div style="font-size:36px;margin-bottom:10px;">⏳</div><p style="font-size:13px;margin-bottom:6px;">Cargando datos...</p><p style="font-size:11px;color:var(--muted);">Si no aparecen procesos en unos segundos,<br>verifica tu conexión y recarga la página.</p>`
-      : abogadoFiltro
-        ? `<div style="font-size:36px;margin-bottom:10px;">📭</div><p style="font-size:13px;margin-bottom:6px;">No tienes procesos asignados aún.</p><p style="font-size:11px;color:var(--muted);">Cuando se te asigne un proceso aparecerá aquí.</p>`
-        : `<div style="font-size:36px;margin-bottom:10px;">📂</div><p style="font-size:13px;">Sin registros</p>`;
-    mc.innerHTML=`<div style="text-align:center;padding:48px 20px;color:var(--muted);">${msg}</div>`;
+    const hayFiltros = activeTipo!=='all' || vencimientoFilter || (document.getElementById('search-input')?.value||'');
+    const msg = hayFiltros
+      ? `<div style="font-size:36px;margin-bottom:10px;">🔍</div>
+         <p style="font-size:13px;margin-bottom:8px;font-weight:600;color:var(--navy);">Sin resultados con los filtros activos</p>
+         <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Toca "Todos" para ver todos tus procesos.</p>
+         <button onclick="setTipo('all');vencimientoFilter=null;document.getElementById('search-input').value='';renderTable();"
+           style="background:var(--accent);color:white;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+           📋 Ver todos los procesos
+         </button>`
+      : abogadoFiltro&&!(window._records||[]).length
+        ? `<div style="font-size:36px;margin-bottom:10px;">⏳</div><p style="font-size:13px;margin-bottom:6px;font-weight:600;">Cargando datos...</p><p style="font-size:11px;color:var(--muted);">Si no aparecen en unos segundos, recarga la página.</p>`
+        : abogadoFiltro
+          ? `<div style="font-size:36px;margin-bottom:10px;">📭</div><p style="font-size:13px;margin-bottom:6px;font-weight:600;">No tienes procesos asignados aún.</p>`
+          : `<div style="font-size:36px;margin-bottom:10px;">📂</div><p style="font-size:13px;">Sin registros</p>`;
+    mc.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--muted);">${msg}</div>`;
     return;
   }
 
