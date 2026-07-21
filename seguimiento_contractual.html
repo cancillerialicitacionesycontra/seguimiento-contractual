@@ -405,14 +405,124 @@ textarea#entry-text:focus{border-color:var(--accent);}
 .avg-bar-wrap{display:flex;align-items:center;gap:8px;}
 .avg-bar{height:8px;border-radius:4px;background:var(--accent);min-width:4px;transition:width .4s;}
 
+/* ══════════════════════════════════════════
+   RESPONSIVE — MÓVIL (≤640px)
+   Vista de tarjetas en lugar de tabla,
+   navegación compacta, formulario vertical
+══════════════════════════════════════════ */
 @media(max-width:640px){
-  header,.toolbar,.stats-bar,.semaforo-wrap,.tipo-bar,.table-wrap,.admin-wrap{padding-left:16px;padding-right:16px;}
+
+  /* ── Header compacto ── */
+  header{padding:0 14px;height:56px;}
+  header h1{font-size:13px;}
+  header .sub{display:none;}
+  #total-badge{display:none;}
+  .user-name{display:none;}
+  #logout-btn{font-size:10px;padding:3px 8px;}
+
+  /* ── Session bar ── */
+  #session-bar{padding:3px 14px;font-size:10px;}
+
+  /* ── Tabs ── */
+  .nav-tabs{padding:0 14px;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;}
+  .tab-btn{padding:12px 14px;font-size:12px;}
+
+  /* ── Toolbar ── */
+  .toolbar{padding:10px 14px;gap:8px;flex-wrap:wrap;}
+  .btn{padding:7px 12px;font-size:12px;}
+  .search-wrap{margin-left:0;width:100%;order:10;}
+  .search-wrap input{width:100%;font-size:13px;}
+
+  /* ── Tipo bar ── */
+  .tipo-bar{padding:10px 14px 0;gap:6px;overflow-x:auto;flex-wrap:nowrap;}
+  .tipo-bar-label{display:none;}
+  .tipo-chip{font-size:11px;padding:5px 12px;white-space:nowrap;flex-shrink:0;}
+
+  /* ── Semáforo ── */
+  .semaforo-wrap{padding:10px 14px 0;}
+  .semaforo-grid{grid-template-columns:repeat(3,1fr);gap:8px;}
+  .sema-card{padding:10px 10px;gap:8px;}
+  .sema-info strong{font-size:18px;}
+  .sema-info span{font-size:10px;}
+  .sema-dot{width:10px;height:10px;}
+
+  /* ── Stats bar ── */
+  .stats-bar{padding:10px 14px;gap:8px;}
+  .stat-card{min-width:calc(50% - 4px);padding:12px 14px;flex:1;}
+  .stat-card .stat-num{font-size:22px;}
+  .stat-card .stat-label{font-size:9px;}
+
+  /* ── Ocultar tabla en móvil ── */
+  .table-wrap{display:none;}
+
+  /* ── Tarjetas móvil ── */
+  .mobile-cards{display:flex;flex-direction:column;gap:10px;padding:10px 14px 80px;}
+  .mc{background:white;border-radius:12px;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;}
+  .mc-head{padding:12px 14px 10px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);background:var(--bg);}
+  .mc-ticket{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--navy);background:var(--accent-light);padding:2px 8px;border-radius:5px;}
+  .mc-body{padding:12px 14px;}
+  .mc-objeto{font-size:13px;font-weight:600;color:var(--navy);line-height:1.4;margin-bottom:10px;}
+  .mc-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;}
+  .mc-lbl{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;min-width:70px;font-weight:600;}
+  .mc-val{color:var(--text);flex:1;}
+  .mc-dates{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;padding:10px;background:var(--bg);border-radius:8px;}
+  .mc-date-item{display:flex;flex-direction:column;gap:2px;}
+  .mc-date-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;}
+  .mc-date-val{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--navy);}
+  .mc-footer{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;}
+  .mc-btn{flex:1;padding:9px;border:1px solid var(--border);background:white;border-radius:8px;font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;color:var(--muted);transition:all .15s;}
+  .mc-btn.log{color:var(--accent);border-color:#BFDBFE;background:var(--accent-light);}
+  .mc-btn.del{color:var(--red);border-color:#FECACA;}
+  .mc-alerta{margin-top:8px;}
+
+  /* ── FAB ── */
+  .fab{display:flex;}
+  #btn-nuevo{display:none;}
+
+  /* ── Dashboard ── */
+  .dash-banner{padding:18px 14px 16px;}
+  .dash-banner-left h2{font-size:16px;}
+  .dash-banner-right{display:none;}
+  .dash-body{padding:14px 14px 0;}
+  .dash-kpis{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+  .kpi{padding:16px 14px 12px;}
+  .kpi .kn{font-size:28px;}
+  .kpi .kl{font-size:10px;}
+  .charts-row{grid-template-columns:1fr;gap:12px;}
+  .dash-tables-row{grid-template-columns:1fr;gap:12px;}
+  .dash-divider{font-size:9px;margin-bottom:14px;}
+  .avg-card-header h4{font-size:11px;}
+  .avg-table{font-size:11px;}
+  .avg-table thead th,.avg-table tbody td{padding:7px 10px;}
+
+  /* ── Formulario ── */
   .form-grid{grid-template-columns:1fr;}
-  .search-wrap{margin-left:0;width:100%;}
-  .search-wrap input{width:100%;}
-  .dash-body{padding:16px;}
-  .semaforo-grid{grid-template-columns:1fr;}
+  .form-group.full{grid-column:1;}
+  .modal{max-height:96vh;border-radius:12px 12px 0 0;}
+  .modal-body{padding:14px 16px;}
+  .modal-footer{padding:12px 16px 16px;}
+  .form-section-title{font-size:10px;}
+
+  /* ── Admin ── */
+  .admin-wrap{padding:16px 14px 40px;}
+  .users-grid{grid-template-columns:1fr;}
+
+  /* ── Bitácora general ── */
+  .bit-gen-modal{border-radius:12px 12px 0 0;max-height:96vh;}
+  .bit-gen-toolbar{flex-direction:column;gap:8px;padding:10px 14px;}
+  .bit-gen-filter,.bit-gen-search{width:100%;box-sizing:border-box;}
+
+  /* ── Overlays: anclar al fondo en móvil ── */
+  .overlay{padding:0;align-items:flex-end;}
+  .overlay .modal{border-radius:16px 16px 0 0;max-height:94vh;}
+  .bit-gen-overlay{padding:0;align-items:flex-end;}
 }
+
+/* ── FAB: oculto en desktop ── */
+.fab{display:none;position:fixed;bottom:24px;right:20px;z-index:50;width:56px;height:56px;border-radius:50%;background:var(--accent);color:white;border:none;font-size:26px;cursor:pointer;box-shadow:0 4px 20px rgba(37,99,235,.45);align-items:center;justify-content:center;transition:all .2s;}
+.fab:hover{background:#1D4ED8;transform:scale(1.08);}
+.fab:active{transform:scale(.96);}
+.mobile-cards{display:none;}
 </style>
 </head>
 <body>
@@ -547,6 +657,12 @@ textarea#entry-text:focus{border-color:var(--accent);}
         <tbody id="table-body"></tbody>
       </table>
     </div>
+
+    <!-- Vista móvil: tarjetas -->
+    <div class="mobile-cards" id="mobile-cards"></div>
+
+    <!-- FAB para móvil -->
+    <button class="fab" id="fab-nuevo" onclick="openModal()" title="Nuevo Registro">＋</button>
   </div>
 
   <!-- DASHBOARD -->
@@ -1321,6 +1437,8 @@ function applyUserUI(){
   const adm=u.role==='admin';
   document.getElementById('tab-admin').style.display=adm?'':'none';
   document.getElementById('btn-nuevo').disabled=!adm;
+  const fab=document.getElementById('fab-nuevo');
+  if(fab) fab.style.display=adm?'flex':'none';
 }
 function isAdmin(){return currentUser?.role==='admin';}
 
@@ -1438,9 +1556,66 @@ function renderTable(){
     }).join('');
   }
   updateStats(records);
+  renderMobileCards(data);
 }
 
-function toggleAccordion(rowId){
+function renderMobileCards(data){
+  const mc=document.getElementById('mobile-cards');
+  if(!mc) return;
+  const adm=isAdmin();
+  if(!data.length){
+    mc.innerHTML=`<div style="text-align:center;padding:48px 20px;color:var(--muted);">
+      <div style="font-size:40px;margin-bottom:12px;">📂</div>
+      <p style="font-size:13px;">Sin registros</p>
+    </div>`;
+    return;
+  }
+  mc.innerHTML=data.map(r=>{
+    const est=getEstado(r.tipo,r.estado);
+    const semBadge=getSemaforoBadge(r);
+    const terminal=estadoIsTerminal(r.tipo,r.estado);
+    const nE=(r.bitacora||[]).length;
+    const tipoBg=r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE';
+    const tipoCol=r.tipo==='asesoria'?'var(--sky)':'var(--teal)';
+    return `<div class="mc">
+      <div class="mc-head">
+        <span class="mc-ticket">${escHtml(r.ticket||'—')}</span>
+        <span style="padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:${tipoBg};color:${tipoCol};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>
+        <span style="margin-left:auto;padding:2px 8px;border-radius:8px;font-size:10px;background:#F1F5F9;color:var(--navy);font-weight:600;">${est.label}</span>
+      </div>
+      <div class="mc-body">
+        <div class="mc-objeto">${escHtml(r.objeto||'Sin objeto')}</div>
+        <div class="mc-row"><span class="mc-lbl">Abogado</span><span class="mc-val">${escHtml(r.abogado||'—')}</span></div>
+        ${r.git?`<div class="mc-row"><span class="mc-lbl">GIT</span><span class="mc-val" style="font-size:11px;">${escHtml(r.git.replace('GIT ',''))}</span></div>`:''}
+        ${r.dependencia?`<div class="mc-row"><span class="mc-lbl">Dependencia</span><span class="mc-val" style="font-size:11px;">${escHtml(r.dependencia)}</span></div>`:''}
+        <div class="mc-dates">
+          <div class="mc-date-item">
+            <span class="mc-date-lbl">F. Asignación</span>
+            <span class="mc-date-val">${fmtDate(r.fechaAsignacion)||'—'}</span>
+          </div>
+          <div class="mc-date-item">
+            <span class="mc-date-lbl">F. Adjudicación</span>
+            <span class="mc-date-val">${fmtDate(r.fechaAdjudicacion)||'—'}</span>
+          </div>
+          ${r.fechaMaxGestion?`<div class="mc-date-item" style="grid-column:1/-1;">
+            <span class="mc-date-lbl" style="color:var(--red);">⏰ F. Máx. Gestión</span>
+            <span class="mc-date-val">${fmtDate(r.fechaMaxGestion)} ${semBadge}</span>
+          </div>`:''}
+        </div>
+        ${nE>0?`<div style="margin-top:8px;font-size:11px;color:var(--accent);font-weight:500;">📝 ${nE} avance${nE!==1?'s':''} registrado${nE!==1?'s':''}</div>`:''}
+        ${r.obs?`<div style="margin-top:8px;font-size:11px;color:var(--muted);font-style:italic;border-top:1px solid var(--border);padding-top:8px;">${escHtml(r.obs.slice(0,100))}${r.obs.length>100?'…':''}</div>`:''}
+      </div>
+      <div class="mc-footer">
+        <button class="mc-btn log" onclick="openBitacora('${r.id}')">${terminal?'📖 Ver':'📝 Avance'}</button>
+        ${adm?`<button class="mc-btn" onclick="openModal('${r.id}')">✏️ Editar</button>`:''}
+        ${adm?`<button class="mc-btn del" onclick="deleteRecord('${r.id}')">🗑️</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  // Deshabilitar FAB para viewers
+  const fab=document.getElementById('fab-nuevo');
+  if(fab) fab.style.display=adm?'flex':'none';
+}
   const row=document.getElementById(rowId);const arr=document.getElementById('arr-'+rowId);
   if(!row)return;
   const isOpen=row.classList.contains('open');
