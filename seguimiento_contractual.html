@@ -455,6 +455,10 @@ textarea#entry-text:focus{border-color:var(--accent);}
   /* ── Ocultar tabla en móvil ── */
   .table-wrap{display:none;}
 
+  /* ── Banner abogado en móvil ── */
+  #abogado-banner{padding:8px 14px;font-size:12px;}
+  #abogado-banner span:last-child{display:none;}
+
   /* ── Tarjetas móvil ── */
   .mobile-cards{display:flex;flex-direction:column;gap:10px;padding:10px 14px 80px;}
   .mc{background:white;border-radius:12px;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;}
@@ -1368,12 +1372,12 @@ function launchApp(){
     document.addEventListener(e,resetInactivity,{passive:true}));
   // _appReady = true al final
   window._appReady=true;
-  // Primer render inmediato (con datos que ya tenga _records)
+  // Render inmediato
   renderTable();
-  // Segundo render a 1 segundo: garantiza que onSnapshot ya entregó datos de Firebase
-  setTimeout(()=>{ if(window._appReady) renderTable(); }, 1000);
-  // Tercer render a 3 segundos: por si la conexión es lenta
-  setTimeout(()=>{ if(window._appReady) renderTable(); }, 3000);
+  // Re-renders adicionales para conexiones lentas (especialmente móvil)
+  setTimeout(()=>{ if(window._appReady) renderTable(); }, 800);
+  setTimeout(()=>{ if(window._appReady) renderTable(); }, 2000);
+  setTimeout(()=>{ if(window._appReady) renderTable(); }, 5000);
 }
 
 function startSessionTimer(){
@@ -1492,7 +1496,6 @@ function setTipo(t){
 function sortBy(f){if(sortField===f)sortDir=sortDir==='asc'?'desc':'asc';else{sortField=f;sortDir='asc';}renderTable();}
 
 function renderTable(){
-  window.renderTable=renderTable;
   const records=window._records||[];
   const q=(document.getElementById('search-input')?.value||'').toLowerCase();
   const abogadoFiltro=getAbogadoFiltro();
@@ -1582,13 +1585,18 @@ function renderMobileCards(data){
   const mc=document.getElementById('mobile-cards');
   if(!mc) return;
   const adm=isAdmin();
+  const abogadoFiltro=getAbogadoFiltro();
+
   if(!data.length){
-    mc.innerHTML=`<div style="text-align:center;padding:48px 20px;color:var(--muted);">
-      <div style="font-size:40px;margin-bottom:12px;">📂</div>
-      <p style="font-size:13px;">Sin registros</p>
-    </div>`;
+    const msg=abogadoFiltro&&!(window._records||[]).length
+      ? `<div style="font-size:36px;margin-bottom:10px;">⏳</div><p style="font-size:13px;margin-bottom:6px;">Cargando datos...</p><p style="font-size:11px;color:var(--muted);">Si no aparecen procesos en unos segundos,<br>verifica tu conexión y recarga la página.</p>`
+      : abogadoFiltro
+        ? `<div style="font-size:36px;margin-bottom:10px;">📭</div><p style="font-size:13px;margin-bottom:6px;">No tienes procesos asignados aún.</p><p style="font-size:11px;color:var(--muted);">Cuando se te asigne un proceso aparecerá aquí.</p>`
+        : `<div style="font-size:36px;margin-bottom:10px;">📂</div><p style="font-size:13px;">Sin registros</p>`;
+    mc.innerHTML=`<div style="text-align:center;padding:48px 20px;color:var(--muted);">${msg}</div>`;
     return;
   }
+
   mc.innerHTML=data.map(r=>{
     const est=getEstado(r.tipo,r.estado);
     const semBadge=getSemaforoBadge(r);
@@ -1631,7 +1639,8 @@ function renderMobileCards(data){
       </div>
     </div>`;
   }).join('');
-  // Deshabilitar FAB para viewers
+
+  // FAB solo para admins
   const fab=document.getElementById('fab-nuevo');
   if(fab) fab.style.display=adm?'flex':'none';
 }
@@ -2647,6 +2656,11 @@ function dl(name,content,type){const a=document.createElement('a');a.href=URL.cr
 window.addEventListener('resize',()=>{if(document.getElementById('page-dash')?.classList.contains('active'))renderDashboard();});
 // Inicializar opciones de estado
 updateEstadoOptions();
+// Registrar funciones globales INMEDIATAMENTE al cargar
+// para que onSnapshot pueda llamarlas en cualquier momento
+window.renderTable=renderTable;
+window.renderDashboard=renderDashboard;
+window.renderAdminPanel=renderAdminPanel;
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </body>
