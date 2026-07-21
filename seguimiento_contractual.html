@@ -410,7 +410,7 @@ textarea#entry-text:focus{border-color:var(--accent);}
    Vista de tarjetas en lugar de tabla,
    navegación compacta, formulario vertical
 ══════════════════════════════════════════ */
-@media(max-width:640px){
+@media(max-width:768px){
 
   /* ── Header compacto ── */
   header{padding:0 14px;height:56px;}
@@ -1638,6 +1638,18 @@ function renderTable(){
 function renderMobileCards(data){
   const mc=document.getElementById('mobile-cards');
   if(!mc) return;
+  const esMobil=window.innerWidth<=768;
+  // Forzar visibilidad via JS (respaldo al CSS media query)
+  const tableWrap=document.querySelector('.table-wrap');
+  if(esMobil){
+    mc.style.display='flex';
+    mc.style.flexDirection='column';
+    if(tableWrap) tableWrap.style.display='none';
+  } else {
+    mc.style.display='none';
+    if(tableWrap) tableWrap.style.display='';
+    return; // en desktop no renderizar tarjetas
+  }
   const adm=isAdmin();
   const abogadoFiltro=getAbogadoFiltro();
 
