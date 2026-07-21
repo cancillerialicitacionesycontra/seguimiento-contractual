@@ -592,7 +592,15 @@ textarea#entry-text:focus{border-color:var(--accent);}
       </div>
     </div>
 
-    <!-- Filtro por tipo -->
+    <!-- Banner de vista filtrada para abogados -->
+    <div id="abogado-banner" style="display:none;background:linear-gradient(90deg,#E0F2FE,#DBEAFE);border-bottom:2px solid var(--sky);padding:10px 32px;align-items:center;gap:10px;">
+      <span style="font-size:18px;">⚖️</span>
+      <div>
+        <span style="font-size:13px;font-weight:600;color:var(--navy);">Vista personal — </span>
+        <span style="font-size:13px;color:var(--sky);font-weight:700;" id="abogado-banner-name"></span>
+      </div>
+      <span style="font-size:11px;color:var(--muted);margin-left:auto;">Solo se muestran los procesos asignados a ti · Solo lectura</span>
+    </div>
     <div class="tipo-bar">
       <span class="tipo-bar-label">Filtrar por:</span>
       <button class="tipo-chip active-all" id="chip-all" onclick="setTipo('all')">📋 Todos</button>
@@ -826,10 +834,17 @@ textarea#entry-text:focus{border-color:var(--accent);}
           <div class="form-group"><label>Abogado Asignado *</label>
             <select id="f-abogado">
               <option value="">— Seleccionar —</option>
-              <option>JOHANNA AGUDELO</option><option>YULY LEIVA</option><option>OSCAR VICTORIA</option>
-              <option>NATALIA JIMENEZ</option><option>ALEXANDRA PORTILLO</option><option>JESSICA GUTIERREZ</option>
-              <option>BRIAM BRITO</option><option>JUAN DAVID GUTIERREZ</option><option>TANIA HUMANEZ</option>
-              <option>KATIANA JIMENEZ</option><option>JHOANA MEDINA</option><option>MARIANA GARCIA MORALES</option>
+              <option value="JOHANNA AGUDELO">JOHANNA AGUDELO</option>
+              <option value="YULY LEIVA">YULY LEIVA</option>
+              <option value="OSCAR VICTORIA">OSCAR VICTORIA</option>
+              <option value="NATALIA JIMENEZ">NATALIA JIMENEZ</option>
+              <option value="ALEXANDRA PORTILLO">ALEXANDRA PORTILLO</option>
+              <option value="JESSICA GUTIERREZ">JESSICA GUTIERREZ</option>
+              <option value="BRIAM BRITO">BRIAM BRITO</option>
+              <option value="TANIA HUMANEZ">TANIA HUMANEZ</option>
+              <option value="KATIANA JIMENEZ">KATIANA JIMENEZ</option>
+              <option value="JHOANA MEDINA">JHOANA MEDINA</option>
+              <option value="MARIANA GARCIA MORALES">MARIANA GARCIA MORALES</option>
             </select>
           </div>
           <div class="form-group"><label>GIT (Grupo Interno de Trabajo)</label>
@@ -1165,10 +1180,10 @@ onSnapshot(collection(db,'registros'),snap=>{
   setConn(true);
   window._records=[];
   snap.forEach(d=>window._records.push({id:d.id,...d.data()}));
-  // Renderizar siempre que la app esté lista, usando la referencia más actual
+  window._dbReady=true;
+  // Renderizar siempre que haya datos nuevos y la app esté activa
   if(window._appReady){
-    const fn=window.renderTable||function(){};
-    fn();
+    if(window.renderTable) window.renderTable();
     const dash=document.getElementById('page-dash');
     if(dash&&dash.classList.contains('active')&&window.renderDashboard) window.renderDashboard();
   }
@@ -1186,9 +1201,6 @@ window._updateEstado=async(id,estado)=>{await updateDoc(doc(db,'registros',id),{
 window._saveBitacora=async(id,bitacora)=>{await updateDoc(doc(db,'registros',id),{bitacora});};
 window._saveUser=async(u)=>{const{id,...r}=u;await setDoc(doc(db,'usuarios',id),r);};
 window._deleteUser=async(id)=>{await deleteDoc(doc(db,'usuarios',id));};
-
-window._dbReady=true;
-if(window._appReady) window.renderTable();
 </script>
 
 <script>
@@ -1240,7 +1252,31 @@ function updateEstadoOptions(){
 /* ═══ USUARIOS ═══ */
 const BUILTIN_USERS=[
   {id:'u1',name:'Andres Camacho',username:'andres.camacho',
-   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'admin'},
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'admin',abogado:null},
+  {id:'u2',name:'Edilma Rojas',username:'edilma.rojas',
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'admin',abogado:null},
+  {id:'u_jagudelo',name:'Johanna Agudelo',username:'johanna.agudelo',
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'viewer',abogado:'JOHANNA AGUDELO'},
+  {id:'u_yleiva',name:'Yuly Leiva',username:'yuly.leiva',
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'viewer',abogado:'YULY LEIVA'},
+  {id:'u_ovictoria',name:'Oscar Victoria',username:'oscar.victoria',
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'viewer',abogado:'OSCAR VICTORIA'},
+  {id:'u_njimenez',name:'Natalia Jimenez',username:'natalia.jimenez',
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'viewer',abogado:'NATALIA JIMENEZ'},
+  {id:'u_aportillo',name:'Alexandra Portillo',username:'alexandra.portillo',
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'viewer',abogado:'ALEXANDRA PORTILLO'},
+  {id:'u_jgutierrez',name:'Jessica Gutierrez',username:'jessica.gutierrez',
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'viewer',abogado:'JESSICA GUTIERREZ'},
+  {id:'u_bbrito',name:'Briam Brito',username:'briam.brito',
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'viewer',abogado:'BRIAM BRITO'},
+  {id:'u_thumanez',name:'Tania Humanez',username:'tania.humanez',
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'viewer',abogado:'TANIA HUMANEZ'},
+  {id:'u_kjimenez',name:'Katiana Jimenez',username:'katiana.jimenez',
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'viewer',abogado:'KATIANA JIMENEZ'},
+  {id:'u_jmedina',name:'Jhoana Medina',username:'jhoana.medina',
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'viewer',abogado:'JHOANA MEDINA'},
+  {id:'u_mgarcia',name:'Mariana Garcia Morales',username:'mariana.garcia',
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'viewer',abogado:'MARIANA GARCIA MORALES'},
 ];
 function loadUsers(){
   const fb=window._fbUsers||[];
@@ -1319,25 +1355,25 @@ let sessionExpiry=0,sessionInterval=null,inactivityTimer=null,inactivityWarning=
 function launchApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
+  // Registrar funciones globales
+  window.renderTable=renderTable;
+  window.renderDashboard=renderDashboard;
+  window.renderAdminPanel=renderAdminPanel;
+  // Configurar sesión y UI — currentUser ya está seteado en doLogin()
   applyUserUI();
   sessionExpiry=Date.now()+30*60*1000;
   startSessionTimer();
   resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>
     document.addEventListener(e,resetInactivity,{passive:true}));
+  // _appReady = true al final
   window._appReady=true;
-  window.renderTable=renderTable;
-  window.renderDashboard=renderDashboard;
-  window.renderAdminPanel=renderAdminPanel;
-  if(window._dbReady){
-    renderTable();
-  } else {
-    let tries=0;
-    const poll=setInterval(()=>{
-      tries++;
-      if(window._dbReady||tries>40){clearInterval(poll);renderTable();}
-    },250);
-  }
+  // Primer render inmediato (con datos que ya tenga _records)
+  renderTable();
+  // Segundo render a 1 segundo: garantiza que onSnapshot ya entregó datos de Firebase
+  setTimeout(()=>{ if(window._appReady) renderTable(); }, 1000);
+  // Tercer render a 3 segundos: por si la conexión es lenta
+  setTimeout(()=>{ if(window._appReady) renderTable(); }, 3000);
 }
 
 function startSessionTimer(){
@@ -1384,15 +1420,43 @@ function applyUserUI(){
   const av=document.getElementById('header-avatar');
   av.textContent=initials(u.name);av.style.background=avColor(u.username);
   const rb=document.getElementById('header-role');
-  rb.textContent=u.role==='admin'?'Admin':'Viewer';
+  rb.textContent=u.role==='admin'?'Admin':'Abogado';
   rb.className='role-badge '+(u.role==='admin'?'admin':'viewer');
   const adm=u.role==='admin';
   document.getElementById('tab-admin').style.display=adm?'':'none';
   document.getElementById('btn-nuevo').disabled=!adm;
   const fab=document.getElementById('fab-nuevo');
   if(fab) fab.style.display=adm?'flex':'none';
+  // Banner de vista filtrada para abogados
+  const banner=document.getElementById('abogado-banner');
+  if(banner){
+    if(!adm&&u.abogado){
+      banner.style.display='flex';
+      document.getElementById('abogado-banner-name').textContent=u.abogado;
+    } else {
+      banner.style.display='none';
+    }
+  }
+  // Re-renderizar tabla después de aplicar rol (necesario para el filtro por abogado)
+  if(window._appReady&&window.renderTable) window.renderTable();
+}function isAdmin(){return currentUser?.role==='admin';}
+function isViewer(){return currentUser?.role==='viewer';}
+// Normaliza texto para comparación: mayúsculas + sin espacios dobles
+function normStr(s){return(s||'').toUpperCase().replace(/\s+/g,' ').trim();}
+// Retorna el abogado vinculado al usuario actual (solo viewers)
+function getAbogadoFiltro(){
+  if(!currentUser||currentUser.role==='admin') return null;
+  return currentUser.abogado||null;
 }
-function isAdmin(){return currentUser?.role==='admin';}
+// Verifica si un registro pertenece al abogado del usuario actual
+function registroEsDelUsuario(r){
+  const filtro=getAbogadoFiltro();
+  if(!filtro) return true; // admin ve todo
+  const en_registro=normStr(r.abogado);
+  const del_usuario=normStr(filtro);
+  const match=en_registro===del_usuario;
+  return match;
+}
 
 /* ═══ DATOS ═══ */
 window._records=[];
@@ -1431,7 +1495,10 @@ function renderTable(){
   window.renderTable=renderTable;
   const records=window._records||[];
   const q=(document.getElementById('search-input')?.value||'').toLowerCase();
+  const abogadoFiltro=getAbogadoFiltro();
   let data=records.filter(r=>{
+    // Viewers solo ven sus propios procesos
+    if(!registroEsDelUsuario(r)) return false;
     if(activeTipo!=='all'&&r.tipo!==activeTipo)return false;
     if(q&&!((r.ticket||'').toLowerCase().includes(q)||(r.objeto||'').toLowerCase().includes(q)||(r.abogado||'').toLowerCase().includes(q)||(r.secop||'').toLowerCase().includes(q)||(r.git||'').toLowerCase().includes(q)))return false;
     if(vencimientoFilter){
@@ -1653,8 +1720,8 @@ function getSemaforoBadge(r){
   return '';
 }
 
-function updateStats(records){
-  const r=records||window._records||[];
+function updateStats(allRecords){
+  const r=(allRecords||window._records||[]).filter(x=>registroEsDelUsuario(x));
   document.getElementById('stat-total').textContent=r.length;
   document.getElementById('stat-asesoria').textContent=r.filter(x=>x.tipo==='asesoria').length;
   document.getElementById('stat-contractual').textContent=r.filter(x=>x.tipo==='contractual').length;
@@ -1882,7 +1949,9 @@ async function deleteUser(id){
 /* ═══ DASHBOARD ═══ */
 function renderDashboard(){
   window.renderDashboard=renderDashboard;
-  const records=window._records||[];
+  const allRecords=window._records||[];
+  // Viewers solo ven sus propios procesos en el dashboard
+  const records=allRecords.filter(r=>registroEsDelUsuario(r));
   const asesorias=records.filter(r=>r.tipo==='asesoria');
   const contractuales=records.filter(r=>r.tipo==='contractual');
   const finalizados=records.filter(r=>estadoIsTerminal(r.tipo,r.estado));
@@ -2035,10 +2104,17 @@ function renderPromedioAbogado(records){
 /* ═══ BITÁCORA GENERAL ═══ */
 function openBitacoraGeneral(){
   const records=window._records||[];
-  const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+  const abogadoFiltro=getAbogadoFiltro();
   const sel=document.getElementById('bg-abogado');
-  sel.innerHTML='<option value="">Todos los abogados</option>'+
-    abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
+  // Para viewers: ocultar el filtro de abogado (solo ven los suyos)
+  if(abogadoFiltro){
+    sel.parentElement.style.display='none';
+  } else {
+    sel.parentElement.style.display='';
+    const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+    sel.innerHTML='<option value="">Todos los abogados</option>'+
+      abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
+  }
   document.getElementById('bg-tipo').value='';
   document.getElementById('bg-solo-avances').value='';
   document.getElementById('bg-search').value='';
@@ -2051,13 +2127,15 @@ function closeBitacoraGeneral(){
 }
 
 function renderBitacoraGeneral(){
-  const records=window._records||[];
+  const allRecords=window._records||[];
+  // Viewers solo ven sus propios procesos
+  const baseRecords=allRecords.filter(r=>registroEsDelUsuario(r));
   const tipo=document.getElementById('bg-tipo').value;
   const abogado=document.getElementById('bg-abogado').value;
   const soloAvances=document.getElementById('bg-solo-avances').value;
   const q=(document.getElementById('bg-search').value||'').toLowerCase();
 
-  let data=records.filter(r=>{
+  let data=baseRecords.filter(r=>{
     if(tipo&&r.tipo!==tipo) return false;
     if(abogado&&r.abogado!==abogado) return false;
     if(soloAvances==='1'&&!(r.bitacora||[]).length) return false;
