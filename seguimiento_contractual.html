@@ -344,6 +344,43 @@ textarea#entry-text:focus{border-color:var(--accent);}
 .sema-info strong.naranja{color:#EA580C;}
 .sema-info span{font-size:11px;color:var(--muted);}
 
+/* ── BITÁCORA GENERAL ── */
+.bit-gen-overlay{display:none;position:fixed;inset:0;background:rgba(15,31,61,.55);z-index:100;align-items:center;justify-content:center;padding:20px;}
+.bit-gen-overlay.open{display:flex;}
+.bit-gen-modal{background:white;border-radius:14px;width:100%;max-width:820px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.bit-gen-header{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--navy);border-radius:14px 14px 0 0;flex-shrink:0;}
+.bit-gen-header h2{color:white;font-size:16px;font-weight:600;flex:1;}
+.bit-gen-header .modal-close{background:rgba(255,255,255,.1);color:white;border:none;}
+.bit-gen-header .modal-close:hover{background:rgba(255,255,255,.2);}
+.bit-gen-toolbar{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap;flex-shrink:0;background:var(--bg);}
+.bit-gen-filter{padding:6px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:12px;outline:none;background:white;color:var(--text);}
+.bit-gen-filter:focus{border-color:var(--accent);}
+.bit-gen-search{padding:6px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:12px;outline:none;background:white;width:200px;}
+.bit-gen-search:focus{border-color:var(--accent);}
+.bit-gen-count{font-size:11px;color:var(--muted);margin-left:auto;font-family:var(--mono);}
+.bit-gen-body{overflow-y:auto;padding:16px 20px;flex:1;}
+.bit-gen-empty{text-align:center;padding:48px 20px;color:var(--muted);}
+.bit-proceso-card{border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;transition:box-shadow .15s;}
+.bit-proceso-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08);}
+.bit-proceso-head{padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;background:var(--bg);border-bottom:1px solid var(--border);}
+.bit-proceso-head:hover{background:#EFF6FF;}
+.bit-proceso-head .bp-ticket{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--navy);background:var(--accent-light);padding:2px 10px;border-radius:5px;}
+.bit-proceso-head .bp-objeto{font-size:12px;color:var(--navy);font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bit-proceso-head .bp-abogado{font-size:11px;color:var(--muted);}
+.bit-proceso-head .bp-count{font-family:var(--mono);font-size:11px;background:var(--purple-light);color:var(--purple);padding:2px 8px;border-radius:10px;font-weight:600;flex-shrink:0;}
+.bit-proceso-head .bp-count.empty{background:var(--bg);color:var(--muted);border:1px solid var(--border);}
+.bit-proceso-head .bp-toggle{font-size:12px;color:var(--muted);transition:transform .2s;flex-shrink:0;}
+.bit-proceso-head .bp-toggle.open{transform:rotate(90deg);}
+.bit-proceso-entries{display:none;padding:12px 16px;background:white;}
+.bit-proceso-entries.open{display:block;}
+.bit-entry-item{padding:10px 14px;border-left:3px solid var(--accent-light);margin-bottom:8px;border-radius:0 6px 6px 0;background:var(--bg);}
+.bit-entry-item:last-child{margin-bottom:0;}
+.bit-entry-meta{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.bit-entry-date{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);}
+.bit-entry-author{font-size:10px;color:var(--muted);background:white;border:1px solid var(--border);padding:1px 7px;border-radius:10px;}
+.bit-entry-text{font-size:12px;color:var(--text);line-height:1.5;white-space:pre-wrap;}
+.bit-no-entries{padding:12px;font-size:12px;color:var(--muted);font-style:italic;text-align:center;}
+
 /* ── PDF MODAL ── */
 .pdf-option{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;margin-bottom:10px;transition:all .15s;}
 .pdf-option:hover{border-color:var(--accent);background:var(--accent-light);}
@@ -438,6 +475,7 @@ textarea#entry-text:focus{border-color:var(--accent);}
       <button class="btn btn-ghost" onclick="exportCSV()">⬇ CSV</button>
       <button class="btn btn-ghost" onclick="exportXLSX()" style="color:#059669;border-color:#6EE7B7;">⬇ Excel</button>
       <button class="btn btn-ghost" onclick="openPdfModal()" style="color:#DC2626;border-color:#FECACA;">📄 Informes PDF</button>
+      <button class="btn btn-ghost" onclick="openBitacoraGeneral()" style="color:#7C3AED;border-color:#C4B5FD;">📓 Bitácora</button>
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
         <input type="text" id="search-input" placeholder="Buscar ticket, objeto, abogado, GIT…" oninput="renderTable()">
@@ -500,7 +538,8 @@ textarea#entry-text:focus{border-color:var(--accent);}
           <th onclick="sortBy('dependencia')">Dependencia</th>
           <th onclick="sortBy('secop')">SECOP</th>
           <th onclick="sortBy('fechaAsignacion')">F. Asignación</th>
-          <th onclick="sortBy('fechaAdjudicacion')">F. Entrega</th>
+          <th onclick="sortBy('fechaAdjudicacion')">F. Adjudicación</th>
+          <th onclick="sortBy('fechaMaxGestion')" style="white-space:nowrap;">⏰ F. Máx. Gestión</th>
           <th onclick="sortBy('estado')">Estado</th>
           <th>Avance</th>
           <th>Acciones</th>
@@ -802,6 +841,11 @@ textarea#entry-text:focus{border-color:var(--accent);}
           <div class="form-group"><label>Fecha de Asignación</label><input type="date" id="f-asignacion"></div>
           <div class="form-group"><label>Fecha Docs. Definitivos</label><input type="date" id="f-documentos"></div>
           <div class="form-group"><label>Fecha de Adjudicación</label><input type="date" id="f-entrega-real"></div>
+          <div class="form-group" style="border:1.5px solid var(--red);border-radius:8px;padding:10px 12px;background:#FFF5F5;">
+            <label style="color:var(--red);">⏰ Fecha Máx. Gestión *</label>
+            <input type="date" id="f-max-gestion" style="border-color:#FECACA;background:white;">
+            <span style="font-size:10px;color:var(--red);margin-top:3px;display:block;">Fecha límite para gestión del proceso — activa el semáforo</span>
+          </div>
         </div>
       </div>
 
@@ -865,6 +909,36 @@ textarea#entry-text:focus{border-color:var(--accent);}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeUserModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="saveUser()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL BITÁCORA GENERAL -->
+<div class="bit-gen-overlay" id="bit-gen-overlay">
+  <div class="bit-gen-modal">
+    <div class="bit-gen-header">
+      <h2>📓 Bitácora General de Avances</h2>
+      <button class="modal-close" onclick="closeBitacoraGeneral()">✕</button>
+    </div>
+    <div class="bit-gen-toolbar">
+      <select class="bit-gen-filter" id="bg-tipo" onchange="renderBitacoraGeneral()">
+        <option value="">Todos los tipos</option>
+        <option value="asesoria">🔵 Asesoría Previa</option>
+        <option value="contractual">🔷 Proceso Contractual</option>
+      </select>
+      <select class="bit-gen-filter" id="bg-abogado" onchange="renderBitacoraGeneral()">
+        <option value="">Todos los abogados</option>
+      </select>
+      <select class="bit-gen-filter" id="bg-solo-avances" onchange="renderBitacoraGeneral()">
+        <option value="">Todos los procesos</option>
+        <option value="1">Solo con avances</option>
+        <option value="0">Solo sin avances</option>
+      </select>
+      <input type="text" class="bit-gen-search" id="bg-search" placeholder="🔍 Buscar ticket u objeto…" oninput="renderBitacoraGeneral()">
+      <span class="bit-gen-count" id="bg-count">0 procesos</span>
+    </div>
+    <div class="bit-gen-body" id="bit-gen-body">
+      <div class="bit-gen-empty">Cargando avances...</div>
     </div>
   </div>
 </div>
@@ -1219,11 +1293,11 @@ function renderTable(){
     if(activeTipo!=='all'&&r.tipo!==activeTipo)return false;
     if(q&&!((r.ticket||'').toLowerCase().includes(q)||(r.objeto||'').toLowerCase().includes(q)||(r.abogado||'').toLowerCase().includes(q)||(r.secop||'').toLowerCase().includes(q)||(r.git||'').toLowerCase().includes(q)))return false;
     if(vencimientoFilter){
-      const d=diasHasta(r.fechaAdjudicacion);
+      const d=diasHasta(getFechaAlerta(r));
       if(d===null||estadoIsTerminal(r.tipo,r.estado)) return false;
-      if(vencimientoFilter==='hoy'  && d>0)       return false; // solo d<=0
-      if(vencimientoFilter==='3dias'&& (d<=0||d>3)) return false; // solo d 1-3
-      if(vencimientoFilter==='7dias'&& (d<=3||d>7)) return false; // solo d 4-7
+      if(vencimientoFilter==='hoy'  && d>0)         return false; // solo d<=0
+      if(vencimientoFilter==='3dias'&& (d<=0||d>3)) return false; // solo d 1,2,3
+      if(vencimientoFilter==='7dias'&& (d<=3||d>7)) return false; // solo d 4,5,6,7
     }
     return true;
   });
@@ -1243,6 +1317,11 @@ function renderTable(){
       const gitS=(r.git||'').length>22?(r.git.slice(0,20)+'…'):(r.git||'—');
       const semBadge=getSemaforoBadge(r);
       const rowId='acc-'+r.id;
+      // Badge de fecha máx gestión para la columna
+      const dMax=r.fechaMaxGestion&&!terminal?diasHasta(r.fechaMaxGestion):null;
+      const maxCell=r.fechaMaxGestion
+        ? `<span style="font-family:var(--mono);font-size:11px;">${fmtDate(r.fechaMaxGestion)}</span>${semBadge}`
+        : `<span style="color:#CBD5E1;font-size:11px;">—</span>`;
       return `<tr class="main-row" onclick="toggleAccordion('${rowId}')">
         <td style="white-space:nowrap"><span class="expand-arrow" id="arr-${rowId}">▶</span><span class="ticket-badge">${escHtml(r.ticket||'—')}</span></td>
         <td><span class="tipo-badge ${r.tipo||'asesoria'}">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span></td>
@@ -1252,7 +1331,8 @@ function renderTable(){
         <td style="font-size:11px;max-width:130px;" title="${escHtml(r.dependencia||'')}">${escHtml(depS)}</td>
         <td style="font-family:var(--mono);font-size:11px;">${escHtml(r.secop||'—')}</td>
         <td class="date-cell ${r.fechaAsignacion?'':'empty'}">${fmtDate(r.fechaAsignacion)||'—'}</td>
-        <td class="date-cell ${r.fechaAdjudicacion?'':'empty'}" style="white-space:nowrap;">${fmtDate(r.fechaAdjudicacion)||'—'}${semBadge}</td>
+        <td class="date-cell ${r.fechaAdjudicacion?'':'empty'}">${fmtDate(r.fechaAdjudicacion)||'—'}</td>
+        <td style="white-space:nowrap;">${maxCell}</td>
         <td onclick="event.stopPropagation()">
           <select class="status-badge ${est.css}" style="border:none;cursor:pointer;font-size:11px;font-weight:600;border-radius:20px;padding:3px 8px;outline:none;" onchange="changeEstado('${r.id}','${r.tipo||'asesoria'}',this)" ${adm?'':'disabled'}>
             ${(ESTADOS[r.tipo||'asesoria']||[]).map(e=>`<option value="${e.value}" ${r.estado===e.value?'selected':''}>${e.label}</option>`).join('')}
@@ -1266,7 +1346,7 @@ function renderTable(){
         </div></td>
       </tr>
       <tr class="accordion-row" id="${rowId}">
-        <td colspan="12">
+        <td colspan="13">
           <div class="accordion-inner">
             <div class="accordion-section full">
               <span class="accordion-label">📋 Objeto</span>
@@ -1277,8 +1357,8 @@ function renderTable(){
             <div class="accordion-section"><span class="accordion-label">📄 SECOP</span><span class="accordion-value" style="font-family:var(--mono)">${escHtml(r.secop||'—')}</span></div>
             <div class="accordion-section"><span class="accordion-label">📅 F. Asignación</span><span class="accordion-value">${fmtDate(r.fechaAsignacion)||'—'}</span></div>
             <div class="accordion-section"><span class="accordion-label">📅 Docs. Definitivos</span><span class="accordion-value">${fmtDate(r.fechaDocumentos)||'—'}</span></div>
-            <div class="accordion-section"><span class="accordion-label">📅 F. Adjudicación</span><span class="accordion-value">${fmtDate(r.fechaAdjudicacion)||'—'}${semBadge}</span></div>
             <div class="accordion-section"><span class="accordion-label">📅 F. Adjudicación</span><span class="accordion-value">${fmtDate(r.fechaAdjudicacion)||'—'}</span></div>
+            <div class="accordion-section"><span class="accordion-label" style="color:var(--red);">⏰ F. Máx. Gestión</span><span class="accordion-value">${r.fechaMaxGestion?fmtDate(r.fechaMaxGestion)+'&nbsp;'+semBadge:'<span style="color:#CBD5E1;">Sin fecha</span>'}</span></div>
             ${r.obs?`<div class="accordion-section full"><span class="accordion-label">💬 Observaciones</span><span class="accordion-value" style="color:var(--muted);font-style:italic;">${escHtml(r.obs)}</span></div>`:''}
           </div>
         </td>
@@ -1333,15 +1413,24 @@ function filtrarVencimiento(tipo){
   renderTable();
 }
 
+function getFechaAlerta(r){
+  // Usa fechaMaxGestion si existe, si no cae en fechaAdjudicacion como respaldo
+  return r.fechaMaxGestion||r.fechaAdjudicacion||null;
+}
+
 function updateSemaforo(records){
-  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&r.fechaAdjudicacion);
+  // Alerta anticipada: cuenta días que FALTAN para la fecha límite
+  // d=0  → vence hoy (🔴)
+  // d=1,2,3 → faltan 3 días o menos (🟠)
+  // d=4,5,6,7 → faltan entre 4 y 7 días (🟡)
+  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r));
   let hoy=0,tres=0,siete=0;
   activos.forEach(r=>{
-    const d=diasHasta(r.fechaAdjudicacion);
+    const d=diasHasta(getFechaAlerta(r));
     if(d===null) return;
-    if(d<=0)       hoy++;    // vence hoy o ya venció
-    else if(d<=3)  tres++;   // vence en 1, 2 o 3 días
-    else if(d<=7)  siete++;  // vence en 4, 5, 6 o 7 días
+    if(d<=0)           hoy++;   // vence hoy o ya pasó
+    else if(d<=3)      tres++;  // faltan 1, 2 o 3 días → PRÓXIMOS 3 DÍAS
+    else if(d<=7)      siete++; // faltan 4, 5, 6 o 7 días → PRÓXIMOS 7 DÍAS
   });
   document.getElementById('sema-hoy').textContent=hoy;
   document.getElementById('sema-3').textContent=tres;
@@ -1349,13 +1438,17 @@ function updateSemaforo(records){
 }
 
 function getSemaforoBadge(r){
-  if(estadoIsTerminal(r.tipo,r.estado)||!r.fechaAdjudicacion) return '';
-  const d=diasHasta(r.fechaAdjudicacion);
+  if(estadoIsTerminal(r.tipo,r.estado)) return '';
+  const fecha=getFechaAlerta(r);
+  if(!fecha) return '';
+  const d=diasHasta(fecha);
   if(d===null) return '';
-  if(d<0)  return `<span style="background:#FEE2E2;color:#991B1B;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:4px;">🔴 ${Math.abs(d)}d vencido</span>`;
-  if(d===0) return `<span style="background:#FEE2E2;color:#991B1B;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:4px;">🔴 Vence hoy</span>`;
-  if(d<=3)  return `<span style="background:#FFEDD5;color:#C2410C;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:4px;">🟠 ${d}d</span>`;
-  if(d<=7)  return `<span style="background:#FFFBEB;color:#92400E;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:4px;">🟡 ${d}d</span>`;
+  const esMax=!!r.fechaMaxGestion;
+  const tag=esMax?'Máx.':'';
+  if(d<0)   return `<span style="background:#FEE2E2;color:#991B1B;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:4px;">🔴 ${tag} ${Math.abs(d)}d vencido</span>`;
+  if(d===0)  return `<span style="background:#FEE2E2;color:#991B1B;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:4px;">🔴 Vence hoy</span>`;
+  if(d<=3)   return `<span style="background:#FFEDD5;color:#C2410C;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:4px;">🟠 ${d}d restante${d!==1?'s':''}</span>`;
+  if(d<=7)   return `<span style="background:#FFFBEB;color:#92400E;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:4px;">🟡 ${d}d restante${d!==1?'s':''}</span>`;
   return '';
 }
 
@@ -1388,6 +1481,7 @@ function openModal(id=null){
   document.getElementById('f-asignacion').value=r?.fechaAsignacion||'';
   document.getElementById('f-documentos').value=r?.fechaDocumentos||'';
   document.getElementById('f-entrega-real').value=r?.fechaAdjudicacion||'';
+  document.getElementById('f-max-gestion').value=r?.fechaMaxGestion||'';
   document.getElementById('f-obs').value=r?.obs||'';
   document.getElementById('modal-overlay').classList.add('open');
 }
@@ -1410,6 +1504,7 @@ async function saveRecord(){
     fechaAsignacion:document.getElementById('f-asignacion').value,
     fechaDocumentos:document.getElementById('f-documentos').value,
     fechaAdjudicacion:document.getElementById('f-entrega-real').value,
+    fechaMaxGestion:document.getElementById('f-max-gestion').value,
     obs:sanitize(document.getElementById('f-obs').value.trim(),2000),
     bitacora:existing?.bitacora||[],
     createdBy:existing?.createdBy||currentUser?.name||'',
@@ -1772,6 +1867,98 @@ function renderSumTable(tbodyId,names,byData){
   const tbody=document.getElementById(tbodyId);if(!tbody)return;
   if(!names.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin datos</td></tr>';return;}
   tbody.innerHTML=names.map(n=>{const d=byData[n];return`<tr><td style="font-weight:500;color:var(--navy)">${escHtml(n)}</td><td class="nc" style="text-align:center;">${d.total}</td><td style="text-align:center;color:var(--purple);font-family:var(--mono);font-weight:600;">${d.asesoria||0}</td><td style="text-align:center;color:var(--teal);font-family:var(--mono);font-weight:600;">${d.contractual||0}</td></tr>`;}).join('');
+}
+
+/* ═══ BITÁCORA GENERAL ═══ */
+function openBitacoraGeneral(){
+  const records=window._records||[];
+  const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+  const sel=document.getElementById('bg-abogado');
+  sel.innerHTML='<option value="">Todos los abogados</option>'+
+    abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
+  document.getElementById('bg-tipo').value='';
+  document.getElementById('bg-solo-avances').value='';
+  document.getElementById('bg-search').value='';
+  document.getElementById('bit-gen-overlay').classList.add('open');
+  renderBitacoraGeneral();
+}
+
+function closeBitacoraGeneral(){
+  document.getElementById('bit-gen-overlay').classList.remove('open');
+}
+
+function renderBitacoraGeneral(){
+  const records=window._records||[];
+  const tipo=document.getElementById('bg-tipo').value;
+  const abogado=document.getElementById('bg-abogado').value;
+  const soloAvances=document.getElementById('bg-solo-avances').value;
+  const q=(document.getElementById('bg-search').value||'').toLowerCase();
+
+  let data=records.filter(r=>{
+    if(tipo&&r.tipo!==tipo) return false;
+    if(abogado&&r.abogado!==abogado) return false;
+    if(soloAvances==='1'&&!(r.bitacora||[]).length) return false;
+    if(soloAvances==='0'&&(r.bitacora||[]).length) return false;
+    if(q&&!((r.ticket||'').toLowerCase().includes(q)||(r.objeto||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  data.sort((a,b)=>{
+    const na=(a.bitacora||[]).length,nb=(b.bitacora||[]).length;
+    if(na!==nb) return nb-na;
+    return (a.ticket||'').localeCompare(b.ticket||'');
+  });
+
+  const totalEntradas=data.reduce((s,r)=>s+(r.bitacora||[]).length,0);
+  document.getElementById('bg-count').textContent=
+    `${data.length} proceso${data.length!==1?'s':''} · ${totalEntradas} entrada${totalEntradas!==1?'s':''}`;
+
+  const body=document.getElementById('bit-gen-body');
+  if(!data.length){
+    body.innerHTML=`<div class="bit-gen-empty"><div style="font-size:36px;margin-bottom:10px;">📭</div><p>No hay procesos que coincidan con los filtros.</p></div>`;
+    return;
+  }
+
+  body.innerHTML=data.map(r=>{
+    const entries=[...(r.bitacora||[])].sort((a,b)=>b.date.localeCompare(a.date));
+    const nE=entries.length;
+    const est=getEstado(r.tipo,r.estado);
+    const tipoBg=r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE';
+    const tipoColor=r.tipo==='asesoria'?'var(--sky)':'var(--teal)';
+    const cardId='bgc-'+r.id;
+    const entriesHtml=nE>0?entries.map(e=>`
+      <div class="bit-entry-item">
+        <div class="bit-entry-meta">
+          <span class="bit-entry-date">📅 ${fmtDate(e.date)||e.date}</span>
+          <span class="bit-entry-author">${escHtml(e.author||'—')}</span>
+        </div>
+        <div class="bit-entry-text">${escHtml(e.text||'')}</div>
+      </div>`).join('')
+    :`<div class="bit-no-entries">Sin entradas de avance registradas.</div>`;
+
+    return `<div class="bit-proceso-card">
+      <div class="bit-proceso-head" onclick="toggleBitCard('${cardId}')">
+        <span class="bp-ticket">${escHtml(r.ticket||'—')}</span>
+        <span style="padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:${tipoBg};color:${tipoColor};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>
+        <span class="bp-objeto">${escHtml(r.objeto||'Sin objeto')}</span>
+        <span class="bp-abogado">⚖️ ${escHtml(r.abogado||'—')}</span>
+        <span style="padding:2px 8px;border-radius:6px;font-size:10px;background:#F1F5F9;color:var(--navy);font-weight:600;">${est.label}</span>
+        <span class="bp-count ${nE===0?'empty':''}">${nE} entrada${nE!==1?'s':''}</span>
+        <span class="bp-toggle" id="arr-${cardId}">▶</span>
+      </div>
+      <div class="bit-proceso-entries ${nE>0?'open':''}" id="${cardId}">
+        ${entriesHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleBitCard(id){
+  const el=document.getElementById(id);
+  const arr=document.getElementById('arr-'+id);
+  if(!el) return;
+  const open=el.classList.toggle('open');
+  if(arr) arr.classList.toggle('open',open);
 }
 
 /* ═══ PDF INFORMES PROFESIONALES ═══ */
@@ -2205,9 +2392,15 @@ function exportXLSX(){
 function dl(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();}
 
 /* ═══ EVENTOS ═══ */
-['modal-overlay','user-overlay','bitacora-overlay','pdf-overlay'].forEach(id=>{
+['modal-overlay','user-overlay','bitacora-overlay','pdf-overlay','bit-gen-overlay'].forEach(id=>{
   document.getElementById(id)?.addEventListener('click',function(e){
-    if(e.target===this){if(id==='modal-overlay')closeModal();else if(id==='user-overlay')closeUserModal();else if(id==='pdf-overlay')closePdfModal();else closeBitacora();}
+    if(e.target===this){
+      if(id==='modal-overlay') closeModal();
+      else if(id==='user-overlay') closeUserModal();
+      else if(id==='pdf-overlay') closePdfModal();
+      else if(id==='bit-gen-overlay') closeBitacoraGeneral();
+      else closeBitacora();
+    }
   });
 });
 window.addEventListener('resize',()=>{if(document.getElementById('page-dash')?.classList.contains('active'))renderDashboard();});
