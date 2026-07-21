@@ -1267,9 +1267,9 @@ function startLockout(){
 /* ═══ LOGIN ═══ */
 let currentUser=null;
 async function doLogin(){
-  if(isLockedOut()) return;
-  const uIn=document.getElementById('login-user').value.trim().toLowerCase();
-  const pIn=document.getElementById('login-pass').value;
+  if(isLockedOut())return;
+  const uIn=(document.getElementById('login-user').value||'').trim().toLowerCase();
+  const pIn=(document.getElementById('login-pass').value||'');
   const errEl=document.getElementById('login-error');
   errEl.style.display='none';
   ['login-user','login-pass'].forEach(id=>document.getElementById(id).classList.remove('input-error'));
@@ -1281,38 +1281,29 @@ async function doLogin(){
   const btn=document.getElementById('login-btn');
   btn.disabled=true;
   btn.textContent='Verificando...';
-  try{
-    const hash=await sha256(pIn);
-    const users=loadUsers();
-    const user=users.find(u=>u.username===uIn&&u.pwHash===hash)||null;
-    if(!user){
-      failedAttempts++;
-      const rem=MAX_ATTEMPTS-failedAttempts;
-      if(failedAttempts>=MAX_ATTEMPTS){
-        startLockout();
-      } else {
-        document.getElementById('attempts-info').textContent=
-          `⚠️ Intento ${failedAttempts}/${MAX_ATTEMPTS} — ${rem} restante${rem!==1?'s':''}`;
-      }
-      showLoginErr('❌ Usuario o contraseña incorrectos.');
-      return;
-    }
-    // Login exitoso
-    failedAttempts=0;
-    currentUser=user;
+  const hash=await sha256(pIn);
+  const users=loadUsers();
+  const user=users.find(u=>u.username===uIn&&u.pwHash===hash)||null;
+  if(!user){
+    failedAttempts++;
+    if(failedAttempts>=MAX_ATTEMPTS)startLockout();
+    else document.getElementById('attempts-info').textContent=`Intentos restantes: ${MAX_ATTEMPTS-failedAttempts}`;
+    errEl.textContent='❌ Usuario o contraseña incorrectos.';
+    errEl.style.display='block';
+    ['login-user','login-pass'].forEach(id=>document.getElementById(id).classList.add('input-error'));
     document.getElementById('login-pass').value='';
-    document.getElementById('attempts-info').textContent='';
-    sessionStorage.setItem('sec_session',JSON.stringify({
-      userId:user.id, ts:Date.now(), role:user.role
-    }));
-    launchApp();
-  } catch(err){
-    console.error('Login error:',err);
-    showLoginErr('❌ Error al verificar credenciales. Intenta de nuevo.');
-  } finally{
     btn.disabled=false;
     btn.textContent='Ingresar →';
+    return;
   }
+  failedAttempts=0;
+  currentUser=user;
+  document.getElementById('login-pass').value='';
+  document.getElementById('attempts-info').textContent='';
+  sessionStorage.setItem('sec_session',JSON.stringify({userId:user.id,ts:Date.now()}));
+  launchApp();
+  btn.disabled=false;
+  btn.textContent='Ingresar →';
 }
 
 function showLoginErr(msg='❌ Usuario o contraseña incorrectos.'){
@@ -1329,17 +1320,11 @@ function launchApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
   applyUserUI();
-  // Renovar timestamp de sesión
-  try{
-    const s=JSON.parse(sessionStorage.getItem('sec_session')||'{}');
-    sessionStorage.setItem('sec_session',JSON.stringify({...s,ts:Date.now()}));
-  }catch{}
   sessionExpiry=Date.now()+30*60*1000;
   startSessionTimer();
   resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>
     document.addEventListener(e,resetInactivity,{passive:true}));
-  // Pre-registrar funciones globales antes de Firebase
   window._appReady=true;
   window.renderTable=renderTable;
   window.renderDashboard=renderDashboard;
@@ -1347,12 +1332,6 @@ function launchApp(){
   if(window._dbReady){
     renderTable();
   } else {
-    // Skeleton mientras carga Firebase
-    const tbody=document.getElementById('table-body');
-    if(tbody){
-      const sk=`<div style="height:14px;background:linear-gradient(90deg,#E2E8F0 25%,#F1F5F9 50%,#E2E8F0 75%);background-size:200%;animation:shimmer 1.5s infinite;border-radius:4px;"></div>`;
-      tbody.innerHTML=Array(4).fill(`<tr>${Array(13).fill(`<td style="padding:11px 14px;">${sk}</td>`).join('')}</tr>`).join('');
-    }
     let tries=0;
     const poll=setInterval(()=>{
       tries++;
@@ -1366,59 +1345,32 @@ function startSessionTimer(){
   sessionInterval=setInterval(()=>{
     const rem=Math.max(0,sessionExpiry-Date.now());
     const m=Math.floor(rem/60000),s=Math.floor((rem%60000)/1000);
-    const el=document.getElementById('session-timer');
-    if(el) el.textContent=`${m}:${s.toString().padStart(2,'0')}`;
-    // Aviso 5 min antes de expirar
-    if(rem>0&&rem<=5*60*1000&&el) el.style.color='#F59E0B';
-    else if(el) el.style.color='';
-    if(rem<=0) logout(true);
+    document.getElementById('session-timer').textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    if(rem<=0)logout(true);
   },1000);
 }
 
 function resetInactivity(){
-  clearTimeout(inactivityTimer);
-  clearInterval(inactivityWarning);
-  const ov=document.getElementById('inactivity-overlay');
-  if(ov) ov.classList.remove('open');
-  // Renovar expiración de sesión con actividad
-  sessionExpiry=Date.now()+30*60*1000;
+  clearTimeout(inactivityTimer);clearInterval(inactivityWarning);
+  document.getElementById('inactivity-overlay').classList.remove('open');
   inactivityTimer=setTimeout(()=>{
-    inactCountdown=30;
-    const ct=document.getElementById('inact-count');
-    if(ct) ct.textContent=30;
-    if(ov) ov.classList.add('open');
-    inactivityWarning=setInterval(()=>{
-      inactCountdown--;
-      if(ct) ct.textContent=inactCountdown;
-      if(inactCountdown<=0) logout(true);
-    },1000);
+    inactCountdown=30;document.getElementById('inact-count').textContent=30;
+    document.getElementById('inactivity-overlay').classList.add('open');
+    inactivityWarning=setInterval(()=>{inactCountdown--;document.getElementById('inact-count').textContent=inactCountdown;if(inactCountdown<=0)logout(true);},1000);
   },15*60*1000);
 }
 
 function logout(auto=false){
-  clearInterval(sessionInterval);
-  clearTimeout(inactivityTimer);
-  clearInterval(inactivityWarning);
-  ['mousemove','keydown','click','touchstart'].forEach(e=>
-    document.removeEventListener(e,resetInactivity));
-  // Limpiar sesión y datos en memoria
-  sessionStorage.removeItem('sec_session');
-  currentUser=null;
-  window._appReady=false;
-  window._records=[];
-  window._fbUsers=[];
-  // Resetear UI
+  clearInterval(sessionInterval);clearTimeout(inactivityTimer);clearInterval(inactivityWarning);
+  ['mousemove','keydown','click','touchstart'].forEach(e=>document.removeEventListener(e,resetInactivity));
+  sessionStorage.removeItem('sec_session');currentUser=null;window._appReady=false;
+  window._records=[];window._fbUsers=[];
   document.getElementById('app-screen').style.display='none';
   document.getElementById('login-screen').style.display='flex';
-  ['login-user','login-pass'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){el.value='';el.classList.remove('input-error');}
-  });
+  ['login-user','login-pass'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.classList.remove('input-error');}});
   document.getElementById('login-error').style.display='none';
-  document.getElementById('attempts-info').textContent='';
-  const ov=document.getElementById('inactivity-overlay');
-  if(ov) ov.classList.remove('open');
-  if(auto) setTimeout(()=>alert('⚠️ Sesión cerrada por inactividad.'),150);
+  document.getElementById('inactivity-overlay').classList.remove('open');
+  if(auto)setTimeout(()=>alert('⚠️ Sesión cerrada por inactividad.'),100);
 }
 
 /* ═══ UI POR ROL ═══ */
@@ -1616,6 +1568,8 @@ function renderMobileCards(data){
   const fab=document.getElementById('fab-nuevo');
   if(fab) fab.style.display=adm?'flex':'none';
 }
+
+function toggleAccordion(rowId){
   const row=document.getElementById(rowId);const arr=document.getElementById('arr-'+rowId);
   if(!row)return;
   const isOpen=row.classList.contains('open');
