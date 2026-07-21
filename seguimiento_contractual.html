@@ -522,6 +522,35 @@ textarea#entry-text:focus{border-color:var(--accent);}
   .bit-gen-overlay{padding:0;align-items:flex-end;}
 }
 
+/* ── PANEL DETALLE MÓVIL ── */
+.mc-detail-overlay{display:none;position:fixed;inset:0;background:rgba(15,31,61,.5);z-index:150;align-items:flex-end;}
+.mc-detail-overlay.open{display:flex;}
+.mc-detail-panel{background:white;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding-bottom:24px;animation:slideUp .25s ease;}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.mc-detail-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0;}
+.mc-detail-header{padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.mc-detail-header h3{font-size:15px;font-weight:700;color:var(--navy);flex:1;}
+.mc-detail-close{width:30px;height:30px;border:none;background:var(--bg);border-radius:8px;font-size:18px;cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+.mc-detail-body{padding:16px 18px;}
+.mc-detail-objeto{font-size:14px;font-weight:600;color:var(--navy);line-height:1.5;padding:12px 14px;background:var(--accent-light);border:1px solid #BFDBFE;border-radius:10px;margin-bottom:16px;}
+.mc-detail-section{margin-bottom:16px;}
+.mc-detail-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.mc-detail-row{display:flex;gap:10px;margin-bottom:8px;align-items:flex-start;}
+.mc-detail-lbl{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);min-width:90px;padding-top:2px;}
+.mc-detail-val{font-size:13px;color:var(--text);flex:1;line-height:1.4;}
+.mc-detail-dates{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;}
+.mc-detail-date-box{background:var(--bg);border-radius:8px;padding:10px 12px;}
+.mc-detail-date-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:4px;}
+.mc-detail-date-val{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--navy);}
+.mc-detail-date-box.alerta{background:#FEF2F2;border:1px solid #FECACA;}
+.mc-detail-date-box.alerta .mc-detail-date-lbl{color:var(--red);}
+.mc-detail-bitacora{display:flex;flex-direction:column;gap:8px;}
+.mc-detail-entry{padding:10px 12px;background:var(--bg);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;}
+.mc-detail-entry-meta{font-size:10px;color:var(--muted);margin-bottom:4px;display:flex;gap:8px;}
+.mc-detail-entry-date{font-family:var(--mono);font-weight:700;color:var(--accent);}
+.mc-detail-entry-text{font-size:12px;color:var(--text);line-height:1.5;}
+.mc-detail-footer{padding:12px 18px 0;display:flex;gap:10px;border-top:1px solid var(--border);margin-top:4px;}
+
 /* ── FAB: oculto en desktop ── */
 .fab{display:none;position:fixed;bottom:24px;right:20px;z-index:50;width:56px;height:56px;border-radius:50%;background:var(--accent);color:white;border:none;font-size:26px;cursor:pointer;box-shadow:0 4px 20px rgba(37,99,235,.45);align-items:center;justify-content:center;transition:all .2s;}
 .fab:hover{background:#1D4ED8;transform:scale(1.08);}
@@ -1088,14 +1117,14 @@ textarea#entry-text:focus{border-color:var(--accent);}
     <div class="modal-body">
       <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Selecciona el tipo de informe. Se abre en una nueva ventana para imprimir o guardar como PDF.</p>
 
-      <div class="pdf-option" onclick="generarPDF('general')">
+      <div id="pdf-opt-general" class="pdf-option" onclick="generarPDF('general')">
         <span class="pdf-ico">📊</span>
         <div>
           <strong>Informe General</strong>
           <span>Resumen ejecutivo completo con KPIs, tabla consolidada de todos los procesos y análisis de alertas.</span>
         </div>
       </div>
-      <div class="pdf-option" onclick="generarPDF('abogado')">
+      <div id="pdf-opt-todos" class="pdf-option" onclick="generarPDF('abogado')">
         <span class="pdf-ico">⚖️</span>
         <div>
           <strong>Informe por Abogado — Todos</strong>
@@ -1103,13 +1132,13 @@ textarea#entry-text:focus{border-color:var(--accent);}
         </div>
       </div>
 
-      <!-- NUEVO: Informe individual por abogado -->
+      <!-- Informe individual por abogado -->
       <div style="border:1.5px solid var(--accent);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:var(--accent-light);">
         <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:12px;">
           <span class="pdf-ico">👤</span>
           <div>
             <strong style="display:block;font-size:13px;color:var(--navy);margin-bottom:3px;">Informe Individual por Abogado</strong>
-            <span style="font-size:11px;color:var(--muted);line-height:1.5;">Selecciona un abogado específico para generar su reporte individual: procesos asignados, estados, alertas de vencimiento, bitácora de avances y métricas de rendimiento.</span>
+            <span style="font-size:11px;color:var(--muted);line-height:1.5;">Reporte individual con procesos asignados, estados, alertas de vencimiento, bitácora y métricas de rendimiento.</span>
           </div>
         </div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
@@ -1122,14 +1151,14 @@ textarea#entry-text:focus{border-color:var(--accent);}
         </div>
       </div>
 
-      <div class="pdf-option" onclick="generarPDF('estado')">
+      <div id="pdf-opt-estado" class="pdf-option" onclick="generarPDF('estado')">
         <span class="pdf-ico">🔄</span>
         <div>
           <strong>Informe por Estado</strong>
           <span>Procesos agrupados por estado actual con detalle y análisis por tipo.</span>
         </div>
       </div>
-      <div class="pdf-option" onclick="generarPDF('vencimiento')">
+      <div id="pdf-opt-vencimiento" class="pdf-option" onclick="generarPDF('vencimiento')">
         <span class="pdf-ico">🚦</span>
         <div>
           <strong>Informe de Alertas de Vencimiento</strong>
@@ -1140,6 +1169,19 @@ textarea#entry-text:focus{border-color:var(--accent);}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closePdfModal()">Cerrar</button>
     </div>
+  </div>
+</div>
+
+<!-- PANEL DETALLE MÓVIL -->
+<div class="mc-detail-overlay" id="mc-detail-overlay" onclick="if(event.target===this)closeMcDetail()">
+  <div class="mc-detail-panel" id="mc-detail-panel">
+    <div class="mc-detail-handle"></div>
+    <div class="mc-detail-header">
+      <h3 id="mc-detail-title">Detalle del Proceso</h3>
+      <button class="mc-detail-close" onclick="closeMcDetail()">✕</button>
+    </div>
+    <div class="mc-detail-body" id="mc-detail-body"></div>
+    <div class="mc-detail-footer" id="mc-detail-footer"></div>
   </div>
 </div>
 
@@ -1604,37 +1646,22 @@ function renderMobileCards(data){
     const nE=(r.bitacora||[]).length;
     const tipoBg=r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE';
     const tipoCol=r.tipo==='asesoria'?'var(--sky)':'var(--teal)';
-    return `<div class="mc">
+    return `<div class="mc" onclick="openMcDetail('${r.id}')" style="cursor:pointer;">
       <div class="mc-head">
         <span class="mc-ticket">${escHtml(r.ticket||'—')}</span>
         <span style="padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:${tipoBg};color:${tipoCol};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>
         <span style="margin-left:auto;padding:2px 8px;border-radius:8px;font-size:10px;background:#F1F5F9;color:var(--navy);font-weight:600;">${est.label}</span>
       </div>
       <div class="mc-body">
-        <div class="mc-objeto">${escHtml(r.objeto||'Sin objeto')}</div>
+        <div class="mc-objeto">${escHtml((r.objeto||'Sin objeto').slice(0,90))}${(r.objeto||'').length>90?'…':''}</div>
         <div class="mc-row"><span class="mc-lbl">Abogado</span><span class="mc-val">${escHtml(r.abogado||'—')}</span></div>
-        ${r.git?`<div class="mc-row"><span class="mc-lbl">GIT</span><span class="mc-val" style="font-size:11px;">${escHtml(r.git.replace('GIT ',''))}</span></div>`:''}
-        ${r.dependencia?`<div class="mc-row"><span class="mc-lbl">Dependencia</span><span class="mc-val" style="font-size:11px;">${escHtml(r.dependencia)}</span></div>`:''}
-        <div class="mc-dates">
-          <div class="mc-date-item">
-            <span class="mc-date-lbl">F. Asignación</span>
-            <span class="mc-date-val">${fmtDate(r.fechaAsignacion)||'—'}</span>
-          </div>
-          <div class="mc-date-item">
-            <span class="mc-date-lbl">F. Adjudicación</span>
-            <span class="mc-date-val">${fmtDate(r.fechaAdjudicacion)||'—'}</span>
-          </div>
-          ${r.fechaMaxGestion?`<div class="mc-date-item" style="grid-column:1/-1;">
-            <span class="mc-date-lbl" style="color:var(--red);">⏰ F. Máx. Gestión</span>
-            <span class="mc-date-val">${fmtDate(r.fechaMaxGestion)} ${semBadge}</span>
-          </div>`:''}
-        </div>
-        ${nE>0?`<div style="margin-top:8px;font-size:11px;color:var(--accent);font-weight:500;">📝 ${nE} avance${nE!==1?'s':''} registrado${nE!==1?'s':''}</div>`:''}
-        ${r.obs?`<div style="margin-top:8px;font-size:11px;color:var(--muted);font-style:italic;border-top:1px solid var(--border);padding-top:8px;">${escHtml(r.obs.slice(0,100))}${r.obs.length>100?'…':''}</div>`:''}
+        ${r.fechaMaxGestion?`<div class="mc-row"><span class="mc-lbl" style="color:var(--red);">⏰ Máx.</span><span class="mc-val">${fmtDate(r.fechaMaxGestion)} ${semBadge}</span></div>`:''}
+        ${nE>0?`<div style="margin-top:6px;font-size:11px;color:var(--accent);font-weight:500;">📝 ${nE} avance${nE!==1?'s':''}</div>`:''}
       </div>
-      <div class="mc-footer">
-        <button class="mc-btn log" onclick="openBitacora('${r.id}')">${terminal?'📖 Ver':'📝 Avance'}</button>
-        ${adm?`<button class="mc-btn" onclick="openModal('${r.id}')">✏️ Editar</button>`:''}
+      <div class="mc-footer" onclick="event.stopPropagation()">
+        <button class="mc-btn log" onclick="openMcDetail('${r.id}')" style="color:var(--navy);border-color:var(--border);">👁 Ver detalle</button>
+        <button class="mc-btn log" onclick="openBitacora('${r.id}')">${terminal?'📖 Bitácora':'📝 Avance'}</button>
+        ${adm?`<button class="mc-btn" onclick="openModal('${r.id}')">✏️</button>`:''}
         ${adm?`<button class="mc-btn del" onclick="deleteRecord('${r.id}')">🗑️</button>`:''}
       </div>
     </div>`;
@@ -1651,6 +1678,122 @@ function toggleAccordion(rowId){
   const isOpen=row.classList.contains('open');
   document.querySelectorAll('.accordion-row.open').forEach(r=>{r.classList.remove('open');document.getElementById('arr-'+r.id)?.classList.remove('open');r.previousElementSibling?.classList.remove('expanded');});
   if(!isOpen){row.classList.add('open');arr?.classList.add('open');row.previousElementSibling?.classList.add('expanded');setTimeout(()=>row.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
+}
+
+/* ═══ PANEL DETALLE MÓVIL ═══ */
+function openMcDetail(id){
+  const r=(window._records||[]).find(x=>x.id===id);
+  if(!r) return;
+  const est=getEstado(r.tipo,r.estado);
+  const semBadge=getSemaforoBadge(r);
+  const terminal=estadoIsTerminal(r.tipo,r.estado);
+  const adm=isAdmin();
+  const tipoBg=r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE';
+  const tipoCol=r.tipo==='asesoria'?'var(--sky)':'var(--teal)';
+  const nE=(r.bitacora||[]).length;
+  const entries=[...(r.bitacora||[])].sort((a,b)=>b.date.localeCompare(a.date));
+
+  // Header
+  document.getElementById('mc-detail-title').innerHTML=
+    `<span class="mc-ticket">${escHtml(r.ticket||'—')}</span>
+     <span style="margin-left:8px;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:${tipoBg};color:${tipoCol};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`;
+
+  // Body
+  document.getElementById('mc-detail-body').innerHTML=`
+    <div class="mc-detail-objeto">${escHtml(r.objeto||'Sin objeto definido')}</div>
+
+    <!-- Estado -->
+    <div style="margin-bottom:14px;">
+      <span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;class="${est.css}"
+        style="background:${getEstadoBg(r.tipo,r.estado)};color:${getEstadoColor(r.tipo,r.estado)};">
+        ${est.label}
+      </span>
+    </div>
+
+    <!-- Responsables -->
+    <div class="mc-detail-section">
+      <div class="mc-detail-section-title">👥 Responsables</div>
+      <div class="mc-detail-row"><span class="mc-detail-lbl">Abogado</span><span class="mc-detail-val"><strong>${escHtml(r.abogado||'—')}</strong></span></div>
+      ${r.git?`<div class="mc-detail-row"><span class="mc-detail-lbl">GIT</span><span class="mc-detail-val" style="font-size:12px;">${escHtml(r.git)}</span></div>`:''}
+      ${r.dependencia?`<div class="mc-detail-row"><span class="mc-detail-lbl">Dependencia</span><span class="mc-detail-val" style="font-size:12px;">${escHtml(r.dependencia)}</span></div>`:''}
+      ${r.secop?`<div class="mc-detail-row"><span class="mc-detail-lbl">SECOP</span><span class="mc-detail-val" style="font-family:var(--mono);font-size:12px;">${escHtml(r.secop)}</span></div>`:''}
+    </div>
+
+    <!-- Fechas -->
+    <div class="mc-detail-section">
+      <div class="mc-detail-section-title">📅 Fechas</div>
+      <div class="mc-detail-dates">
+        <div class="mc-detail-date-box">
+          <div class="mc-detail-date-lbl">F. Asignación</div>
+          <div class="mc-detail-date-val">${fmtDate(r.fechaAsignacion)||'—'}</div>
+        </div>
+        <div class="mc-detail-date-box">
+          <div class="mc-detail-date-lbl">Docs. Definitivos</div>
+          <div class="mc-detail-date-val">${fmtDate(r.fechaDocumentos)||'—'}</div>
+        </div>
+        <div class="mc-detail-date-box">
+          <div class="mc-detail-date-lbl">F. Adjudicación</div>
+          <div class="mc-detail-date-val">${fmtDate(r.fechaAdjudicacion)||'—'}</div>
+        </div>
+        <div class="mc-detail-date-box ${r.fechaMaxGestion&&semBadge?'alerta':''}">
+          <div class="mc-detail-date-lbl" style="${r.fechaMaxGestion?'color:var(--red);':''}">⏰ F. Máx. Gestión</div>
+          <div class="mc-detail-date-val">${r.fechaMaxGestion?fmtDate(r.fechaMaxGestion):'—'}</div>
+          ${semBadge?`<div style="margin-top:4px;">${semBadge}</div>`:''}
+        </div>
+      </div>
+    </div>
+
+    ${r.obs?`
+    <div class="mc-detail-section">
+      <div class="mc-detail-section-title">💬 Observaciones</div>
+      <div style="font-size:13px;color:var(--muted);font-style:italic;line-height:1.5;">${escHtml(r.obs)}</div>
+    </div>`:''}
+
+    <!-- Bitácora -->
+    <div class="mc-detail-section">
+      <div class="mc-detail-section-title">📓 Bitácora de Avances (${nE})</div>
+      ${nE>0?`<div class="mc-detail-bitacora">
+        ${entries.map(e=>`<div class="mc-detail-entry">
+          <div class="mc-detail-entry-meta">
+            <span class="mc-detail-entry-date">📅 ${fmtDate(e.date)||e.date}</span>
+            <span>${escHtml(e.author||'—')}</span>
+          </div>
+          <div class="mc-detail-entry-text">${escHtml(e.text||'')}</div>
+        </div>`).join('')}
+      </div>`:`<div style="font-size:12px;color:var(--muted);font-style:italic;padding:8px 0;">Sin avances registrados aún.</div>`}
+    </div>
+  `;
+
+  // Footer con acciones
+  document.getElementById('mc-detail-footer').innerHTML=`
+    <button class="mc-btn log" style="flex:2;" onclick="closeMcDetail();openBitacora('${r.id}')">${terminal?'📖 Ver bitácora':'📝 Registrar avance'}</button>
+    ${adm?`<button class="mc-btn" onclick="closeMcDetail();openModal('${r.id}')">✏️ Editar</button>`:''}
+    ${adm?`<button class="mc-btn del" onclick="closeMcDetail();deleteRecord('${r.id}')">🗑️</button>`:''}
+  `;
+
+  document.getElementById('mc-detail-overlay').classList.add('open');
+}
+
+function closeMcDetail(){
+  document.getElementById('mc-detail-overlay').classList.remove('open');
+}
+
+// Helpers para colores de estado en el panel
+function getEstadoBg(tipo,valor){
+  const map={
+    'asignado':'#FEF9C3','en-revision-lyc':'#DBEAFE','en-revision-at':'#EDE9FE','aprobado':'#D1FAE5',
+    'en-estructuracion':'#CFFAFE','publicado-secop':'#DBEAFE','en-evaluacion':'#FFEDD5',
+    'adjudicado':'#EDE9FE','contratado':'#D1FAE5','cancelado':'#FEE2E2'
+  };
+  return map[valor]||'#F1F5F9';
+}
+function getEstadoColor(tipo,valor){
+  const map={
+    'asignado':'#92400E','en-revision-lyc':'#1D4ED8','en-revision-at':'#5B21B6','aprobado':'#065F46',
+    'en-estructuracion':'#0E7490','publicado-secop':'#1D4ED8','en-evaluacion':'#C2410C',
+    'adjudicado':'#5B21B6','contratado':'#065F46','cancelado':'#991B1B'
+  };
+  return map[valor]||'#1E293B';
 }
 
 async function changeEstado(id,tipo,sel){
@@ -2212,13 +2355,35 @@ function toggleBitCard(id){
 }
 
 /* ═══ PDF INFORMES PROFESIONALES ═══ */
+// Retorna solo los registros que el usuario actual puede ver
+function getRecordsDelUsuario(){
+  return (window._records||[]).filter(r=>registroEsDelUsuario(r));
+}
+
 function openPdfModal(){
-  // Poblar selector de abogados con los que tienen registros
-  const records=window._records||[];
-  const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+  const records=getRecordsDelUsuario();
+  const abogadoFiltro=getAbogadoFiltro();
+
+  // Para viewers: pre-seleccionar su propio abogado y ocultar opciones globales
   const sel=document.getElementById('pdf-abogado-select');
-  sel.innerHTML='<option value="">— Seleccionar abogado —</option>'+
-    abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
+  if(abogadoFiltro){
+    // Solo puede generar su propio informe individual
+    sel.innerHTML=`<option value="${escHtml(abogadoFiltro)}">${escHtml(abogadoFiltro)}</option>`;
+    // Ocultar opciones globales
+    ['pdf-opt-general','pdf-opt-todos','pdf-opt-estado','pdf-opt-vencimiento'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.style.display='none';
+    });
+  } else {
+    // Admin: ver todos los abogados
+    const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+    sel.innerHTML='<option value="">— Seleccionar abogado —</option>'+
+      abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
+    ['pdf-opt-general','pdf-opt-todos','pdf-opt-estado','pdf-opt-vencimiento'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.style.display='';
+    });
+  }
   document.getElementById('pdf-overlay').classList.add('open');
 }
 function closePdfModal(){ document.getElementById('pdf-overlay').classList.remove('open'); }
@@ -2232,9 +2397,15 @@ function generarPDFIndividual(){
     alert('Selecciona un abogado para generar el informe.');
     return;
   }
+  // Viewers solo pueden generar su propio informe
+  const abogadoFiltro=getAbogadoFiltro();
+  if(abogadoFiltro&&normStr(abogado)!==normStr(abogadoFiltro)){
+    alert('Solo puedes generar tu propio informe.');
+    return;
+  }
   closePdfModal();
-  const records=window._records||[];
-  const proc=records.filter(r=>r.abogado===abogado);
+  const records=getRecordsDelUsuario();
+  const proc=records.filter(r=>normStr(r.abogado)===normStr(abogado));
   if(!proc.length){alert(`No hay registros asignados a ${abogado}.`);return;}
   pdfAbogadoIndividual(abogado, proc, records);
 }
@@ -2602,8 +2773,10 @@ function pdfVencimiento(records){
 }
 
 function generarPDF(tipo){
+  // Viewers no pueden generar reportes globales
+  if(!isAdmin()){alert('Solo los administradores pueden generar este tipo de informe.');return;}
   closePdfModal();
-  const records=window._records||[];
+  const records=getRecordsDelUsuario();
   if(!records.length){alert('No hay registros para generar el informe.');return;}
   if(tipo==='general') pdfGeneral(records);
   else if(tipo==='abogado') pdfPorAbogado(records);
@@ -2613,25 +2786,25 @@ function generarPDF(tipo){
 
 /* ═══ EXPORT CSV/XLSX ═══ */
 function exportCSV(){
-  const records=window._records||[];
-  const hdrs=['Ticket','Tipo','Objeto','Encargado','Abogado','Dependencia','SECOP','Estado','F.Asignación','Docs.Def.','F. Adjudicación','F. Adjudicación','Observaciones','Entradas Avance'];
-  const rows=records.map(r=>[r.ticket,r.tipo==='contractual'?'Proceso Contractual':'Asesoría Previa',r.objeto||'',r.encargado||'',r.abogado||'',r.dependencia||'',r.secop||'',getEstado(r.tipo,r.estado).label,fmtDate(r.fechaAsignacion)||'',fmtDate(r.fechaDocumentos)||'',fmtDate(r.fechaAdjudicacion)||'',fmtDate(r.fechaAdjudicacion)||'',r.obs||'',(r.bitacora||[]).length+''].map(v=>`"${(v||'').replace(/"/g,'""')}"`));
+  const records=getRecordsDelUsuario();
+  const hdrs=['Ticket','Tipo','Objeto','Abogado','GIT','Dependencia','SECOP','Estado','F.Asignación','Docs.Def.','F. Adjudicación','F. Máx. Gestión','Observaciones','Entradas Avance'];
+  const rows=records.map(r=>[r.ticket,r.tipo==='contractual'?'Proceso Contractual':'Asesoría Previa',r.objeto||'',r.abogado||'',r.git||'',r.dependencia||'',r.secop||'',getEstado(r.tipo,r.estado).label,fmtDate(r.fechaAsignacion)||'',fmtDate(r.fechaDocumentos)||'',fmtDate(r.fechaAdjudicacion)||'',fmtDate(r.fechaMaxGestion)||'',r.obs||'',(r.bitacora||[]).length+''].map(v=>`"${(v||'').replace(/"/g,'""')}"`));
   dl('seguimiento_contractual.csv',[hdrs.join(','),...rows.map(r=>r.join(','))].join('\n'),'text/csv');
 }
 function exportXLSX(){
   if(typeof XLSX==='undefined'){alert('La librería aún carga. Intenta en unos segundos.');return;}
-  const records=window._records||[];
-  const hdrs=['Ticket','Tipo','Objeto','Encargado','Abogado','Dependencia','SECOP','Estado','F.Asignación','Docs.Def.','F. Adjudicación','F. Adjudicación','Observaciones','Entradas Avance'];
-  const rows=records.map(r=>[r.ticket,r.tipo==='contractual'?'Proceso Contractual':'Asesoría Previa',r.objeto||'',r.encargado||'',r.abogado||'',r.dependencia||'',r.secop||'',getEstado(r.tipo,r.estado).label,fmtDate(r.fechaAsignacion)||'',fmtDate(r.fechaDocumentos)||'',fmtDate(r.fechaAdjudicacion)||'',fmtDate(r.fechaAdjudicacion)||'',r.obs||'',(r.bitacora||[]).length]);
+  const records=getRecordsDelUsuario();
+  const hdrs=['Ticket','Tipo','Objeto','Abogado','GIT','Dependencia','SECOP','Estado','F.Asignación','Docs.Def.','F. Adjudicación','F. Máx. Gestión','Observaciones','Entradas Avance'];
+  const rows=records.map(r=>[r.ticket,r.tipo==='contractual'?'Proceso Contractual':'Asesoría Previa',r.objeto||'',r.abogado||'',r.git||'',r.dependencia||'',r.secop||'',getEstado(r.tipo,r.estado).label,fmtDate(r.fechaAsignacion)||'',fmtDate(r.fechaDocumentos)||'',fmtDate(r.fechaAdjudicacion)||'',fmtDate(r.fechaMaxGestion)||'',r.obs||'',(r.bitacora||[]).length]);
   const ws=XLSX.utils.aoa_to_sheet([hdrs,...rows]);
-  ws['!cols']=[{wch:12},{wch:20},{wch:40},{wch:22},{wch:22},{wch:36},{wch:16},{wch:22},{wch:13},{wch:13},{wch:13},{wch:13},{wch:28},{wch:8}];
+  ws['!cols']=[{wch:12},{wch:20},{wch:40},{wch:22},{wch:30},{wch:36},{wch:16},{wch:22},{wch:13},{wch:13},{wch:13},{wch:13},{wch:28},{wch:8}];
   // Hoja bitácora
-  const bitHdrs=['Ticket','Tipo','Objeto','Encargado','Estado','Fecha Avance','Registrado por','Descripción'];
+  const bitHdrs=['Ticket','Tipo','Objeto','Abogado','Estado','Fecha Avance','Registrado por','Descripción'];
   const bitData=[bitHdrs];
   records.forEach(r=>{
     const ent=(r.bitacora||[]).slice().sort((a,b)=>a.date.localeCompare(b.date));
-    if(!ent.length){bitData.push([r.ticket,r.tipo==='contractual'?'Contractual':'Asesoría',r.objeto||'',r.encargado||'',getEstado(r.tipo,r.estado).label,'','','Sin entradas']);}
-    else ent.forEach((e,i)=>{bitData.push([i===0?(r.ticket||''):'',i===0?(r.tipo==='contractual'?'Contractual':'Asesoría'):'',i===0?(r.objeto||''):'',i===0?(r.encargado||''):'',i===0?getEstado(r.tipo,r.estado).label:'',fmtDate(e.date)||e.date||'',e.author||'',e.text||'']);});
+    if(!ent.length){bitData.push([r.ticket,r.tipo==='contractual'?'Contractual':'Asesoría',r.objeto||'',r.abogado||'',getEstado(r.tipo,r.estado).label,'','','Sin entradas']);}
+    else ent.forEach((e,i)=>{bitData.push([i===0?(r.ticket||''):'',i===0?(r.tipo==='contractual'?'Contractual':'Asesoría'):'',i===0?(r.objeto||''):'',i===0?(r.abogado||''):'',i===0?getEstado(r.tipo,r.estado).label:'',fmtDate(e.date)||e.date||'',e.author||'',e.text||'']);});
     bitData.push(Array(8).fill(''));
   });
   const wb=XLSX.utils.book_new();
