@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<title>Seguimiento Contractual — MRE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root{
+  --navy:#0F1F3D;--navy-mid:#1A3260;--accent:#2563EB;--accent-light:#DBEAFE;
+  --gold:#F59E0B;--gold-light:#FEF9C3;
+  --green:#059669;--green-light:#D1FAE5;
+  --red:#DC2626;--red-light:#FEE2E2;
+  --purple:#7C3AED;--purple-light:#EDE9FE;
+  --orange:#EA580C;--orange-light:#FFEDD5;
+  --teal:#0891B2;--teal-light:#CFFAFE;
+  --sky:#0284C7;--sky-light:#E0F2FE;
+  --bg:#F8FAFC;--surface:#FFFFFF;--border:#E2E8F0;
+  --text:#1E293B;--muted:#64748B;
+  --font:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── SYNC ── */
+#sync-bar{position:fixed;top:0;left:0;right:0;z-index:300;height:3px;background:transparent;}
+#sync-bar.syncing{background:linear-gradient(90deg,var(--accent),var(--gold),var(--accent));background-size:200%;animation:syncAnim 1s linear infinite;}
+@keyframes syncAnim{0%{background-position:0%}100%{background-position:200%}}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.sync-toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:white;padding:10px 16px;border-radius:8px;font-size:12px;z-index:400;display:none;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.3);}
+.sync-toast.show{display:flex;}
+
+/* ── LOGIN ── */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0F1F3D 0%,#1A3260 60%,#1e3a8a 100%);padding:20px;}
+.login-card{background:white;border-radius:16px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,.35);overflow:hidden;}
+.login-top{background:var(--navy);padding:32px;text-align:center;border-bottom:3px solid var(--gold);}
+.login-logo{width:52px;height:52px;background:var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 14px;}
+.login-top h1{color:white;font-size:18px;font-weight:600;}
+.login-top p{color:#94A3B8;font-size:12px;margin-top:4px;}
+.login-body{padding:28px;}
+.login-body label{display:block;font-size:12px;font-weight:500;color:var(--navy);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.login-body input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:14px;outline:none;transition:border .15s;background:var(--bg);margin-bottom:16px;}
+.login-body input:focus{border-color:var(--accent);background:white;}
+.login-body input.input-error{border-color:var(--red);background:#fff5f5;}
+#login-btn{width:100%;padding:11px;background:var(--accent);color:white;border:none;border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;}
+#login-btn:hover{background:#1D4ED8;}
+#login-btn:disabled{background:#93C5FD;cursor:not-allowed;}
+#login-error{display:none;background:var(--red-light);color:var(--red);border:1px solid #FECACA;border-radius:6px;padding:9px 12px;font-size:12px;margin-bottom:14px;}
+#lockout-msg{display:none;background:var(--gold-light);color:#92400E;border:1px solid #FDE68A;border-radius:6px;padding:9px 12px;font-size:12px;margin-bottom:14px;}
+.login-footer{text-align:center;margin-top:18px;font-size:11px;color:var(--muted);}
+
+/* ── APP ── */
+#app-screen{display:none;}
+#session-bar{background:#1E293B;color:#94A3B8;font-size:11px;text-align:right;padding:4px 32px;font-family:var(--mono);display:flex;justify-content:space-between;align-items:center;}
+#session-timer{color:var(--gold);font-weight:600;}
+#firebase-status{font-size:10px;display:flex;align-items:center;gap:5px;}
+.fb-dot{width:7px;height:7px;border-radius:50%;background:#64748B;}
+.fb-dot.online{background:#10B981;}
+
+header{background:var(--navy);color:white;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:64px;border-bottom:3px solid var(--gold);}
+.header-left{display:flex;align-items:center;gap:14px;}
+.header-icon{width:36px;height:36px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+header h1{font-size:16px;font-weight:600;}
+header .sub{font-size:12px;color:#94A3B8;font-weight:300;}
+.header-right{display:flex;align-items:center;gap:10px;}
+#total-badge{background:var(--navy-mid);border:1px solid #334155;color:#CBD5E1;font-family:var(--mono);font-size:12px;padding:4px 12px;border-radius:20px;}
+.user-pill{display:flex;align-items:center;gap:8px;background:var(--navy-mid);border:1px solid #334155;border-radius:20px;padding:4px 12px 4px 6px;}
+.user-avatar{width:22px;height:22px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--navy);}
+.user-name{font-size:12px;color:#CBD5E1;}
+.role-badge{font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;}
+.role-badge.admin{background:#FEF3C7;color:#92400E;}
+.role-badge.viewer{background:var(--purple-light);color:#5B21B6;}
+#logout-btn{background:transparent;border:1px solid #475569;color:#94A3B8;padding:4px 10px;border-radius:6px;font-family:var(--font);font-size:11px;cursor:pointer;}
+#logout-btn:hover{background:#1E293B;color:white;}
+
+/* ── TABS ── */
+.nav-tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;display:flex;gap:4px;}
+.tab-btn{padding:14px 20px;font-family:var(--font);font-size:13px;font-weight:500;border:none;background:transparent;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* ── TOOLBAR MEJORADO ── */
+.toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
+.btn-primary{background:var(--accent);color:white;box-shadow:0 2px 8px rgba(37,99,235,.3);}.btn-primary:hover{background:#1D4ED8;box-shadow:0 4px 12px rgba(37,99,235,.4);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}.btn-ghost:hover{background:var(--bg);color:var(--text);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.search-wrap{position:relative;margin-left:auto;}
+.search-wrap input{padding:8px 12px 8px 36px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;width:260px;outline:none;background:var(--bg);transition:all .15s;}
+.search-wrap input:focus{border-color:var(--accent);background:white;box-shadow:0 0 0 3px rgba(37,99,235,.1);width:280px;}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none;}
+
+/* ── TIPO FILTER MEJORADO ── */
+.tipo-bar{padding:12px 32px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.tipo-bar-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-right:4px;}
+.tipo-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:white;color:var(--muted);transition:all .2s;}
+.tipo-chip:hover{border-color:var(--accent);color:var(--accent);}
+.tipo-chip.active-all{background:var(--navy);color:white;border-color:var(--navy);box-shadow:0 2px 8px rgba(15,31,61,.3);}
+.tipo-chip.active-asesoria{background:var(--sky-light);color:var(--sky);border-color:var(--sky);box-shadow:0 2px 8px rgba(2,132,199,.15);}
+.tipo-chip.active-contractual{background:var(--teal-light);color:var(--teal);border-color:var(--teal);box-shadow:0 2px 8px rgba(8,145,178,.15);}
+
+/* ── TABLE MEJORADA ── */
+.table-wrap{padding:0 32px 32px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:12px;overflow:hidden;border:1px solid var(--border);font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+thead tr{background:linear-gradient(135deg,var(--navy) 0%,#1A3260 100%);color:white;}
+thead th{padding:13px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;cursor:pointer;user-select:none;border-right:1px solid rgba(255,255,255,.08);}
+thead th:last-child{border-right:none;}
+thead th:hover{background:rgba(255,255,255,.1);}
+tbody tr.main-row{border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+tbody tr.main-row:nth-child(even) td{background:#FAFBFC;}
+tbody tr.main-row:hover td{background:#EFF6FF!important;}
+tbody tr.main-row.expanded td{background:#EFF6FF!important;border-bottom:none;}
+tbody td{padding:12px 14px;vertical-align:middle;}
+
+/* ── STATS ── */
+.stats-bar{padding:16px 32px;display:flex;gap:12px;flex-wrap:wrap;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;min-width:148px;transition:all .2s;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:12px 0 0 12px;}
+.stat-card-total::before{background:var(--navy);}
+.stat-card-asesoria::before{background:var(--sky);}
+.stat-card-contractual::before{background:var(--teal);}
+.stat-card-ok::before{background:var(--green);}
+.stat-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.10);transform:translateY(-2px);}
+.stat-card-total .stat-num{color:var(--navy);}
+.stat-card-asesoria .stat-num{color:var(--sky);}
+.stat-card-contractual .stat-num{color:var(--teal);}
+.stat-card-ok .stat-num{color:var(--green);}
+.stat-card .stat-num{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--navy);display:block;line-height:1.1;}
+.stat-card .stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);display:block;margin-top:3px;}
+
+/* ── STATUS BADGES ── */
+/* Asesoría previa */
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+.sb-asignado{background:#FEF9C3;color:#92400E;}
+.sb-en-revision-lyc{background:var(--accent-light);color:#1D4ED8;}
+.sb-en-revision-at{background:var(--purple-light);color:#5B21B6;}
+.sb-aprobado{background:var(--green-light);color:#065F46;}
+/* Proceso contractual */
+.sb-pc-asignado{background:#FEF9C3;color:#92400E;}
+.sb-pc-en-estructuracion{background:var(--teal-light);color:#0E7490;}
+.sb-pc-publicado-secop{background:var(--accent-light);color:#1D4ED8;}
+.sb-pc-en-evaluacion{background:var(--orange-light);color:#C2410C;}
+.sb-pc-adjudicado{background:var(--purple-light);color:#5B21B6;}
+.sb-pc-contratado{background:var(--green-light);color:#065F46;}
+.sb-pc-cancelado{background:var(--red-light);color:#991B1B;}
+
+/* ── TABLE ── */
+.expand-arrow{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:var(--accent-light);color:var(--accent);font-size:10px;margin-right:6px;transition:transform .2s;vertical-align:middle;}
+.expand-arrow.open{transform:rotate(90deg);}
+tr.accordion-row{display:none;}
+tr.accordion-row.open{display:table-row;}
+tr.accordion-row td{padding:0!important;border-bottom:1px solid var(--border);}
+.accordion-inner{padding:18px 22px 20px;background:linear-gradient(135deg,#F8FAFF 0%,#EFF6FF 100%);border-top:2px solid #BFDBFE;display:grid;grid-template-columns:1fr 1fr;gap:14px 28px;}
+.accordion-section{display:flex;flex-direction:column;gap:4px;}
+.accordion-section.full{grid-column:1/-1;}
+.accordion-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);}
+.accordion-value{font-size:13px;color:var(--text);line-height:1.5;}
+.accordion-value.obj-text{font-size:13px;color:var(--navy);font-weight:500;line-height:1.6;background:white;border:1.5px solid #BFDBFE;border-radius:8px;padding:12px 14px;box-shadow:0 1px 4px rgba(37,99,235,.08);}
+.ticket-badge{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--navy);background:var(--accent-light);padding:2px 10px;border-radius:6px;letter-spacing:.03em;}
+.tipo-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;letter-spacing:.04em;}
+.tipo-badge.asesoria{background:var(--sky-light);color:var(--sky);}
+.tipo-badge.contractual{background:var(--teal-light);color:var(--teal);}
+.date-cell{font-family:var(--mono);font-size:12px;color:var(--muted);}
+.date-cell.empty{color:#CBD5E1;font-style:italic;font-size:12px;}
+.actions-cell{display:flex;gap:5px;}
+.icon-btn{width:30px;height:30px;border:1px solid var(--border);background:transparent;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;color:var(--muted);}
+.icon-btn:hover{background:var(--bg);border-color:#CBD5E1;}
+.icon-btn.del:hover{background:var(--red-light);color:var(--red);border-color:#FECACA;}
+.icon-btn:disabled{opacity:.3;cursor:not-allowed;pointer-events:none;}
+.empty-state{text-align:center;padding:56px 20px;color:var(--muted);}
+.empty-state .big-icon{font-size:44px;margin-bottom:14px;display:block;}
+
+/* ── BITÁCORA ── */
+.avance-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;color:var(--muted);}
+.avance-dot{width:7px;height:7px;border-radius:50%;background:var(--border);}
+.avance-dot.has{background:var(--accent);}
+
+/* ── MODALES ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,31,61,.55);z-index:100;align-items:center;justify-content:center;padding:20px;}
+.overlay.open{display:flex;}
+.modal{background:white;border-radius:12px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.modal-lg{max-width:700px;}
+.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:2;}
+.modal-header h2{font-size:16px;font-weight:600;color:var(--navy);}
+.modal-close{width:32px;height:32px;border:none;background:var(--bg);border-radius:6px;cursor:pointer;font-size:18px;color:var(--muted);}
+.modal-close:hover{background:var(--border);}
+.modal-body{padding:20px 24px;}
+.modal-footer{padding:16px 24px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;background:white;}
+.form-section{margin-bottom:20px;}
+.form-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);padding:8px 0 10px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+.form-group label{font-size:12px;font-weight:500;color:var(--navy);text-transform:uppercase;letter-spacing:.06em;}
+.form-group input,.form-group select,.form-group textarea{padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:13px;outline:none;transition:border .15s;background:var(--bg);}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);background:white;}
+.form-group textarea{resize:vertical;min-height:70px;}
+
+/* ── BITÁCORA MODAL ── */
+.bit-header{background:var(--bg);border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.new-entry-box{border:1.5px solid var(--border);border-radius:8px;padding:14px;margin-bottom:20px;background:white;}
+.new-entry-box.locked{background:var(--bg);border-style:dashed;}
+.new-entry-top{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
+.new-entry-top input[type=date]{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:12px;outline:none;background:var(--bg);}
+.locked-note{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;padding:10px;}
+textarea#entry-text{width:100%;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:13px;padding:9px 12px;resize:vertical;min-height:80px;outline:none;}
+textarea#entry-text:focus{border-color:var(--accent);}
+.entries-list{display:flex;flex-direction:column;gap:10px;}
+.entry-item{border:1px solid var(--border);border-radius:8px;padding:12px 14px;background:var(--surface);position:relative;}
+.entry-date{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--accent);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;}
+.entry-author{font-size:10px;color:var(--muted);}
+.entry-text{font-size:13px;color:var(--text);line-height:1.5;white-space:pre-wrap;}
+.entry-del{position:absolute;top:8px;right:8px;width:22px;height:22px;border:none;background:transparent;border-radius:4px;cursor:pointer;font-size:12px;color:var(--muted);}
+.entry-del:hover{background:var(--red-light);color:var(--red);}
+.no-entries{text-align:center;padding:28px;color:var(--muted);font-size:13px;}
+
+/* ── ADMIN ── */
+.admin-wrap{padding:24px 32px 40px;}
+.section-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:14px;}
+.users-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:28px;}
+.user-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;display:flex;align-items:center;gap:14px;}
+.uc-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:white;flex-shrink:0;}
+.uc-info .uname{font-size:14px;font-weight:600;color:var(--navy);}
+.uc-info .ulogin{font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--mono);}
+.uc-info .urole{margin-top:4px;}
+.uc-actions{margin-left:auto;display:flex;gap:6px;}
+
+/* ── DASHBOARD ── */
+.dash-wrap{padding:0 0 56px;background:var(--bg);}
+
+/* Banner */
+.dash-banner{background:linear-gradient(135deg,var(--navy) 0%,#1A3260 60%,#1e3a8a 100%);padding:28px 36px 24px;border-bottom:4px solid var(--gold);display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.dash-banner-left h2{color:white;font-size:22px;font-weight:700;margin-bottom:4px;letter-spacing:.01em;}
+.dash-banner-left p{color:#94A3B8;font-size:12px;}
+.dash-banner-right{font-family:var(--mono);font-size:11px;color:#64748B;text-align:right;}
+.dash-banner-right span{display:block;color:#94A3B8;}
+.dash-body{padding:28px 36px 0;}
+
+/* KPIs */
+.dash-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
+@media(max-width:860px){.dash-kpis{grid-template-columns:repeat(2,1fr);}}
+.kpi{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px 18px;overflow:hidden;transition:all .2s;cursor:default;}
+.kpi:hover{box-shadow:0 8px 24px rgba(0,0,0,.10);transform:translateY(-2px);}
+.kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:14px 0 0 14px;}
+.kpi::after{content:'';position:absolute;right:-20px;bottom:-20px;width:80px;height:80px;border-radius:50%;opacity:.06;}
+.kpi.kt::before{background:var(--navy);}  .kpi.kt::after{background:var(--navy);}
+.kpi.ka::before{background:var(--sky);}   .kpi.ka::after{background:var(--sky);}
+.kpi.kc::before{background:var(--teal);}  .kpi.kc::after{background:var(--teal);}
+.kpi.kap::before{background:var(--green);}.kpi.kap::after{background:var(--green);}
+.kpi .kn{font-family:var(--mono);font-size:36px;font-weight:700;line-height:1;display:block;margin-bottom:8px;}
+.kpi.kt .kn{color:var(--navy);}
+.kpi.ka .kn{color:var(--sky);}
+.kpi.kc .kn{color:var(--teal);}
+.kpi.kap .kn{color:var(--green);}
+.kpi .kl{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600;}
+.kpi .kpct{position:absolute;top:20px;right:20px;font-size:11px;color:var(--border);font-family:var(--mono);font-weight:600;}
+
+/* Divider */
+.dash-divider{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);padding:0 0 12px;border-bottom:2px solid var(--navy);margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.dash-divider-icon{width:24px;height:24px;background:var(--navy);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.dash-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* Chart cards */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;}
+@media(max-width:860px){.charts-row{grid-template-columns:1fr;}}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.chart-card-header{padding:16px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;background:var(--surface);}
+.chart-card-header h3{font-size:13px;font-weight:700;color:var(--navy);}
+.chart-card-header p{font-size:11px;color:var(--muted);margin-top:2px;}
+.chart-card-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 10px;border-radius:20px;background:var(--navy);color:white;white-space:nowrap;}
+.chart-card-body{padding:20px 16px;}
+
+/* Estado pills en dashboard */
+.estado-list{display:flex;flex-direction:column;gap:8px;padding:16px 20px;}
+.estado-row{display:flex;align-items:center;gap:10px;}
+.estado-row-label{font-size:12px;color:var(--text);font-weight:500;min-width:160px;}
+.estado-row-bar{flex:1;height:10px;background:#F1F5F9;border-radius:5px;overflow:hidden;}
+.estado-row-fill{height:100%;border-radius:5px;transition:width .6s ease;}
+.estado-row-count{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--navy);min-width:28px;text-align:right;}
+.estado-row-pct{font-size:10px;color:var(--muted);min-width:34px;text-align:right;font-family:var(--mono);}
+
+/* Tablas dash */
+.dash-tables-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;}
+@media(max-width:860px){.dash-tables-row{grid-template-columns:1fr;}}
+.dash-table-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.dash-table-card-header{padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.dash-table-card-header h4{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.08em;}
+.dash-table-card-header .dtc-badge{font-family:var(--mono);font-size:11px;background:var(--bg);border:1px solid var(--border);color:var(--muted);padding:1px 8px;border-radius:10px;margin-left:auto;}
+.dash-table{width:100%;border-collapse:collapse;font-size:12px;}
+.dash-table thead tr{background:linear-gradient(135deg,var(--navy),#1A3260);}
+.dash-table thead th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.8);}
+.dash-table thead th:not(:first-child){text-align:center;}
+.dash-table tbody tr{border-bottom:1px solid #F1F5F9;transition:background .1s;}
+.dash-table tbody tr:last-child{border-bottom:none;}
+.dash-table tbody tr:nth-child(even) td{background:#FAFBFC;}
+.dash-table tbody tr:hover td{background:#EFF6FF!important;}
+.dash-table tbody td{padding:10px 14px;}
+.dash-table tbody td:not(:first-child){text-align:center;}
+.nc{font-family:var(--mono);font-size:12px;font-weight:700;}
+.nc.sky{color:var(--sky);} .nc.teal{color:var(--teal);} .nc.green{color:var(--green);}
+
+/* Avg card */
+.avg-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:28px;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.avg-card-header{padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.avg-card-header h4{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.08em;}
+.avg-table{width:100%;border-collapse:collapse;font-size:12px;}
+.avg-table thead tr{background:linear-gradient(135deg,var(--navy),#1A3260);}
+.avg-table thead th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.8);}
+.avg-table thead th:not(:first-child){text-align:center;}
+.avg-table tbody tr{border-bottom:1px solid #F1F5F9;transition:background .1s;}
+.avg-table tbody tr:last-child{border-bottom:none;}
+.avg-table tbody tr:nth-child(even) td{background:#FAFBFC;}
+.avg-table tbody tr:hover td{background:#EFF6FF!important;}
+.avg-table tbody td{padding:10px 14px;}
+.avg-table tbody td:not(:first-child){text-align:center;}
+
+.page{display:none;}.page.active{display:block;}
+#inactivity-overlay{display:none;position:fixed;inset:0;background:rgba(15,31,61,.75);z-index:200;align-items:center;justify-content:center;}
+#inactivity-overlay.open{display:flex;}
+.inactivity-box{background:white;border-radius:14px;padding:32px;max-width:360px;width:90%;text-align:center;}
+.inactivity-box h3{font-size:16px;font-weight:600;color:var(--navy);margin-bottom:8px;}
+.inactivity-box p{font-size:13px;color:var(--muted);margin-bottom:20px;}
+.inactivity-box .countdown{font-family:var(--mono);font-size:28px;font-weight:600;color:var(--red);margin-bottom:20px;}
+
+/* ── SEMÁFORO DE VENCIMIENTO ── */
+.semaforo-wrap{padding:12px 32px 0;}
+.semaforo-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.semaforo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:4px;}
+.sema-card{border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;border:1px solid transparent;cursor:pointer;transition:all .15s;}
+.sema-card:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.1);}
+.sema-card.rojo{background:#FEF2F2;border-color:#FECACA;}
+.sema-card.amarillo{background:#FFFBEB;border-color:#FDE68A;}
+.sema-card.naranja{background:#FFF7ED;border-color:#FDBA74;}
+.sema-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 3px rgba(255,255,255,.8);}
+.sema-dot.rojo{background:#DC2626;animation:pulse-red 1.5s ease-in-out infinite;}
+.sema-dot.amarillo{background:#D97706;}
+.sema-dot.naranja{background:#EA580C;}
+@keyframes pulse-red{0%,100%{box-shadow:0 0 0 3px rgba(220,38,38,.2)}50%{box-shadow:0 0 0 6px rgba(220,38,38,.1)}}
+.sema-info strong{display:block;font-family:var(--mono);font-size:20px;font-weight:700;}
+.sema-info strong.rojo{color:#DC2626;}
+.sema-info strong.amarillo{color:#D97706;}
+.sema-info strong.naranja{color:#EA580C;}
+.sema-info span{font-size:11px;color:var(--muted);}
+
+/* ── PDF MODAL ── */
+.pdf-option{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;margin-bottom:10px;transition:all .15s;}
+.pdf-option:hover{border-color:var(--accent);background:var(--accent-light);}
+.pdf-ico{font-size:28px;flex-shrink:0;margin-top:2px;}
+.pdf-option strong{display:block;font-size:13px;color:var(--navy);margin-bottom:3px;}
+.pdf-option span{font-size:11px;color:var(--muted);line-height:1.5;}
+
+/* ── PROMEDIO ABOGADO ── */
+.avg-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:28px;}
+.avg-card-header{padding:14px 18px;border-bottom:1px solid var(--border);}
+.avg-card-header h4{font-size:12px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:.07em;}
+.avg-table{width:100%;border-collapse:collapse;font-size:12px;}
+.avg-table thead tr{background:var(--bg);}
+.avg-table thead th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+.avg-table thead th:not(:first-child){text-align:center;}
+.avg-table tbody tr{border-bottom:1px solid #F1F5F9;}
+.avg-table tbody tr:last-child{border-bottom:none;}
+.avg-table tbody tr:hover{background:#F8FAFC;}
+.avg-table tbody td{padding:9px 14px;}
+.avg-table tbody td:not(:first-child){text-align:center;}
+.avg-dias{font-family:var(--mono);font-weight:700;color:var(--navy);}
+.avg-bar-wrap{display:flex;align-items:center;gap:8px;}
+.avg-bar{height:8px;border-radius:4px;background:var(--accent);min-width:4px;transition:width .4s;}
+
+@media(max-width:640px){
+  header,.toolbar,.stats-bar,.semaforo-wrap,.tipo-bar,.table-wrap,.admin-wrap{padding-left:16px;padding-right:16px;}
+  .form-grid{grid-template-columns:1fr;}
+  .search-wrap{margin-left:0;width:100%;}
+  .search-wrap input{width:100%;}
+  .dash-body{padding:16px;}
+  .semaforo-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div id="sync-bar"></div>
+<div class="sync-toast" id="sync-toast"><span id="sync-msg">Guardando...</span></div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-top">
+      <div class="login-logo">📁</div>
+      <h1>Seguimiento Contractual</h1>
+      <p>Ministerio de Relaciones Exteriores</p>
+    </div>
+    <div class="login-body">
+      <div id="lockout-msg">⏳ Demasiados intentos. Espera <span id="lockout-count">30</span>s.</div>
+      <div id="login-error">❌ Usuario o contraseña incorrectos.</div>
+      <label>Usuario</label>
+      <input type="text" id="login-user" placeholder="tu.usuario" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      <button id="login-btn" onclick="doLogin()">Ingresar →</button>
+      <div class="login-footer">🔒 Acceso restringido — solo personal autorizado<br><span id="attempts-info" style="font-family:var(--mono);font-size:10px;"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <div id="session-bar">
+    <div id="firebase-status"><span class="fb-dot" id="fb-dot"></span><span id="fb-label">Conectando...</span></div>
+    <div>Sesión · <span id="session-user-bar"></span> · Cierra en <span id="session-timer">30:00</span></div>
+  </div>
+  <header>
+    <div class="header-left">
+      <div class="header-icon">📁</div>
+      <div><h1>Seguimiento Contractual</h1><span class="sub">Ministerio de Relaciones Exteriores</span></div>
+    </div>
+    <div class="header-right">
+      <span id="total-badge">0 registros</span>
+      <div class="user-pill">
+        <div class="user-avatar" id="header-avatar">?</div>
+        <span class="user-name" id="header-username">—</span>
+        <span class="role-badge" id="header-role">—</span>
+      </div>
+      <button id="logout-btn" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="showPage('db')" id="tab-db">📄 Registros</button>
+    <button class="tab-btn" onclick="showPage('dash')" id="tab-dash">📊 Dashboard</button>
+    <button class="tab-btn" onclick="showPage('admin')" id="tab-admin" style="display:none">⚙️ Usuarios</button>
+  </div>
+
+  <!-- REGISTROS -->
+  <div class="page active" id="page-db">
+    <div class="toolbar">
+      <button class="btn btn-primary" id="btn-nuevo" onclick="openModal()">＋ Nuevo Registro</button>
+      <button class="btn btn-ghost" onclick="exportCSV()">⬇ CSV</button>
+      <button class="btn btn-ghost" onclick="exportXLSX()" style="color:#059669;border-color:#6EE7B7;">⬇ Excel</button>
+      <button class="btn btn-ghost" onclick="openPdfModal()" style="color:#DC2626;border-color:#FECACA;">📄 Informes PDF</button>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="Buscar ticket, objeto, abogado, GIT…" oninput="renderTable()">
+      </div>
+    </div>
+
+    <!-- Filtro por tipo -->
+    <div class="tipo-bar">
+      <span class="tipo-bar-label">Filtrar por:</span>
+      <button class="tipo-chip active-all" id="chip-all" onclick="setTipo('all')">📋 Todos</button>
+      <button class="tipo-chip" id="chip-asesoria" onclick="setTipo('asesoria')">🔵 Asesoría Previa</button>
+      <button class="tipo-chip" id="chip-contractual" onclick="setTipo('contractual')">🔷 Proceso Contractual</button>
+    </div>
+
+    <!-- Semáforo de vencimiento -->
+    <div class="semaforo-wrap">
+      <div class="semaforo-title">🚦 Alertas de Vencimiento — clic para filtrar</div>
+      <div class="semaforo-grid">
+        <div class="sema-card rojo" onclick="filtrarVencimiento('hoy')" title="Ver procesos que vencen hoy o ya vencidos">
+          <span class="sema-dot rojo"></span>
+          <div class="sema-info"><strong class="rojo" id="sema-hoy">0</strong><span>Vence hoy</span></div>
+        </div>
+        <div class="sema-card naranja" onclick="filtrarVencimiento('3dias')" title="Ver procesos que vencen en los próximos 3 días">
+          <span class="sema-dot naranja"></span>
+          <div class="sema-info"><strong class="naranja" id="sema-3">0</strong><span>Próximos 3 días</span></div>
+        </div>
+        <div class="sema-card amarillo" onclick="filtrarVencimiento('7dias')" title="Ver procesos que vencen entre 4 y 7 días">
+          <span class="sema-dot amarillo"></span>
+          <div class="sema-info"><strong class="amarillo" id="sema-7">0</strong><span>Próximos 7 días</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-card stat-card-total">
+        <div><span class="stat-num" id="stat-total">0</span><span class="stat-label">Total Registros</span></div>
+      </div>
+      <div class="stat-card stat-card-asesoria">
+        <div><span class="stat-num" id="stat-asesoria" style="color:var(--sky)">0</span><span class="stat-label">Asesorías</span></div>
+      </div>
+      <div class="stat-card stat-card-contractual">
+        <div><span class="stat-num" id="stat-contractual" style="color:var(--teal)">0</span><span class="stat-label">Contractuales</span></div>
+      </div>
+      <div class="stat-card stat-card-ok">
+        <div><span class="stat-num" id="stat-aprobado" style="color:var(--green)">0</span><span class="stat-label">Aprobados</span></div>
+      </div>
+      <div class="stat-card stat-card-ok">
+        <div><span class="stat-num" id="stat-contratado" style="color:var(--green)">0</span><span class="stat-label">Contratados</span></div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th onclick="sortBy('ticket')">Ticket</th>
+          <th onclick="sortBy('tipo')">Tipo</th>
+          <th onclick="sortBy('objeto')">Objeto</th>
+          <th onclick="sortBy('abogado')">Abogado</th>
+          <th onclick="sortBy('git')">GIT</th>
+          <th onclick="sortBy('dependencia')">Dependencia</th>
+          <th onclick="sortBy('secop')">SECOP</th>
+          <th onclick="sortBy('fechaAsignacion')">F. Asignación</th>
+          <th onclick="sortBy('fechaAdjudicacion')">F. Entrega</th>
+          <th onclick="sortBy('estado')">Estado</th>
+          <th>Avance</th>
+          <th>Acciones</th>
+        </tr></thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page" id="page-dash">
+    <div class="dash-wrap">
+      <div class="dash-banner">
+        <div class="dash-banner-left">
+          <h2>Panel de Control — Seguimiento Contractual</h2>
+          <p>Ministerio de Relaciones Exteriores · Datos en tiempo real</p>
+        </div>
+        <div class="dash-banner-right"><span id="dash-date-label"></span>Actualización en tiempo real</div>
+      </div>
+      <div class="dash-body">
+
+        <!-- KPIs -->
+        <div class="dash-kpis">
+          <div class="kpi kt">
+            <span class="kpct" id="d-pct-total"></span>
+            <span class="kn" id="d-total">0</span>
+            <span class="kl">Total registros</span>
+          </div>
+          <div class="kpi ka">
+            <span class="kpct" id="d-pct-asesoria"></span>
+            <span class="kn" id="d-asesoria">0</span>
+            <span class="kl">Asesorías previas</span>
+          </div>
+          <div class="kpi kc">
+            <span class="kpct" id="d-pct-contractual"></span>
+            <span class="kn" id="d-contractual">0</span>
+            <span class="kl">Proc. Contractuales</span>
+          </div>
+          <div class="kpi kap">
+            <span class="kpct" id="d-pct-finalizados"></span>
+            <span class="kn" id="d-finalizados">0</span>
+            <span class="kl">Finalizados</span>
+          </div>
+        </div>
+
+        <!-- Distribución por estado -->
+        <div class="dash-divider"><span class="dash-divider-icon">📊</span>Distribución por Estado</div>
+        <div class="charts-row">
+          <!-- Asesoría Previa -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <h3>Asesoría Previa</h3>
+                <p>Procesos por estado de revisión</p>
+              </div>
+              <span class="chart-card-tag" style="background:var(--sky-light);color:var(--sky);">🔵 Asesoría</span>
+            </div>
+            <div class="estado-list" id="dash-estado-asesoria"></div>
+          </div>
+          <!-- Proceso Contractual -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <h3>Proceso Contractual</h3>
+                <p>Procesos por etapa contractual</p>
+              </div>
+              <span class="chart-card-tag" style="background:var(--teal-light);color:var(--teal);">🔷 Contractual</span>
+            </div>
+            <div class="estado-list" id="dash-estado-contractual"></div>
+          </div>
+        </div>
+
+        <!-- Promedio abogado -->
+        <div class="dash-divider"><span class="dash-divider-icon">⏱️</span>Tiempo Promedio por Abogado</div>
+        <div class="avg-card">
+          <div class="avg-card-header">
+            <h4>Días promedio desde asignación hasta adjudicación</h4>
+            <span style="font-size:10px;color:var(--muted);margin-left:auto;">🟢 ≤15d excelente · 🟡 ≤30d aceptable · 🔴 &gt;30d revisar</span>
+          </div>
+          <table class="avg-table">
+            <thead><tr>
+              <th>Abogado</th>
+              <th>Finalizados</th>
+              <th>Promedio</th>
+              <th style="min-width:160px;">Indicador</th>
+            </tr></thead>
+            <tbody id="dash-avg-body"></tbody>
+          </table>
+        </div>
+
+        <!-- Tablas por responsable -->
+        <div class="dash-divider"><span class="dash-divider-icon">👥</span>Detalle por Responsable</div>
+        <div class="dash-tables-row">
+          <div class="dash-table-card">
+            <div class="dash-table-card-header">
+              <h4>Por Abogado</h4>
+              <span class="dtc-badge" id="dtc-abog">0</span>
+            </div>
+            <table class="dash-table">
+              <thead><tr>
+                <th>Abogado</th>
+                <th>Total</th>
+                <th>Asesoría</th>
+                <th>Contractual</th>
+                <th>Vencidos</th>
+              </tr></thead>
+              <tbody id="dash-abog-body"></tbody>
+            </table>
+          </div>
+          <div class="dash-table-card">
+            <div class="dash-table-card-header">
+              <h4>Por GIT</h4>
+              <span class="dtc-badge" id="dtc-git">0</span>
+            </div>
+            <table class="dash-table">
+              <thead><tr>
+                <th>GIT</th>
+                <th>Total</th>
+                <th>Asesoría</th>
+                <th>Contractual</th>
+              </tr></thead>
+              <tbody id="dash-git-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div class="page" id="page-admin">
+    <div class="admin-wrap">
+      <p class="section-title">Gestión de Usuarios</p>
+      <div style="margin-bottom:16px;"><button class="btn btn-primary" onclick="openAddUser()">＋ Agregar Usuario</button></div>
+      <div class="users-grid" id="users-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REGISTRO -->
+<div class="overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header"><h2 id="modal-title">Nuevo Registro</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+
+      <!-- Sección: Identificación -->
+      <div class="form-section">
+        <div class="form-section-title">🏷️ Identificación</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Ticket *</label><input type="text" id="f-ticket" placeholder="Ej. AC-001 / PC-001"></div>
+          <div class="form-group"><label>Tipo de proceso *</label>
+            <select id="f-tipo" onchange="updateEstadoOptions()">
+              <option value="asesoria">🔵 Asesoría Previa</option>
+              <option value="contractual">🔷 Proceso Contractual</option>
+            </select>
+          </div>
+          <div class="form-group full"><label>Objeto *</label><textarea id="f-objeto" placeholder="Describe el objeto del proceso…" style="min-height:60px;"></textarea></div>
+          <div class="form-group"><label>Consecutivo SECOP</label><input type="text" id="f-secop" placeholder="Ej. SEC-2026-001"></div>
+          <div class="form-group"><label>Estado *</label><select id="f-estado"></select></div>
+        </div>
+      </div>
+
+      <!-- Sección: Responsables -->
+      <div class="form-section">
+        <div class="form-section-title">👥 Responsables</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Abogado Asignado *</label>
+            <select id="f-abogado">
+              <option value="">— Seleccionar —</option>
+              <option>JOHANNA AGUDELO</option><option>YULY LEIVA</option><option>OSCAR VICTORIA</option>
+              <option>NATALIA JIMENEZ</option><option>ALEXANDRA PORTILLO</option><option>JESSICA GUTIERREZ</option>
+              <option>BRIAM BRITO</option><option>JUAN DAVID GUTIERREZ</option><option>TANIA HUMANEZ</option>
+              <option>KATIANA JIMENEZ</option><option>JHOANA MEDINA</option><option>MARIANA GARCIA MORALES</option>
+            </select>
+          </div>
+          <div class="form-group"><label>GIT (Grupo Interno de Trabajo)</label>
+            <select id="f-git">
+              <option value="">— Seleccionar GIT —</option>
+              <option>GIT JEFATURA DE GABINETE</option>
+              <option>GIT PRENSA Y COMUNICACION CORPORATIVA</option>
+              <option>GIT CONTROL INTERNO DE GESTION</option>
+              <option>GIT POLITICA EXTERIOR FEMINISTA Y ASUNTOS DE GENERO</option>
+              <option>GIT PRIVILEGIOS E INMUNIDADES</option>
+              <option>GIT CEREMONIAL DIPLOMATICO</option>
+              <option>GIT NATURALIZACION, RENUNCIA Y RECUPERACION DE LA NACIONALIDAD</option>
+              <option>GIT CONSULTORIA PARA ASUNTOS EN DERECHO INTERNACIONAL</option>
+              <option>GIT TRATADOS</option>
+              <option>GIT ASUNTOS ANTE LA CORTE INTERNACIONAL DE JUSTICIA</option>
+              <option>GIT DIVULGACION Y SELECCION PARA EL INGRESO A LA CARRERA DIPLOMATICA Y CONSULAR</option>
+              <option>GIT FORMACION Y CAPACITACION DIPLOMATICA Y CONSULAR</option>
+              <option>GIT GESTION Y PROYECCION NACIONAL E INTERNACIONAL</option>
+              <option>GIT GESTION DEL CONOCIMIENTO, INVESTIGACION Y BIBLIOTECA</option>
+              <option>GIT DESARROLLO FRONTERIZO</option>
+              <option>GIT INTEGRACION FRONTERIZA</option>
+              <option>GIT SISTEMAS DE INFORMACION</option>
+              <option>GIT SERVICIOS TECNOLOGICOS</option>
+              <option>GIT GOBIERNO DE TECNOLOGIAS DE LA INFORMACION</option>
+              <option>GIT GESTION Y DESEMPEÑO INSTITUCIONAL</option>
+              <option>GIT ESTRATEGIA, PROYECTOS Y PARTICIPACION CIUDADANA</option>
+              <option>GIT ESTADOS UNIDOS MEXICANOS Y CENTRO AMERICA</option>
+              <option>GIT CARIBE</option>
+              <option>GIT AMERICA DEL SUR</option>
+              <option>GIT ESTADOS UNIDOS Y CANADA</option>
+              <option>GIT GABINETES BINACIONALES</option>
+              <option>GIT ASUNTOS CON VENEZUELA</option>
+              <option>GIT EUROPA OCCIDENTAL Y ASUNTOS DE LA UNION EUROPEA</option>
+              <option>GIT EUROPA CENTRAL, ORIENTAL Y EURO-ASIA</option>
+              <option>GIT ASIA PACIFICO</option>
+              <option>GIT AFRICA, MEDIO ORIENTE Y ASIA CENTRAL</option>
+              <option>GIT FRONTERAS TERRESTRES Y CARTOGRAFIA</option>
+              <option>GIT ASUNTOS MARITIMOS Y AEREOS</option>
+              <option>GIT ASUNTOS DE SEGURIDAD, DEFENSA Y REGIONALES FRONTERIZOS</option>
+              <option>GIT ASUNTOS INSTITUCIONALES ANTE ORGANISMOS MULTILATERALES</option>
+              <option>GIT DESARME Y NO PROLIFERACION</option>
+              <option>GIT PREVENCION DEL DELITO</option>
+              <option>GIT ASUNTOS RELACIONADOS CON LAS DROGAS</option>
+              <option>GIT ASUNTOS ECONOMICOS</option>
+              <option>GIT ASUNTOS SOCIALES</option>
+              <option>GIT ASUNTOS AMBIENTALES</option>
+              <option>GIT ATENCION A INSTANCIAS INTERNACIONALES DE DERECHOS HUMANOS Y DERECHO INTERNACIONAL HUMANITARIO</option>
+              <option>GIT ASUNTOS DE PROTECCION SOBRE DERECHOS HUMANOS</option>
+              <option>GIT SEGUIMIENTO A LAS ORDENES Y RECOMENDACIONES DE LOS ORGANOS INTERNACIONALES EN MATERIA DE DERECHOS HUMANOS</option>
+              <option>GIT COOPERACION MULTILATERAL</option>
+              <option>GIT COOPERACION BILATERAL Y ASISTENCIA OFICIAL PARA EL DESARROLLO</option>
+              <option>GIT COOPERACION SUR-SUR Y TRIANGULAR</option>
+              <option>GIT PROGRAMAS Y CONVENIOS DE CULTURA, EDUCACION Y DEPORTE</option>
+              <option>GIT GESTION DE INTERCAMBIOS</option>
+              <option>GIT ACCION CULTURAL</option>
+              <option>GIT UNESCO</option>
+              <option>GIT MECANISMOS DE CONCERTACION REGIONALES</option>
+              <option>GIT MECANISMOS DE INTEGRACION REGIONALES</option>
+              <option>GIT LICITACIONES Y CONTRATOS</option>
+              <option>GIT ASUNTOS LEGALES</option>
+              <option>GIT CONCEPTOS Y REGULACION NORMATIVA</option>
+              <option>GIT ADMINISTRACION DE PERSONAL</option>
+              <option>GIT CARRERAS DIPLOMATICAS Y ADMINISTRATIVAS</option>
+              <option>GIT BIENESTAR, CAPACITACION, SEGURIDAD Y SALUD EN EL TRABAJO</option>
+              <option>GIT NOMINA</option>
+              <option>GIT PRESTACIONES SOCIALES</option>
+              <option>GIT TIQUETES Y VIATICOS</option>
+              <option>GIT FONDO ROTATORIO DEL MINISTERIO DE RELACIONES EXTERIORES</option>
+              <option>GIT SERVICIOS AL EXTERIOR</option>
+              <option>GIT FINANCIERO</option>
+              <option>GIT ALMACEN</option>
+              <option>GIT ARCHIVO</option>
+              <option>GIT SERVICIOS ADMINISTRATIVOS</option>
+              <option>GIT MANTENIMIENTO</option>
+              <option>GIT TRANSPORTE</option>
+              <option>GIT ASUNTOS CONSULARES Y COOPERACION JUDICIAL</option>
+              <option>GIT ASISTENCIA A CONNACIONALES EN EL EXTERIOR</option>
+              <option>GIT COLOMBIA NOS UNE</option>
+              <option>GIT PASAPORTES SEDE NORTE</option>
+              <option>GIT PASAPORTES SEDE CENTRO</option>
+              <option>GIT VISAS E INMIGRACION</option>
+              <option>GIT APOSTILLA Y LEGALIZACION</option>
+              <option>GIT ESTADISTICA CONSULAR Y ANALISIS DE DATOS</option>
+              <option>GIT CENTRO INTEGRAL DE ATENCION AL CIUDADANO</option>
+              <option>GIT APOYO JURIDICO</option>
+              <option>GIT POLITICA Y ASUNTOS MIGRATORIOS</option>
+              <option>GIT DETERMINACION DE LA CONDICION DE REFUGIADO</option>
+              <option>GIT DETERMINACION DE LA CONDICION DE APATRIDA</option>
+            </select>
+          </div>
+          <div class="form-group full"><label>Dependencia</label>
+            <select id="f-dependencia">
+              <option value="">— Seleccionar —</option>
+              <option>DESPACHO DEL MINISTRO</option><option>DIRECCION DEL PROTOCOLO</option>
+              <option>DIRECCION DE ASUNTOS JURIDICOS INTERNACIONALES</option>
+              <option>DIRECCION DE LA ACADEMIA DIPLOMATICA</option>
+              <option>DIRECCION PARA EL DESARROLLO Y LA INTEGRACION FRONTERIZA</option>
+              <option>DIRECCION DE GESTION DE INFORMACION Y TECNOLOGIA</option>
+              <option>OFICINA ASESORA DE PLANEACION Y DESARROLLO ORGANIZACIONAL</option>
+              <option>VICEMINISTERIO DE RELACIONES EXTERIORES</option>
+              <option>DIRECCION DE AMERICA</option><option>DIRECCION DE EUROPA</option>
+              <option>DIRECCION DE ASIA, AFRICA Y OCEANIA</option>
+              <option>DIRECCION DE SOBERANIA TERRITORIAL</option>
+              <option>VICEMINISTERIO DE ASUNTOS MULTILATERALES</option>
+              <option>DIRECCION DE ASUNTOS POLITICOS MULTILATERALES</option>
+              <option>DIRECCION DE ASUNTOS ECONOMICOS SOCIALES Y AMBIENTALES</option>
+              <option>DIRECCION DE DERECHOS HUMANOS Y DERECHO INTERNACIONAL HUMANITARIO</option>
+              <option>DIRECCION DE COOPERACION INTERNACIONAL</option>
+              <option>DIRECCION DE ASUNTOS CULTURALES</option>
+              <option>DIRECCION DE MECANISMOS DE CONCERTACION E INTEGRACION REGIONALES</option>
+              <option>SECRETARIA GENERAL</option><option>OFICINA ASESORA JURIDICA INTERNA</option>
+              <option>DIRECCION DE TALENTO HUMANO</option>
+              <option>DIRECCION ADMINISTRATIVA Y FINANCIERA</option>
+              <option>DIRECCION DE ASUNTOS MIGRATORIOS CONSULARES Y SERVICIO AL CIUDADANO</option>
+              <option>OFICINA DE CONTROL DISCIPLINARIO INTERNO</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección: Fechas -->
+      <div class="form-section">
+        <div class="form-section-title">📅 Fechas</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Fecha de Asignación</label><input type="date" id="f-asignacion"></div>
+          <div class="form-group"><label>Fecha Docs. Definitivos</label><input type="date" id="f-documentos"></div>
+          <div class="form-group"><label>Fecha de Adjudicación</label><input type="date" id="f-entrega-real"></div>
+        </div>
+      </div>
+
+      <!-- Sección: Notas -->
+      <div class="form-section">
+        <div class="form-section-title">💬 Notas</div>
+        <div class="form-grid">
+          <div class="form-group full"><label>Observaciones</label><textarea id="f-obs" placeholder="Notas adicionales…"></textarea></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRecord()">Guardar en la nube ☁️</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL BITÁCORA -->
+<div class="overlay" id="bitacora-overlay">
+  <div class="modal modal-lg">
+    <div class="modal-header"><h2>📓 Bitácora de Avance</h2><button class="modal-close" onclick="closeBitacora()">✕</button></div>
+    <div class="modal-body">
+      <div class="bit-header" id="bit-header"></div>
+      <div class="new-entry-box" id="new-entry-box">
+        <div id="new-entry-form">
+          <div class="new-entry-top">
+            <label style="font-size:12px;font-weight:500;color:var(--navy);text-transform:uppercase;">Fecha</label>
+            <input type="date" id="entry-date">
+            <span id="entry-author-name" style="font-size:12px;color:var(--muted);margin-left:8px;"></span>
+          </div>
+          <textarea id="entry-text" placeholder="Describe el avance…"></textarea>
+          <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+            <button class="btn btn-primary" style="padding:5px 14px;font-size:12px;" onclick="addEntry()">＋ Agregar</button>
+          </div>
+        </div>
+        <div id="new-entry-locked" class="locked-note" style="display:none;">🔒 Estado <strong id="locked-estado-name"></strong> — no se pueden agregar entradas.</div>
+      </div>
+      <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px;">Historial (<span id="entries-count">0</span> entradas)</p>
+      <div class="entries-list" id="entries-list"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeBitacora()">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- MODAL USUARIO -->
+<div class="overlay" id="user-overlay">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header"><h2 id="user-modal-title">Agregar Usuario</h2><button class="modal-close" onclick="closeUserModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid" style="grid-template-columns:1fr;">
+        <div class="form-group"><label>Nombre completo *</label><input type="text" id="u-name" placeholder="Ej. Ana Gómez"></div>
+        <div class="form-group"><label>Usuario (login) *</label><input type="text" id="u-user" placeholder="Ej. ana.gomez" autocomplete="off"></div>
+        <div class="form-group"><label>Contraseña <span id="u-pass-hint" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:11px;">(vacío = no cambiar)</span></label>
+          <input type="password" id="u-pass" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
+        <div class="form-group"><label>Rol</label>
+          <select id="u-role"><option value="viewer">👁 Viewer — solo lectura</option><option value="admin">🔑 Admin — acceso completo</option></select></div>
+        <div id="u-error" style="display:none;color:var(--red);font-size:12px;background:var(--red-light);padding:8px 12px;border-radius:6px;"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeUserModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveUser()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PDF -->
+<div class="overlay" id="pdf-overlay">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h2>📄 Generar Informe PDF</h2>
+      <button class="modal-close" onclick="closePdfModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Selecciona el tipo de informe. Se abre en una nueva ventana para imprimir o guardar como PDF.</p>
+
+      <div class="pdf-option" onclick="generarPDF('general')">
+        <span class="pdf-ico">📊</span>
+        <div>
+          <strong>Informe General</strong>
+          <span>Resumen ejecutivo completo con KPIs, tabla consolidada de todos los procesos y análisis de alertas.</span>
+        </div>
+      </div>
+      <div class="pdf-option" onclick="generarPDF('abogado')">
+        <span class="pdf-ico">⚖️</span>
+        <div>
+          <strong>Informe por Abogado — Todos</strong>
+          <span>Carga de trabajo, rendimiento y detalle de procesos para todos los abogados asignados.</span>
+        </div>
+      </div>
+
+      <!-- NUEVO: Informe individual por abogado -->
+      <div style="border:1.5px solid var(--accent);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:var(--accent-light);">
+        <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:12px;">
+          <span class="pdf-ico">👤</span>
+          <div>
+            <strong style="display:block;font-size:13px;color:var(--navy);margin-bottom:3px;">Informe Individual por Abogado</strong>
+            <span style="font-size:11px;color:var(--muted);line-height:1.5;">Selecciona un abogado específico para generar su reporte individual: procesos asignados, estados, alertas de vencimiento, bitácora de avances y métricas de rendimiento.</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <select id="pdf-abogado-select" style="flex:1;padding:8px 12px;border:1.5px solid #BFDBFE;border-radius:8px;font-family:var(--font);font-size:13px;outline:none;background:white;color:var(--navy);">
+            <option value="">— Seleccionar abogado —</option>
+          </select>
+          <button onclick="generarPDFIndividual()" class="btn btn-primary" style="padding:8px 16px;font-size:13px;white-space:nowrap;">
+            📄 Generar
+          </button>
+        </div>
+      </div>
+
+      <div class="pdf-option" onclick="generarPDF('estado')">
+        <span class="pdf-ico">🔄</span>
+        <div>
+          <strong>Informe por Estado</strong>
+          <span>Procesos agrupados por estado actual con detalle y análisis por tipo.</span>
+        </div>
+      </div>
+      <div class="pdf-option" onclick="generarPDF('vencimiento')">
+        <span class="pdf-ico">🚦</span>
+        <div>
+          <strong>Informe de Alertas de Vencimiento</strong>
+          <span>Procesos en riesgo: vencidos, que vencen hoy, en 3 días y en 7 días.</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closePdfModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- INACTIVIDAD -->
+<div id="inactivity-overlay">
+  <div class="inactivity-box">
+    <h3>⚠️ ¿Sigues ahí?</h3>
+    <p>La sesión se cerrará en:</p>
+    <div class="countdown" id="inact-count">30</div>
+    <button class="btn btn-primary" style="width:100%" onclick="resetInactivity()">Sí, continuar</button>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, updateDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCWR7FT1-81sF8E1e10D3WPTOEVapIXPCQ",
+  authDomain: "seguimiento-contractual-29c43.firebaseapp.com",
+  projectId: "seguimiento-contractual-29c43",
+  storageBucket: "seguimiento-contractual-29c43.firebasestorage.app",
+  messagingSenderId: "939646630919",
+  appId: "1:939646630919:web:711edeb1df0cd32702bea2"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+window._db=db;
+
+function setConn(online){
+  const dot=document.getElementById('fb-dot');
+  const lbl=document.getElementById('fb-label');
+  if(!dot) return;
+  dot.className='fb-dot '+(online?'online':'');
+  lbl.textContent=online?'Firebase conectado':'Sin conexión';
+}
+
+onSnapshot(collection(db,'registros'),snap=>{
+  setConn(true);
+  window._records=[];
+  snap.forEach(d=>window._records.push({id:d.id,...d.data()}));
+  if(window._appReady){window.renderTable();window.renderDashboard&&document.getElementById('page-dash').classList.contains('active')&&window.renderDashboard();}
+},err=>{setConn(false);console.error(err);});
+
+onSnapshot(collection(db,'usuarios'),snap=>{
+  window._fbUsers=[];
+  snap.forEach(d=>window._fbUsers.push({id:d.id,...d.data()}));
+  if(window._appReady&&document.getElementById('page-admin').classList.contains('active')) window.renderAdminPanel&&window.renderAdminPanel();
+},err=>console.error(err));
+
+window._saveRecord=async(data)=>{const{id,...r}=data;await setDoc(doc(db,'registros',id),r);};
+window._deleteRecord=async(id)=>{await deleteDoc(doc(db,'registros',id));};
+window._updateEstado=async(id,estado)=>{await updateDoc(doc(db,'registros',id),{estado});};
+window._saveBitacora=async(id,bitacora)=>{await updateDoc(doc(db,'registros',id),{bitacora});};
+window._saveUser=async(u)=>{const{id,...r}=u;await setDoc(doc(db,'usuarios',id),r);};
+window._deleteUser=async(id)=>{await deleteDoc(doc(db,'usuarios',id));};
+
+window._dbReady=true;
+if(window._appReady) window.renderTable();
+</script>
+
+<script>
+/* ═══ CRYPTO ═══ */
+async function sha256(msg){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function sanitize(s,n=500){return String(s||'').slice(0,n);}
+function fmtDate(d){if(!d)return null;const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
+function todayISO(){return new Date().toISOString().slice(0,10);}
+
+/* ═══ ESTADOS POR TIPO ═══ */
+const ESTADOS={
+  asesoria:[
+    {value:'asignado',        label:'Asignado',          css:'sb-asignado'},
+    {value:'en-revision-lyc', label:'En Revisión L y C', css:'sb-en-revision-lyc'},
+    {value:'en-revision-at',  label:'En Revisión A.T.',  css:'sb-en-revision-at'},
+    {value:'aprobado',        label:'Aprobado',           css:'sb-aprobado'},
+  ],
+  contractual:[
+    {value:'asignado',          label:'Asignado',             css:'sb-pc-asignado'},
+    {value:'en-estructuracion', label:'En Estructuración',    css:'sb-pc-en-estructuracion'},
+    {value:'publicado-secop',   label:'Publicado en SECOP',   css:'sb-pc-publicado-secop'},
+    {value:'en-evaluacion',     label:'En Evaluación',        css:'sb-pc-en-evaluacion'},
+    {value:'adjudicado',        label:'Adjudicado',           css:'sb-pc-adjudicado'},
+    {value:'contratado',        label:'Contratado',           css:'sb-pc-contratado'},
+    {value:'cancelado',         label:'Cancelado',            css:'sb-pc-cancelado'},
+  ]
+};
+
+function getEstado(tipo,value){
+  return (ESTADOS[tipo]||[]).find(e=>e.value===value)||{label:value,css:''};
+}
+
+function estadoIsTerminal(tipo,value){
+  return tipo==='asesoria'?value==='aprobado':['contratado','cancelado'].includes(value);
+}
+
+function updateEstadoOptions(){
+  const tipo=document.getElementById('f-tipo').value;
+  const sel=document.getElementById('f-estado');
+  const cur=sel.value;
+  sel.innerHTML=(ESTADOS[tipo]||[]).map(e=>`<option value="${e.value}">${e.label}</option>`).join('');
+  if((ESTADOS[tipo]||[]).find(e=>e.value===cur)) sel.value=cur;
+}
+
+/* ═══ USUARIOS ═══ */
+const BUILTIN_USERS=[
+  {id:'u1',name:'Andres Camacho',username:'andres.camacho',
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'admin'},
+];
+function loadUsers(){
+  const fb=window._fbUsers||[];
+  const bi=BUILTIN_USERS.filter(b=>!fb.find(f=>f.id===b.id));
+  return[...bi,...fb];
+}
+
+/* ═══ BLOQUEO ═══ */
+const MAX_ATTEMPTS=5;
+let failedAttempts=0,lockoutUntil=0,lockoutInterval=null;
+function isLockedOut(){return Date.now()<lockoutUntil;}
+function startLockout(){
+  lockoutUntil=Date.now()+30000;
+  document.getElementById('lockout-msg').style.display='block';
+  document.getElementById('login-btn').disabled=true;
+  let r=30;clearInterval(lockoutInterval);
+  lockoutInterval=setInterval(()=>{r--;document.getElementById('lockout-count').textContent=r;
+    if(r<=0){clearInterval(lockoutInterval);lockoutUntil=0;failedAttempts=0;
+      document.getElementById('lockout-msg').style.display='none';
+      document.getElementById('login-btn').disabled=false;
+      document.getElementById('attempts-info').textContent='';}},1000);
+}
+
+/* ═══ LOGIN ═══ */
+let currentUser=null;
+async function doLogin(){
+  if(isLockedOut())return;
+  const uIn=document.getElementById('login-user').value.trim().toLowerCase();
+  const pIn=document.getElementById('login-pass').value;
+  document.getElementById('login-error').style.display='none';
+  ['login-user','login-pass'].forEach(id=>document.getElementById(id).classList.remove('input-error'));
+  if(!uIn||!pIn){showLoginErr();return;}
+  document.getElementById('login-btn').disabled=true;
+  document.getElementById('login-btn').textContent='Verificando...';
+  try{
+    const hash=await sha256(pIn);
+    const users=loadUsers();
+    const user=users.find(u=>u.username===uIn&&u.pwHash===hash)||null;
+    if(!user){
+      failedAttempts++;
+      if(failedAttempts>=MAX_ATTEMPTS)startLockout();
+      else document.getElementById('attempts-info').textContent=`Intentos restantes: ${MAX_ATTEMPTS-failedAttempts}`;
+      showLoginErr();return;
+    }
+    failedAttempts=0;currentUser=user;
+    document.getElementById('login-pass').value='';
+    document.getElementById('attempts-info').textContent='';
+    sessionStorage.setItem('sec_session',JSON.stringify({userId:user.id,ts:Date.now()}));
+    launchApp();
+  }catch(err){console.error(err);showLoginErr();}
+  finally{document.getElementById('login-btn').disabled=false;document.getElementById('login-btn').textContent='Ingresar →';}
+}
+function showLoginErr(){
+  document.getElementById('login-error').style.display='block';
+  ['login-user','login-pass'].forEach(id=>document.getElementById(id).classList.add('input-error'));
+  document.getElementById('login-pass').value='';
+}
+
+/* ═══ SESIÓN ═══ */
+let sessionExpiry=0,sessionInterval=null,inactivityTimer=null,inactivityWarning=null,inactCountdown=30;
+function launchApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  applyUserUI();
+  sessionExpiry=Date.now()+30*60*1000;
+  startSessionTimer();resetInactivity();
+  ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
+  window._appReady=true;
+  window.renderTable=renderTable;
+  window.renderDashboard=renderDashboard;
+  window.renderAdminPanel=renderAdminPanel;
+  if(window._dbReady){renderTable();}
+  else{
+    let tries=0;
+    const poll=setInterval(()=>{tries++;if(window._dbReady||tries>30){clearInterval(poll);renderTable();}},300);
+  }
+}
+function startSessionTimer(){
+  clearInterval(sessionInterval);
+  sessionInterval=setInterval(()=>{
+    const rem=Math.max(0,sessionExpiry-Date.now());
+    const m=Math.floor(rem/60000),s=Math.floor((rem%60000)/1000);
+    document.getElementById('session-timer').textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    if(rem<=0)logout(true);
+  },1000);
+}
+function resetInactivity(){
+  clearTimeout(inactivityTimer);clearInterval(inactivityWarning);
+  document.getElementById('inactivity-overlay').classList.remove('open');
+  inactivityTimer=setTimeout(()=>{
+    inactCountdown=30;document.getElementById('inact-count').textContent=30;
+    document.getElementById('inactivity-overlay').classList.add('open');
+    inactivityWarning=setInterval(()=>{inactCountdown--;document.getElementById('inact-count').textContent=inactCountdown;if(inactCountdown<=0)logout(true);},1000);
+  },15*60*1000);
+}
+function logout(auto=false){
+  clearInterval(sessionInterval);clearTimeout(inactivityTimer);clearInterval(inactivityWarning);
+  ['mousemove','keydown','click','touchstart'].forEach(e=>document.removeEventListener(e,resetInactivity));
+  sessionStorage.removeItem('sec_session');currentUser=null;window._appReady=false;
+  window._records=[];window._fbUsers=[];
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  ['login-user','login-pass'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.classList.remove('input-error');}});
+  document.getElementById('login-error').style.display='none';
+  document.getElementById('inactivity-overlay').classList.remove('open');
+  if(auto)setTimeout(()=>alert('⚠️ Sesión cerrada por inactividad.'),100);
+}
+
+/* ═══ UI POR ROL ═══ */
+const AV_COLORS=['#2563EB','#059669','#7C3AED','#D97706','#DC2626','#0891B2'];
+function avColor(s){let h=0;for(let c of s)h=(h+c.charCodeAt(0))%AV_COLORS.length;return AV_COLORS[h];}
+function initials(n){return n.trim().split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();}
+function applyUserUI(){
+  const u=currentUser;
+  document.getElementById('session-user-bar').textContent=u.name;
+  document.getElementById('header-username').textContent=u.name;
+  const av=document.getElementById('header-avatar');
+  av.textContent=initials(u.name);av.style.background=avColor(u.username);
+  const rb=document.getElementById('header-role');
+  rb.textContent=u.role==='admin'?'Admin':'Viewer';
+  rb.className='role-badge '+(u.role==='admin'?'admin':'viewer');
+  const adm=u.role==='admin';
+  document.getElementById('tab-admin').style.display=adm?'':'none';
+  document.getElementById('btn-nuevo').disabled=!adm;
+}
+function isAdmin(){return currentUser?.role==='admin';}
+
+/* ═══ DATOS ═══ */
+window._records=[];
+let editingId=null,sortField='ticket',sortDir='asc',activeTipo='all';
+
+function showSyncToast(msg,d=2000){
+  const t=document.getElementById('sync-toast');
+  document.getElementById('sync-msg').textContent=msg;
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);
+}
+
+/* ═══ TABS ═══ */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if(id==='dash')renderDashboard();
+  if(id==='admin')renderAdminPanel();
+}
+
+/* ═══ FILTRO TIPO ═══ */
+function setTipo(t){
+  activeTipo=t;
+  document.querySelectorAll('.tipo-chip').forEach(c=>c.className='tipo-chip');
+  const map={all:'active-all',asesoria:'active-asesoria',contractual:'active-contractual'};
+  const idMap={all:'chip-all',asesoria:'chip-asesoria',contractual:'chip-contractual'};
+  document.getElementById(idMap[t])?.classList.add(map[t]);
+  renderTable();
+}
+
+/* ═══ TABLA ═══ */
+function sortBy(f){if(sortField===f)sortDir=sortDir==='asc'?'desc':'asc';else{sortField=f;sortDir='asc';}renderTable();}
+
+function renderTable(){
+  window.renderTable=renderTable;
+  const records=window._records||[];
+  const q=(document.getElementById('search-input')?.value||'').toLowerCase();
+  let data=records.filter(r=>{
+    if(activeTipo!=='all'&&r.tipo!==activeTipo)return false;
+    if(q&&!((r.ticket||'').toLowerCase().includes(q)||(r.objeto||'').toLowerCase().includes(q)||(r.abogado||'').toLowerCase().includes(q)||(r.secop||'').toLowerCase().includes(q)||(r.git||'').toLowerCase().includes(q)))return false;
+    if(vencimientoFilter){
+      const d=diasHasta(r.fechaAdjudicacion);
+      if(d===null||estadoIsTerminal(r.tipo,r.estado)) return false;
+      if(vencimientoFilter==='hoy'  && d>0)       return false; // solo d<=0
+      if(vencimientoFilter==='3dias'&& (d<=0||d>3)) return false; // solo d 1-3
+      if(vencimientoFilter==='7dias'&& (d<=3||d>7)) return false; // solo d 4-7
+    }
+    return true;
+  });
+  data.sort((a,b)=>{let va=(a[sortField]||'').toLowerCase(),vb=(b[sortField]||'').toLowerCase();return va<vb?(sortDir==='asc'?-1:1):va>vb?(sortDir==='asc'?1:-1):0;});
+  const adm=isAdmin();
+  const tbody=document.getElementById('table-body');if(!tbody)return;
+  if(!data.length){
+    tbody.innerHTML=`<tr><td colspan="12"><div class="empty-state"><div class="big-icon">📂</div><p>${q?'Sin resultados':'Sin registros. Haz clic en <strong>+ Nuevo Registro</strong>.'}</p></div></td></tr>`;
+  } else {
+    tbody.innerHTML=data.map(r=>{
+      const est=getEstado(r.tipo,r.estado);
+      const nE=(r.bitacora||[]).length;
+      const terminal=estadoIsTerminal(r.tipo,r.estado);
+      const avB=`<span class="avance-badge"><span class="avance-dot ${nE?'has':''}"></span>${nE}</span>`;
+      const objS=(r.objeto||'').length>35?(r.objeto.slice(0,33)+'…'):(r.objeto||'—');
+      const depS=(r.dependencia||'').length>28?(r.dependencia.slice(0,26)+'…'):(r.dependencia||'—');
+      const gitS=(r.git||'').length>22?(r.git.slice(0,20)+'…'):(r.git||'—');
+      const semBadge=getSemaforoBadge(r);
+      const rowId='acc-'+r.id;
+      return `<tr class="main-row" onclick="toggleAccordion('${rowId}')">
+        <td style="white-space:nowrap"><span class="expand-arrow" id="arr-${rowId}">▶</span><span class="ticket-badge">${escHtml(r.ticket||'—')}</span></td>
+        <td><span class="tipo-badge ${r.tipo||'asesoria'}">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span></td>
+        <td style="font-size:12px;max-width:180px;"><div style="color:var(--navy);font-weight:500;">${escHtml(objS)}</div></td>
+        <td style="white-space:nowrap;font-size:12px;">${escHtml(r.abogado||'—')}</td>
+        <td style="font-size:11px;max-width:130px;" title="${escHtml(r.git||'')}">${escHtml(gitS)}</td>
+        <td style="font-size:11px;max-width:130px;" title="${escHtml(r.dependencia||'')}">${escHtml(depS)}</td>
+        <td style="font-family:var(--mono);font-size:11px;">${escHtml(r.secop||'—')}</td>
+        <td class="date-cell ${r.fechaAsignacion?'':'empty'}">${fmtDate(r.fechaAsignacion)||'—'}</td>
+        <td class="date-cell ${r.fechaAdjudicacion?'':'empty'}" style="white-space:nowrap;">${fmtDate(r.fechaAdjudicacion)||'—'}${semBadge}</td>
+        <td onclick="event.stopPropagation()">
+          <select class="status-badge ${est.css}" style="border:none;cursor:pointer;font-size:11px;font-weight:600;border-radius:20px;padding:3px 8px;outline:none;" onchange="changeEstado('${r.id}','${r.tipo||'asesoria'}',this)" ${adm?'':'disabled'}>
+            ${(ESTADOS[r.tipo||'asesoria']||[]).map(e=>`<option value="${e.value}" ${r.estado===e.value?'selected':''}>${e.label}</option>`).join('')}
+          </select>
+        </td>
+        <td>${avB}</td>
+        <td onclick="event.stopPropagation()"><div class="actions-cell">
+          <button class="icon-btn" onclick="openBitacora('${r.id}')" title="${!terminal?'Avance':'Ver'}">${!terminal?'📝':'📖'}</button>
+          <button class="icon-btn" onclick="editRecord('${r.id}')" ${adm?'':'disabled'}>✏️</button>
+          <button class="icon-btn del" onclick="deleteRecord('${r.id}')" ${adm?'':'disabled'}>🗑️</button>
+        </div></td>
+      </tr>
+      <tr class="accordion-row" id="${rowId}">
+        <td colspan="12">
+          <div class="accordion-inner">
+            <div class="accordion-section full">
+              <span class="accordion-label">📋 Objeto</span>
+              <div class="accordion-value obj-text">${escHtml(r.objeto||'Sin objeto definido.')}</div>
+            </div>
+            <div class="accordion-section"><span class="accordion-label">🏛️ Dependencia</span><span class="accordion-value">${escHtml(r.dependencia||'—')}</span></div>
+            <div class="accordion-section"><span class="accordion-label">👥 GIT</span><span class="accordion-value">${escHtml(r.git||'—')}</span></div>
+            <div class="accordion-section"><span class="accordion-label">📄 SECOP</span><span class="accordion-value" style="font-family:var(--mono)">${escHtml(r.secop||'—')}</span></div>
+            <div class="accordion-section"><span class="accordion-label">📅 F. Asignación</span><span class="accordion-value">${fmtDate(r.fechaAsignacion)||'—'}</span></div>
+            <div class="accordion-section"><span class="accordion-label">📅 Docs. Definitivos</span><span class="accordion-value">${fmtDate(r.fechaDocumentos)||'—'}</span></div>
+            <div class="accordion-section"><span class="accordion-label">📅 F. Adjudicación</span><span class="accordion-value">${fmtDate(r.fechaAdjudicacion)||'—'}${semBadge}</span></div>
+            <div class="accordion-section"><span class="accordion-label">📅 F. Adjudicación</span><span class="accordion-value">${fmtDate(r.fechaAdjudicacion)||'—'}</span></div>
+            ${r.obs?`<div class="accordion-section full"><span class="accordion-label">💬 Observaciones</span><span class="accordion-value" style="color:var(--muted);font-style:italic;">${escHtml(r.obs)}</span></div>`:''}
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  updateStats(records);
+}
+
+function toggleAccordion(rowId){
+  const row=document.getElementById(rowId);const arr=document.getElementById('arr-'+rowId);
+  if(!row)return;
+  const isOpen=row.classList.contains('open');
+  document.querySelectorAll('.accordion-row.open').forEach(r=>{r.classList.remove('open');document.getElementById('arr-'+r.id)?.classList.remove('open');r.previousElementSibling?.classList.remove('expanded');});
+  if(!isOpen){row.classList.add('open');arr?.classList.add('open');row.previousElementSibling?.classList.add('expanded');setTimeout(()=>row.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
+}
+
+async function changeEstado(id,tipo,sel){
+  if(!isAdmin()){const r=(window._records||[]).find(x=>x.id===id);if(r)sel.value=r.estado;return;}
+  const est=getEstado(tipo,sel.value);
+  sel.className=`status-badge ${est.css}`;
+  sel.style.cssText='border:none;cursor:pointer;font-size:11px;font-weight:600;border-radius:20px;padding:3px 8px;outline:none;';
+  showSyncToast('Guardando estado...');
+  await window._updateEstado(id,sel.value);
+  showSyncToast('✅ Estado actualizado');
+}
+
+/* ═══ SEMÁFORO DE VENCIMIENTO ═══ */
+let vencimientoFilter=null;
+
+function diasHasta(fechaISO){
+  if(!fechaISO) return null;
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  const fecha=new Date(fechaISO+'T00:00:00');
+  return Math.round((fecha-hoy)/(1000*60*60*24));
+}
+
+function filtrarVencimiento(tipo){
+  vencimientoFilter=vencimientoFilter===tipo?null:tipo;
+  renderTable();
+}
+
+function updateSemaforo(records){
+  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&r.fechaAdjudicacion);
+  let hoy=0,tres=0,siete=0;
+  activos.forEach(r=>{
+    const d=diasHasta(r.fechaAdjudicacion);
+    if(d===null) return;
+    if(d<=0)       hoy++;    // vence hoy o ya venció
+    else if(d<=3)  tres++;   // vence en 1, 2 o 3 días
+    else if(d<=7)  siete++;  // vence en 4, 5, 6 o 7 días
+  });
+  document.getElementById('sema-hoy').textContent=hoy;
+  document.getElementById('sema-3').textContent=tres;
+  document.getElementById('sema-7').textContent=siete;
+}
+
+function getSemaforoBadge(r){
+  if(estadoIsTerminal(r.tipo,r.estado)||!r.fechaAdjudicacion) return '';
+  const d=diasHasta(r.fechaAdjudicacion);
+  if(d===null) return '';
+  if(d<0)  return `<span style="background:#FEE2E2;color:#991B1B;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:4px;">🔴 ${Math.abs(d)}d vencido</span>`;
+  if(d===0) return `<span style="background:#FEE2E2;color:#991B1B;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:4px;">🔴 Vence hoy</span>`;
+  if(d<=3)  return `<span style="background:#FFEDD5;color:#C2410C;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:4px;">🟠 ${d}d</span>`;
+  if(d<=7)  return `<span style="background:#FFFBEB;color:#92400E;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:4px;">🟡 ${d}d</span>`;
+  return '';
+}
+
+function updateStats(records){
+  const r=records||window._records||[];
+  document.getElementById('stat-total').textContent=r.length;
+  document.getElementById('stat-asesoria').textContent=r.filter(x=>x.tipo==='asesoria').length;
+  document.getElementById('stat-contractual').textContent=r.filter(x=>x.tipo==='contractual').length;
+  document.getElementById('stat-aprobado').textContent=r.filter(x=>x.tipo==='asesoria'&&x.estado==='aprobado').length;
+  document.getElementById('stat-contratado').textContent=r.filter(x=>x.tipo==='contractual'&&x.estado==='contratado').length;
+  document.getElementById('total-badge').textContent=r.length+' registro'+(r.length!==1?'s':'');
+  updateSemaforo(r);
+}
+
+/* ═══ MODAL REGISTRO ═══ */
+function openModal(id=null){
+  if(!isAdmin()){alert('Solo los administradores pueden agregar registros.');return;}
+  editingId=id;
+  const r=id?(window._records||[]).find(x=>x.id===id):null;
+  document.getElementById('modal-title').textContent=r?'Editar Registro':'Nuevo Registro';
+  document.getElementById('f-ticket').value=r?.ticket||'';
+  document.getElementById('f-tipo').value=r?.tipo||'asesoria';
+  updateEstadoOptions();
+  document.getElementById('f-estado').value=r?.estado||'asignado';
+  document.getElementById('f-objeto').value=r?.objeto||'';
+  document.getElementById('f-secop').value=r?.secop||'';
+  document.getElementById('f-abogado').value=r?.abogado||'';
+  document.getElementById('f-git').value=r?.git||'';
+  document.getElementById('f-dependencia').value=r?.dependencia||'';
+  document.getElementById('f-asignacion').value=r?.fechaAsignacion||'';
+  document.getElementById('f-documentos').value=r?.fechaDocumentos||'';
+  document.getElementById('f-entrega-real').value=r?.fechaAdjudicacion||'';
+  document.getElementById('f-obs').value=r?.obs||'';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');editingId=null;}
+async function saveRecord(){
+  if(!isAdmin())return;
+  const ticket=sanitize(document.getElementById('f-ticket').value.trim(),50);
+  const abogado=document.getElementById('f-abogado').value;
+  const objeto=sanitize(document.getElementById('f-objeto').value.trim(),1000);
+  if(!ticket||!abogado||!objeto){alert('Completa: Ticket, Abogado y Objeto.');return;}
+  const existing=editingId?(window._records||[]).find(r=>r.id===editingId):null;
+  const data={
+    id:editingId||('r'+Date.now()),
+    ticket, abogado, objeto,
+    tipo:document.getElementById('f-tipo').value,
+    estado:document.getElementById('f-estado').value,
+    secop:sanitize(document.getElementById('f-secop').value.trim(),80),
+    git:document.getElementById('f-git').value,
+    dependencia:document.getElementById('f-dependencia').value,
+    fechaAsignacion:document.getElementById('f-asignacion').value,
+    fechaDocumentos:document.getElementById('f-documentos').value,
+    fechaAdjudicacion:document.getElementById('f-entrega-real').value,
+    obs:sanitize(document.getElementById('f-obs').value.trim(),2000),
+    bitacora:existing?.bitacora||[],
+    createdBy:existing?.createdBy||currentUser?.name||'',
+    createdAt:existing?.createdAt||new Date().toISOString(),
+    updatedBy:currentUser?.name||'',
+    updatedAt:new Date().toISOString(),
+  };
+  showSyncToast('Guardando en la nube ☁️...',3000);
+  try{await window._saveRecord(data);showSyncToast('✅ Guardado');closeModal();}
+  catch(err){alert('Error: '+err.message);showSyncToast('❌ Error',3000);}
+}
+function editRecord(id){openModal(id);}
+async function deleteRecord(id){
+  if(!isAdmin())return;
+  if(!confirm('¿Eliminar este registro y su bitácora?'))return;
+  showSyncToast('Eliminando...');
+  await window._deleteRecord(id);
+  showSyncToast('✅ Eliminado');
+}
+
+/* ═══ BITÁCORA ═══ */
+let bitacoraRecordId=null;
+function openBitacora(id){
+  bitacoraRecordId=id;
+  const r=(window._records||[]).find(x=>x.id===id);if(!r)return;
+  const terminal=estadoIsTerminal(r.tipo,r.estado);
+  const canEdit=!terminal&&isAdmin();
+  const est=getEstado(r.tipo,r.estado);
+  document.getElementById('bit-header').innerHTML=`
+    <span class="ticket-badge">${escHtml(r.ticket)}</span>
+    <span class="tipo-badge ${r.tipo||'asesoria'}">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>
+    <span class="status-badge ${est.css}" style="font-size:11px;padding:2px 8px;">${est.label}</span>
+    <span style="font-size:11px;color:var(--muted);margin-left:auto;">${escHtml(r.encargado)}</span>`;
+  const fEl=document.getElementById('new-entry-form');
+  const lEl=document.getElementById('new-entry-locked');
+  const bEl=document.getElementById('new-entry-box');
+  if(canEdit){
+    bEl.classList.remove('locked');fEl.style.display='block';lEl.style.display='none';
+    document.getElementById('entry-date').value=todayISO();
+    document.getElementById('entry-text').value='';
+    document.getElementById('entry-author-name').textContent='Por: '+currentUser.name;
+  } else {
+    bEl.classList.add('locked');fEl.style.display='none';lEl.style.display='flex';
+    document.getElementById('locked-estado-name').textContent=est.label;
+  }
+  renderEntries(r);
+  document.getElementById('bitacora-overlay').classList.add('open');
+}
+function renderEntries(r){
+  const entries=[...(r.bitacora||[])].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('entries-count').textContent=entries.length;
+  const list=document.getElementById('entries-list');
+  if(!entries.length){list.innerHTML=`<div class="no-entries">📭 Sin entradas aún.</div>`;return;}
+  const canDel=isAdmin()&&!estadoIsTerminal(r.tipo,r.estado);
+  list.innerHTML=entries.map(e=>`<div class="entry-item">
+    <div class="entry-date"><span>📅 ${fmtDate(e.date)||e.date}</span><span class="entry-author">Por: ${escHtml(e.author||'—')}</span></div>
+    <div class="entry-text">${escHtml(e.text)}</div>
+    ${canDel?`<button class="entry-del" onclick="deleteEntry('${r.id}','${e.id}')">✕</button>`:''}
+  </div>`).join('');
+}
+async function addEntry(){
+  const r=(window._records||[]).find(x=>x.id===bitacoraRecordId);if(!r)return;
+  if(estadoIsTerminal(r.tipo,r.estado)){alert('No se pueden agregar entradas en este estado.');return;}
+  if(!isAdmin())return;
+  const date=document.getElementById('entry-date').value;
+  const text=document.getElementById('entry-text').value.trim();
+  if(!date||!text){alert('Selecciona fecha y escribe el avance.');return;}
+  const bitacora=[...(r.bitacora||[]),{id:'e'+Date.now(),date,text,author:currentUser.name,ts:Date.now()}];
+  showSyncToast('Guardando avance...',3000);
+  await window._saveBitacora(r.id,bitacora);
+  showSyncToast('✅ Avance guardado');
+  document.getElementById('entry-text').value='';
+  document.getElementById('entry-date').value=todayISO();
+  const updated=(window._records||[]).find(x=>x.id===r.id);
+  if(updated)renderEntries(updated);
+}
+async function deleteEntry(recordId,entryId){
+  const r=(window._records||[]).find(x=>x.id===recordId);if(!r)return;
+  if(!confirm('¿Eliminar esta entrada?'))return;
+  const bitacora=(r.bitacora||[]).filter(e=>e.id!==entryId);
+  await window._saveBitacora(r.id,bitacora);
+  const updated=(window._records||[]).find(x=>x.id===r.id);
+  if(updated)renderEntries(updated);
+}
+function closeBitacora(){document.getElementById('bitacora-overlay').classList.remove('open');bitacoraRecordId=null;}
+
+/* ═══ ADMIN USUARIOS ═══ */
+let editingUserId=null;
+function renderAdminPanel(){
+  window.renderAdminPanel=renderAdminPanel;
+  const users=loadUsers();
+  document.getElementById('users-grid').innerHTML=users.map(u=>`
+    <div class="user-card">
+      <div class="uc-avatar" style="background:${avColor(u.username)}">${initials(u.name)}</div>
+      <div class="uc-info">
+        <div class="uname">${escHtml(u.name)}</div>
+        <div class="ulogin">@${escHtml(u.username)}</div>
+        <div class="urole"><span class="role-badge ${u.role}">${u.role==='admin'?'🔑 Admin':'👁 Viewer'}</span></div>
+      </div>
+      <div class="uc-actions">
+        <button class="icon-btn" onclick="openEditUser('${u.id}')">✏️</button>
+        ${u.id!==currentUser?.id?`<button class="icon-btn del" onclick="deleteUser('${u.id}')">🗑️</button>`:''}
+      </div>
+    </div>`).join('');
+}
+function openAddUser(){editingUserId=null;document.getElementById('user-modal-title').textContent='Agregar Usuario';['u-name','u-user','u-pass'].forEach(id=>document.getElementById(id).value='');document.getElementById('u-role').value='viewer';document.getElementById('u-pass-hint').style.display='none';document.getElementById('u-error').style.display='none';document.getElementById('user-overlay').classList.add('open');}
+function openEditUser(id){editingUserId=id;const u=loadUsers().find(x=>x.id===id);if(!u)return;document.getElementById('user-modal-title').textContent='Editar Usuario';document.getElementById('u-name').value=u.name;document.getElementById('u-user').value=u.username;document.getElementById('u-pass').value='';document.getElementById('u-role').value=u.role;document.getElementById('u-pass-hint').style.display='';document.getElementById('u-error').style.display='none';document.getElementById('user-overlay').classList.add('open');}
+function closeUserModal(){document.getElementById('user-overlay').classList.remove('open');editingUserId=null;}
+async function saveUser(){
+  const name=sanitize(document.getElementById('u-name').value.trim(),100);
+  const username=document.getElementById('u-user').value.trim().toLowerCase().replace(/\s+/g,'');
+  const pass=document.getElementById('u-pass').value;
+  const role=document.getElementById('u-role').value;
+  const errEl=document.getElementById('u-error');errEl.style.display='none';
+  function showErr(m){errEl.textContent='⚠️ '+m;errEl.style.display='block';}
+  if(!name||!username){showErr('Nombre y usuario son obligatorios.');return;}
+  if(!editingUserId&&!pass){showErr('La contraseña es obligatoria.');return;}
+  if(pass&&pass.length<6){showErr('Mínimo 6 caracteres.');return;}
+  const users=loadUsers();
+  const dup=users.find(u=>u.username===username&&u.id!==editingUserId);
+  if(dup){showErr('Ya existe un usuario con ese login.');return;}
+  const pwHash=pass?await sha256(pass):users.find(u=>u.id===editingUserId)?.pwHash||'';
+  const userData={id:editingUserId||'u'+Date.now(),name,username,pwHash,role,updatedAt:new Date().toISOString()};
+  showSyncToast('Guardando usuario...',3000);
+  try{await window._saveUser(userData);if(editingUserId===currentUser?.id){currentUser={...currentUser,name,username,role};applyUserUI();}showSyncToast('✅ Usuario guardado');closeUserModal();}
+  catch(err){showErr('Error: '+err.message);}
+}
+async function deleteUser(id){
+  if(BUILTIN_USERS.find(b=>b.id===id)){alert('No puedes eliminar usuarios base.');return;}
+  if(id===currentUser?.id){alert('No puedes eliminarte a ti mismo.');return;}
+  const u=loadUsers().find(x=>x.id===id);
+  if(!confirm(`¿Eliminar al usuario "${u?.name}"?`))return;
+  await window._deleteUser(id);
+}
+
+/* ═══ DASHBOARD ═══ */
+function renderDashboard(){
+  window.renderDashboard=renderDashboard;
+  const records=window._records||[];
+  const asesorias=records.filter(r=>r.tipo==='asesoria');
+  const contractuales=records.filter(r=>r.tipo==='contractual');
+  const finalizados=records.filter(r=>estadoIsTerminal(r.tipo,r.estado));
+  const tot=records.length;
+
+  // KPIs con porcentajes
+  document.getElementById('d-total').textContent=tot;
+  document.getElementById('d-asesoria').textContent=asesorias.length;
+  document.getElementById('d-contractual').textContent=contractuales.length;
+  document.getElementById('d-finalizados').textContent=finalizados.length;
+  const pct=v=>tot?Math.round(v/tot*100)+'%':'—';
+  document.getElementById('d-pct-total').textContent='100%';
+  document.getElementById('d-pct-asesoria').textContent=pct(asesorias.length);
+  document.getElementById('d-pct-contractual').textContent=pct(contractuales.length);
+  document.getElementById('d-pct-finalizados').textContent=pct(finalizados.length);
+
+  // Fecha
+  const now=new Date();
+  const dl=document.getElementById('dash-date-label');
+  if(dl) dl.textContent=now.toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'})+' · ';
+
+  // Barras horizontales por estado — Asesoría
+  renderEstadoList('dash-estado-asesoria', asesorias, ESTADOS.asesoria,
+    ['#FCD34D','#7DD3FC','#C4B5FD','#6EE7B7']);
+
+  // Barras horizontales por estado — Contractual
+  renderEstadoList('dash-estado-contractual', contractuales, ESTADOS.contractual,
+    ['#FCD34D','#67E8F9','#93C5FD','#FDBA74','#C4B5FD','#6EE7B7','#FCA5A5']);
+
+  // Tabla por abogado con vencidos
+  const byAbog={};
+  records.forEach(r=>{
+    const k=r.abogado||'Sin asignar';
+    if(!byAbog[k]) byAbog[k]={total:0,asesoria:0,contractual:0,vencidos:0};
+    byAbog[k].total++;
+    byAbog[k][r.tipo||'asesoria']=(byAbog[k][r.tipo||'asesoria']||0)+1;
+    if(!estadoIsTerminal(r.tipo,r.estado)&&r.fechaAdjudicacion&&diasHasta(r.fechaAdjudicacion)<=0)
+      byAbog[k].vencidos++;
+  });
+  const abNames=Object.keys(byAbog).sort();
+  const abogBody=document.getElementById('dash-abog-body');
+  document.getElementById('dtc-abog').textContent=abNames.length;
+  if(abogBody) abogBody.innerHTML=abNames.length?abNames.map(n=>{
+    const d=byAbog[n];
+    return `<tr>
+      <td style="font-weight:600;color:var(--navy);font-size:12px;">${escHtml(n)}</td>
+      <td><span class="nc" style="color:var(--navy);">${d.total}</span></td>
+      <td><span class="nc sky">${d.asesoria||0}</span></td>
+      <td><span class="nc teal">${d.contractual||0}</span></td>
+      <td>${d.vencidos>0?`<span style="background:var(--red-light);color:var(--red);font-family:var(--mono);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">⚠️ ${d.vencidos}</span>`:`<span style="color:var(--green);font-family:var(--mono);font-weight:600;font-size:11px;">✅ 0</span>`}</td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="5" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin datos</td></tr>`;
+
+  // Tabla por GIT
+  const byGit={};
+  records.forEach(r=>{
+    const k=r.git?r.git.replace('GIT ',''):'Sin GIT';
+    if(!byGit[k]) byGit[k]={total:0,asesoria:0,contractual:0};
+    byGit[k].total++;
+    byGit[k][r.tipo||'asesoria']=(byGit[k][r.tipo||'asesoria']||0)+1;
+  });
+  const gitNames=Object.keys(byGit).sort((a,b)=>byGit[b].total-byGit[a].total);
+  const gitBody=document.getElementById('dash-git-body');
+  document.getElementById('dtc-git').textContent=gitNames.length;
+  if(gitBody) gitBody.innerHTML=gitNames.length?gitNames.map(n=>{
+    const d=byGit[n];
+    return `<tr>
+      <td style="font-weight:500;color:var(--navy);font-size:11px;">${escHtml(n)}</td>
+      <td><span class="nc" style="color:var(--navy);">${d.total}</span></td>
+      <td><span class="nc sky">${d.asesoria||0}</span></td>
+      <td><span class="nc teal">${d.contractual||0}</span></td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="4" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin datos</td></tr>`;
+
+  renderPromedioAbogado(records);
+}
+
+function renderEstadoList(containerId, records, estados, colors){
+  const el=document.getElementById(containerId); if(!el) return;
+  const tot=records.length;
+  if(!tot){
+    el.innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Sin registros</div>`;
+    return;
+  }
+  el.innerHTML=estados.map((est,i)=>{
+    const v=records.filter(r=>r.estado===est.value).length;
+    const pct=Math.round(v/tot*100);
+    const color=colors[i]||'#93C5FD';
+    return `<div class="estado-row">
+      <span class="estado-row-label">${escHtml(est.label)}</span>
+      <div class="estado-row-bar"><div class="estado-row-fill" style="width:${pct}%;background:${color};"></div></div>
+      <span class="estado-row-count">${v}</span>
+      <span class="estado-row-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+function renderPromedioAbogado(records){
+  const tbody=document.getElementById('dash-avg-body');if(!tbody)return;
+  // Solo registros finalizados con fecha asignación y entrega real o entrega
+  const finalizados=records.filter(r=>{
+    if(!estadoIsTerminal(r.tipo,r.estado)) return false;
+    if(!r.fechaAsignacion) return false;
+    return !!(r.fechaAdjudicacion||r.fechaAdjudicacion);
+  });
+  if(!finalizados.length){
+    tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin procesos finalizados con fechas registradas</td></tr>`;
+    return;
+  }
+  // Calcular días por abogado
+  const byAbog={};
+  finalizados.forEach(r=>{
+    const k=r.abogado||'Sin asignar';
+    if(!byAbog[k]) byAbog[k]={dias:[],total:0};
+    const inicio=new Date(r.fechaAsignacion+'T00:00:00');
+    const fin=new Date((r.fechaAdjudicacion||r.fechaAdjudicacion)+'T00:00:00');
+    const d=Math.round((fin-inicio)/(1000*60*60*24));
+    if(d>=0){byAbog[k].dias.push(d);byAbog[k].total++;}
+  });
+  const abogados=Object.keys(byAbog).sort((a,b)=>{
+    const avgA=byAbog[a].dias.reduce((s,v)=>s+v,0)/(byAbog[a].dias.length||1);
+    const avgB=byAbog[b].dias.reduce((s,v)=>s+v,0)/(byAbog[b].dias.length||1);
+    return avgA-avgB;
+  });
+  const maxAvg=Math.max(...abogados.map(k=>{const d=byAbog[k].dias;return d.reduce((s,v)=>s+v,0)/(d.length||1);}),1);
+  tbody.innerHTML=abogados.map(k=>{
+    const d=byAbog[k].dias;
+    const avg=Math.round(d.reduce((s,v)=>s+v,0)/(d.length||1));
+    const pct=Math.min(Math.round((avg/maxAvg)*100),100);
+    const color=avg<=15?'#059669':avg<=30?'#D97706':'#DC2626';
+    return `<tr>
+      <td style="font-weight:500;color:var(--navy);font-size:12px;">${escHtml(k)}</td>
+      <td style="text-align:center;font-family:var(--mono);font-size:12px;">${d.length}</td>
+      <td style="text-align:center;">
+        <span style="font-family:var(--mono);font-size:14px;font-weight:700;color:${color};">${avg}</span>
+        <span style="font-size:10px;color:var(--muted);margin-left:3px;">días</span>
+      </td>
+      <td style="min-width:100px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="flex:1;height:8px;background:#E2E8F0;border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${color};border-radius:4px;transition:width .4s;"></div>
+          </div>
+          <span style="font-size:10px;color:var(--muted);white-space:nowrap;">${pct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function drawStateBar(canvasId,title,records,estados,colors){
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-8,H=200;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+  if(!records.length){ctx.fillStyle='#94A3B8';ctx.font='13px IBM Plex Sans,sans-serif';ctx.textAlign='center';ctx.fillText('Sin datos',W/2,H/2);return;}
+  const counts=estados.map(e=>records.filter(r=>r.estado===e.value).length);
+  const maxVal=Math.max(...counts,1);
+  const PAD_L=30,PAD_R=20,PAD_T=40,PAD_B=44;
+  const cW=W-PAD_L-PAD_R,cH=H-PAD_T-PAD_B;
+  const gW=cW/estados.length,bW=Math.min(gW*0.55,60);
+  // Cuadrícula
+  for(let i=0;i<=4;i++){const y=PAD_T+cH-(cH*i/4);ctx.beginPath();ctx.strokeStyle='#E2E8F0';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.moveTo(PAD_L,y);ctx.lineTo(W-PAD_R,y);ctx.stroke();ctx.setLineDash([]);}
+  counts.forEach((v,i)=>{
+    const x=PAD_L+gW*i+(gW-bW)/2;
+    const bh=v===0?3:Math.max((v/maxVal)*cH,4);
+    const y=PAD_T+cH-bh;
+    ctx.fillStyle=colors[i]||'#93C5FD';
+    ctx.shadowColor='rgba(0,0,0,.08)';ctx.shadowBlur=5;ctx.shadowOffsetY=2;
+    // Barras redondeadas arriba
+    ctx.beginPath();ctx.moveTo(x+5,y);ctx.lineTo(x+bW-5,y);ctx.quadraticCurveTo(x+bW,y,x+bW,y+5);ctx.lineTo(x+bW,y+bh);ctx.lineTo(x,y+bh);ctx.lineTo(x,y+5);ctx.quadraticCurveTo(x,y,x+5,y);ctx.closePath();ctx.fill();
+    ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+    // Número
+    ctx.fillStyle='#0F1F3D';ctx.font='bold 13px IBM Plex Mono,monospace';ctx.textAlign='center';ctx.fillText(v,x+bW/2,y-8);
+    // Etiqueta
+    const lbl=estados[i].label.length>12?estados[i].label.slice(0,10)+'…':estados[i].label;
+    ctx.fillStyle='#64748B';ctx.font='10px IBM Plex Sans,sans-serif';
+    ctx.save();ctx.translate(x+bW/2,PAD_T+cH+10);ctx.rotate(-0.4);ctx.fillText(lbl,0,0);ctx.restore();
+  });
+}
+
+function renderSumTable(tbodyId,names,byData){
+  const tbody=document.getElementById(tbodyId);if(!tbody)return;
+  if(!names.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin datos</td></tr>';return;}
+  tbody.innerHTML=names.map(n=>{const d=byData[n];return`<tr><td style="font-weight:500;color:var(--navy)">${escHtml(n)}</td><td class="nc" style="text-align:center;">${d.total}</td><td style="text-align:center;color:var(--purple);font-family:var(--mono);font-weight:600;">${d.asesoria||0}</td><td style="text-align:center;color:var(--teal);font-family:var(--mono);font-weight:600;">${d.contractual||0}</td></tr>`;}).join('');
+}
+
+/* ═══ PDF INFORMES PROFESIONALES ═══ */
+function openPdfModal(){
+  // Poblar selector de abogados con los que tienen registros
+  const records=window._records||[];
+  const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+  const sel=document.getElementById('pdf-abogado-select');
+  sel.innerHTML='<option value="">— Seleccionar abogado —</option>'+
+    abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
+  document.getElementById('pdf-overlay').classList.add('open');
+}
+function closePdfModal(){ document.getElementById('pdf-overlay').classList.remove('open'); }
+
+function generarPDFIndividual(){
+  const sel=document.getElementById('pdf-abogado-select');
+  const abogado=sel.value;
+  if(!abogado){
+    sel.style.borderColor='var(--red)';
+    setTimeout(()=>sel.style.borderColor='',2000);
+    alert('Selecciona un abogado para generar el informe.');
+    return;
+  }
+  closePdfModal();
+  const records=window._records||[];
+  const proc=records.filter(r=>r.abogado===abogado);
+  if(!proc.length){alert(`No hay registros asignados a ${abogado}.`);return;}
+  pdfAbogadoIndividual(abogado, proc, records);
+}
+
+function pdfAbogadoIndividual(abogado, proc, allRecords){
+  const fin=proc.filter(r=>estadoIsTerminal(r.tipo,r.estado));
+  const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+  const asesorias=proc.filter(r=>r.tipo==='asesoria');
+  const contractuales=proc.filter(r=>r.tipo==='contractual');
+  const vencidos=activos.filter(r=>r.fechaAdjudicacion&&diasHasta(r.fechaAdjudicacion)<0);
+  const proxHoy=activos.filter(r=>r.fechaAdjudicacion&&diasHasta(r.fechaAdjudicacion)===0);
+  const prox3=activos.filter(r=>{const d=diasHasta(r.fechaAdjudicacion);return d>0&&d<=3;});
+  const prox7=activos.filter(r=>{const d=diasHasta(r.fechaAdjudicacion);return d>3&&d<=7;});
+  const fechaHoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
+
+  // Promedio de días
+  const diasList=fin.filter(r=>r.fechaAsignacion&&(r.fechaAdjudicacion||r.fechaAdjudicacion)).map(r=>{
+    const d=Math.round((new Date((r.fechaAdjudicacion||r.fechaAdjudicacion)+'T00:00:00')-new Date(r.fechaAsignacion+'T00:00:00'))/(1000*60*60*24));
+    return d>=0?d:null;
+  }).filter(d=>d!==null);
+  const avg=diasList.length?Math.round(diasList.reduce((a,b)=>a+b,0)/diasList.length):null;
+  const avgColor=avg===null?PDF_GRAY:avg<=15?PDF_GREEN:avg<=30?'#D97706':PDF_RED;
+
+  // KPIs
+  const kpis=pdfKpiGrid([
+    {label:'Total Procesos',   value:proc.length,       color:PDF_NAVY,  sub:'Asignados a este abogado'},
+    {label:'Asesorías Previas',value:asesorias.length,  color:PDF_SKY,   sub:`${Math.round(asesorias.length/Math.max(proc.length,1)*100)}% del total`},
+    {label:'Contractuales',    value:contractuales.length,color:PDF_TEAL, sub:`${Math.round(contractuales.length/Math.max(proc.length,1)*100)}% del total`},
+    {label:'Finalizados',      value:fin.length,         color:PDF_GREEN, sub:`${Math.round(fin.length/Math.max(proc.length,1)*100)}% completados`},
+    {label:'Activos',          value:activos.length,     color:'#7C3AED', sub:'En trámite'},
+    {label:'Promedio de Días', value:avg!==null?avg+'d':'N/A', color:avgColor, sub:'Asignación → Finalización'},
+    {label:'Vencidos',         value:vencidos.length,    color:PDF_RED,   sub:'Requieren acción'},
+    {label:'Alertas (hoy+3d)', value:proxHoy.length+prox3.length, color:'#EA580C', sub:'Atención prioritaria'},
+  ]);
+
+  // Texto descriptivo
+  const intro=pdfIntroBox(`Este informe presenta el detalle completo de los procesos asignados al abogado <strong>${abogado}</strong> a la fecha ${fechaHoy}. Incluye indicadores individuales de gestión, análisis de alertas de vencimiento, bitácora de avances registrados y conclusiones automatizadas basadas en el estado actual de la cartera.`);
+
+  // Conclusiones
+  let conclusiones='';
+  const puntos=[];
+  if(proc.length===0) puntos.push({tipo:'info',txt:'No hay procesos asignados actualmente.'});
+  else {
+    puntos.push({tipo:'info',txt:`La cartera de <strong>${abogado}</strong> comprende <strong>${proc.length} proceso${proc.length!==1?'s':''}</strong>: ${asesorias.length} asesoría${asesorias.length!==1?'s':''} previa${asesorias.length!==1?'s':''} y ${contractuales.length} proceso${contractuales.length!==1?'s':''} contractual${contractuales.length!==1?'es':''}.`});
+    if(fin.length>0&&avg!==null) puntos.push({tipo:avg<=15?'ok':avg<=30?'warn':'alert',txt:`El tiempo promedio de atención es de <strong>${avg} días</strong> desde la asignación hasta la finalización. ${avg<=15?'Este indicador refleja un excelente nivel de respuesta.':avg<=30?'Se recomienda revisar procesos que puedan optimizarse.':'Se sugiere analizar los factores que prolongan los tiempos de cierre.'}`});
+    if(fin.length===0) puntos.push({tipo:'info',txt:'Aún no hay procesos finalizados en la cartera de este abogado.'});
+    const pctFin=Math.round(fin.length/Math.max(proc.length,1)*100);
+    if(pctFin>=70) puntos.push({tipo:'ok',txt:`El <strong>${pctFin}%</strong> de los procesos asignados han sido finalizados, lo que refleja un alto nivel de productividad.`});
+    else if(pctFin>=40) puntos.push({tipo:'warn',txt:`El <strong>${pctFin}%</strong> de los procesos han sido finalizados. Se recomienda hacer seguimiento a los procesos activos para avanzar hacia el cierre.`});
+    if(vencidos.length>0) puntos.push({tipo:'alert',txt:`⚠️ Hay <strong>${vencidos.length} proceso${vencidos.length!==1?'s':''} vencido${vencidos.length!==1?'s':''}</strong> que superaron la fecha de entrega. Requieren gestión inmediata.`});
+    else puntos.push({tipo:'ok',txt:'No hay procesos vencidos en la cartera. Excelente cumplimiento de plazos.'});
+    if(proxHoy.length+prox3.length>0) puntos.push({tipo:'warn',txt:`<strong>${proxHoy.length+prox3.length} proceso${proxHoy.length+prox3.length!==1?'s':''}</strong> vence${proxHoy.length+prox3.length===1?'':'n'} en los próximos 3 días o hoy. Se requiere atención prioritaria.`});
+    if(prox7.length>0) puntos.push({tipo:'info',txt:`<strong>${prox7.length} proceso${prox7.length!==1?'s':''}</strong> vence${prox7.length===1?'':'n'} entre 4 y 7 días. Mantener seguimiento activo.`});
+  }
+  conclusiones=pdfConclusions(puntos);
+
+  // Tabla resumen de procesos
+  const tablaRows=proc.slice().sort((a,b)=>(a.ticket||'').localeCompare(b.ticket||'')).map((r,i)=>{
+    const est=getEstado(r.tipo,r.estado);
+    const d=r.fechaAdjudicacion&&!estadoIsTerminal(r.tipo,r.estado)?diasHasta(r.fechaAdjudicacion):null;
+    const alerta=d!==null?(d<0?`<b style="color:${PDF_RED};">🔴 ${Math.abs(d)}d vencido</b>`:d===0?`<b style="color:${PDF_RED};">🔴 Hoy</b>`:d<=3?`<span style="color:#C2410C;">🟠 ${d}d</span>`:d<=7?`<span style="color:#92400E;">🟡 ${d}d</span>`:'✅'):(estadoIsTerminal(r.tipo,r.estado)?'<span style="color:'+PDF_GREEN+';">Finalizado</span>':'—');
+    const tipoBg=r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE';
+    const tipoColor=r.tipo==='asesoria'?PDF_SKY:PDF_TEAL;
+    return [
+      `<b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
+      `<span style="padding:2px 6px;border-radius:8px;font-size:10px;font-weight:700;background:${tipoBg};color:${tipoColor};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,
+      `<span style="font-size:10px;">${escHtml((r.objeto||'—').slice(0,52))}${(r.objeto||'').length>52?'…':''}</span>`,
+      `<span style="padding:2px 6px;border-radius:6px;font-size:10px;background:#F1F5F9;color:${PDF_NAVY};font-weight:600;">${est.label}</span>`,
+      `<span style="font-family:monospace;font-size:10px;">${fmtDate(r.fechaAsignacion)||'—'}</span>`,
+      `<span style="font-family:monospace;font-size:10px;">${fmtDate(r.fechaAdjudicacion)||'—'}</span>`,
+      alerta,
+    ];
+  });
+
+  const tablaHeader=['Ticket','Tipo','Objeto','Estado','F. Asignación','F. Adjudicación','Alerta'];
+  const tablaWidths=['8%','11%','30%','15%','12%','12%','12%'];
+
+  // Bitácora de avances
+  let bitacora='';
+  const conAvances=proc.filter(r=>(r.bitacora||[]).length>0);
+  if(conAvances.length){
+    bitacora=pdfSectionTitle('📓','Bitácora de Avances');
+    conAvances.forEach(r=>{
+      const entradas=[...(r.bitacora||[])].sort((a,b)=>b.date.localeCompare(a.date));
+      const est=getEstado(r.tipo,r.estado);
+      bitacora+=`<div style="margin-bottom:16px;page-break-inside:avoid;">
+        <div style="background:${PDF_BG};border-left:4px solid ${r.tipo==='asesoria'?PDF_SKY:PDF_TEAL};border-radius:0 8px 8px 0;padding:8px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-family:monospace;font-weight:700;color:${PDF_NAVY};background:#DBEAFE;padding:2px 8px;border-radius:4px;">${escHtml(r.ticket||'—')}</span>
+          <span style="font-size:12px;color:${PDF_NAVY};font-weight:600;flex:1;">${escHtml((r.objeto||'').slice(0,60))}${(r.objeto||'').length>60?'…':''}</span>
+          <span style="padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:#F1F5F9;color:${PDF_NAVY};">${est.label}</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+          <thead><tr style="background:${PDF_NAVY};color:white;">
+            <th style="padding:7px 10px;text-align:left;width:12%;">Fecha</th>
+            <th style="padding:7px 10px;text-align:left;width:16%;">Registrado por</th>
+            <th style="padding:7px 10px;text-align:left;">Descripción del avance</th>
+          </tr></thead>
+          <tbody>${entradas.map((e,i)=>`<tr style="${i%2===0?'':'background:#F8FAFC;'}border-bottom:1px solid ${PDF_BORDER};">
+            <td style="padding:7px 10px;font-family:monospace;font-weight:600;color:${PDF_SKY};white-space:nowrap;">${fmtDate(e.date)||e.date||'—'}</td>
+            <td style="padding:7px 10px;color:${PDF_GRAY};">${escHtml(e.author||'—')}</td>
+            <td style="padding:7px 10px;">${escHtml(e.text||'')}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>`;
+    });
+  } else {
+    bitacora=pdfSectionTitle('📓','Bitácora de Avances')+
+      `<div style="padding:14px;color:${PDF_GRAY};font-size:12px;font-style:italic;background:${PDF_BG};border-radius:8px;">No hay entradas de bitácora registradas para los procesos de este abogado.</div>`;
+  }
+
+  abrirPdf(`
+    ${pdfHeader(`Informe Individual — ${abogado}`,`Reporte de gestión contractual · ${fechaHoy}`)}
+    ${intro}
+    ${pdfSectionTitle('📊','Indicadores de Gestión')}
+    ${kpis}
+    ${pdfSectionTitle('📋','Análisis y Conclusiones')}
+    ${conclusiones}
+    ${pdfSectionTitle('📁','Detalle de Procesos Asignados')}
+    ${pdfTable(tablaHeader,tablaRows,tablaWidths)}
+    ${bitacora}
+    ${pdfFooter()}
+  `);
+}
+
+const PDF_NAVY='#0F1F3D', PDF_GOLD='#F59E0B', PDF_SKY='#0284C7',
+      PDF_TEAL='#0891B2', PDF_GREEN='#059669', PDF_RED='#DC2626',
+      PDF_GRAY='#64748B', PDF_BORDER='#E2E8F0', PDF_BG='#F8FAFC';
+
+function pdfHeader(titulo, subtitulo=''){
+  const fecha=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  return `
+  <div class="no-print" style="display:flex;gap:10px;margin-bottom:28px;">
+    <button onclick="window.print()" style="background:${PDF_NAVY};color:white;border:none;padding:10px 22px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:.03em;">\u{1F5A8} Imprimir / Guardar PDF</button>
+    <button onclick="window.close()" style="background:white;color:${PDF_GRAY};border:1px solid ${PDF_BORDER};padding:10px 16px;border-radius:7px;cursor:pointer;font-size:13px;">Cerrar</button>
+  </div>
+  <div style="border:1px solid ${PDF_BORDER};border-radius:10px;overflow:hidden;margin-bottom:28px;">
+    <div style="background:${PDF_NAVY};padding:20px 28px;display:flex;align-items:flex-start;gap:18px;">
+      <div style="width:4px;background:${PDF_GOLD};border-radius:2px;align-self:stretch;flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div style="color:rgba(255,255,255,.55);font-size:9px;text-transform:uppercase;letter-spacing:.18em;margin-bottom:3px;">República de Colombia</div>
+        <div style="color:white;font-size:15px;font-weight:700;margin-bottom:1px;">Ministerio de Relaciones Exteriores</div>
+        <div style="color:rgba(255,255,255,.55);font-size:10px;">Dirección Administrativa y Financiera · Seguimiento Contractual</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="color:rgba(255,255,255,.4);font-size:9px;text-transform:uppercase;letter-spacing:.1em;">Fecha de emisión</div>
+        <div style="color:white;font-size:11px;font-weight:600;margin-top:2px;">${fecha}</div>
+        <div style="color:rgba(255,255,255,.4);font-size:10px;">${hora} horas</div>
+      </div>
+    </div>
+    <div style="background:${PDF_GOLD};height:3px;"></div>
+    <div style="background:#FEFCE8;padding:16px 28px;">
+      <div style="font-size:17px;font-weight:700;color:${PDF_NAVY};margin-bottom:3px;">${titulo}</div>
+      ${subtitulo?`<div style="font-size:12px;color:${PDF_GRAY};">${subtitulo}</div>`:''}
+    </div>
+  </div>`;
+}
+
+function pdfConclusions(puntos){
+  const tipos={
+    ok:    {bg:'#F0FDF4',border:'#86EFAC',icon:'✅',color:'#166534'},
+    warn:  {bg:'#FFFBEB',border:'#FDE68A',icon:'⚠️',color:'#92400E'},
+    alert: {bg:'#FEF2F2',border:'#FECACA',icon:'🔴',color:'#991B1B'},
+    info:  {bg:'#EFF6FF',border:'#BFDBFE',icon:'ℹ️',color:'#1E40AF'},
+  };
+  return `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px;">
+    ${puntos.map(p=>{const t=tipos[p.tipo]||tipos.info;return `<div style="background:${t.bg};border:1px solid ${t.border};border-left:4px solid ${t.border};border-radius:0 8px 8px 0;padding:10px 14px;font-size:12px;color:${t.color};line-height:1.6;">${p.txt}</div>`;}).join('')}
+  </div>`;
+}
+
+function pdfIntroBox(texto){
+  return `<div style="background:#EFF6FF;border-left:4px solid ${PDF_SKY};border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:24px;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:${PDF_SKY};font-weight:700;margin-bottom:6px;">Descripción del informe</div>
+    <div style="font-size:12px;color:#1E293B;line-height:1.7;">${texto}</div>
+  </div>`;
+}
+
+function pdfAlertBox(texto, tipo='info'){
+  const cfg={
+    info:  {bg:'#EFF6FF',border:PDF_SKY,    label:'ℹ️ Observación',   color:PDF_SKY},
+    warn:  {bg:'#FFFBEB',border:'#D97706',  label:'⚠️ Atención',      color:'#92400E'},
+    danger:{bg:'#FEF2F2',border:PDF_RED,    label:'🔴 Alerta Crítica', color:'#991B1B'},
+    ok:    {bg:'#F0FDF4',border:PDF_GREEN,  label:'✅ Conclusión',     color:'#065F46'},
+  }[tipo]||{bg:'#F8FAFC',border:PDF_GRAY,label:'Nota',color:PDF_GRAY};
+  return `<div style="background:${cfg.bg};border-left:4px solid ${cfg.border};border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:12px;">
+    <div style="font-size:10px;font-weight:700;color:${cfg.color};text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">${cfg.label}</div>
+    <div style="font-size:12px;color:#1E293B;line-height:1.65;">${texto}</div>
+  </div>`;
+}
+
+function pdfKpiGrid(kpis){
+  const cols=Math.min(kpis.length,4);
+  return `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:10px;margin-bottom:24px;">
+    ${kpis.map(k=>`<div style="background:white;border:1px solid ${PDF_BORDER};border-radius:8px;padding:14px 16px;border-top:3px solid ${k.color};">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:${PDF_GRAY};margin-bottom:6px;">${k.label}</div>
+      <div style="font-size:26px;font-weight:700;color:${k.color};font-family:monospace;line-height:1;margin-bottom:4px;">${k.value}</div>
+      ${k.sub?`<div style="font-size:10px;color:${PDF_GRAY};">${k.sub}</div>`:''}
+    </div>`).join('')}
+  </div>`;
+}
+
+function pdfSectionTitle(icon, title){
+  return `<div style="display:flex;align-items:center;gap:10px;margin:28px 0 14px;padding-bottom:8px;border-bottom:2px solid ${PDF_NAVY};">
+    <span style="font-size:15px;">${icon}</span>
+    <span style="font-size:12px;font-weight:700;color:${PDF_NAVY};text-transform:uppercase;letter-spacing:.09em;">${title}</span>
+  </div>`;
+}
+
+function pdfTable(headers, rows, colWidths=[]){
+  const ths=headers.map((h,i)=>`<th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:white;background:${PDF_NAVY};width:${colWidths[i]||'auto'};">${h}</th>`).join('');
+  const trs=rows.map((r,ri)=>`<tr style="background:${ri%2===0?'white':'#F8FAFC'};">${r.map(c=>`<td style="padding:8px 12px;font-size:11px;color:#1E293B;border-bottom:1px solid ${PDF_BORDER};">${c??'—'}</td>`).join('')}</tr>`).join('');
+  return `<table style="width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid ${PDF_BORDER};margin-bottom:20px;">
+    <thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
+}
+
+function pdfFooter(){
+  return `<div style="margin-top:40px;padding-top:12px;border-top:1px solid ${PDF_BORDER};display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-size:9px;color:${PDF_GRAY};">Ministerio de Relaciones Exteriores de Colombia · Sistema de Seguimiento Contractual</div>
+    <div style="font-size:9px;color:${PDF_GRAY};">Documento de uso interno · ${new Date().toLocaleString('es-CO')}</div>
+  </div>`;
+}
+
+function abrirPdf(html, titulo='Informe'){
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html lang="es"><head>
+    <meta charset="UTF-8"><title>${titulo}</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0;}
+      body{font-family:Arial,Helvetica,sans-serif;padding:32px 40px;color:#1E293B;background:#fff;font-size:12px;line-height:1.6;max-width:960px;margin:0 auto;}
+      @media print{body{padding:10mm 14mm;}.no-print{display:none!important;}@page{margin:12mm 14mm;size:A4;}}
+      table{border-collapse:collapse;}
+    </style>
+  </head><body>${html}</body></html>`);
+  win.document.close();
+}
+
+function pdfGeneral(records){
+  const asesorias=records.filter(r=>r.tipo==='asesoria');
+  const contractuales=records.filter(r=>r.tipo==='contractual');
+  const finalizados=records.filter(r=>estadoIsTerminal(r.tipo,r.estado));
+  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+  const vencidos=activos.filter(r=>r.fechaAdjudicacion&&diasHasta(r.fechaAdjudicacion)<0);
+  const hoy=activos.filter(r=>r.fechaAdjudicacion&&diasHasta(r.fechaAdjudicacion)===0);
+  const prox3=activos.filter(r=>{const d=diasHasta(r.fechaAdjudicacion);return d>0&&d<=3;});
+  const pctFin=records.length?Math.round(finalizados.length/records.length*100):0;
+  const pctVenc=activos.length?Math.round(vencidos.length/activos.length*100):0;
+  const rows=records.slice().sort((a,b)=>(a.tipo||'').localeCompare(b.tipo||'')||(a.ticket||'').localeCompare(b.ticket||'')).map(r=>{
+    const est=getEstado(r.tipo,r.estado);
+    const d=r.fechaAdjudicacion&&!estadoIsTerminal(r.tipo,r.estado)?diasHasta(r.fechaAdjudicacion):null;
+    const alerta=d===null?'Finalizado':d<0?`<span style="color:${PDF_RED};font-weight:700;">Vencido (${Math.abs(d)}d)</span>`:d===0?`<span style="color:${PDF_RED};font-weight:700;">Hoy</span>`:d<=3?`<span style="color:#C2410C;">Urgente (${d}d)</span>`:d<=7?`<span style="color:#D97706;">Próximo (${d}d)</span>`:'Al día';
+    return [
+      `<b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
+      `<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE'};color:${r.tipo==='asesoria'?PDF_SKY:PDF_TEAL};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,
+      `<span style="font-size:10px;">${escHtml((r.objeto||'').slice(0,50))}${(r.objeto||'').length>50?'…':''}</span>`,
+      escHtml(r.abogado||'—'),
+      `<span style="padding:2px 6px;border-radius:8px;font-size:10px;background:#EFF6FF;color:${PDF_NAVY};font-weight:600;">${est.label}</span>`,
+      fmtDate(r.fechaAdjudicacion)||'—', alerta,
+    ];
+  });
+  let conclusiones='';
+  if(vencidos.length>0) conclusiones+=pdfAlertBox(`Existen <strong>${vencidos.length} proceso${vencidos.length!==1?'s':''} vencido${vencidos.length!==1?'s':''}</strong> que han superado su fecha de entrega programada, representando el <strong>${pctVenc}%</strong> de los procesos activos. Requieren atención inmediata.`,'danger');
+  if(hoy.length>0) conclusiones+=pdfAlertBox(`<strong>${hoy.length} proceso${hoy.length!==1?'s':''}</strong> tienen fecha de entrega para el día de hoy. Se recomienda verificar su estado antes del cierre de la jornada.`,'warn');
+  if(prox3.length>0) conclusiones+=pdfAlertBox(`<strong>${prox3.length} proceso${prox3.length!==1?'s':''}</strong> vencen en los próximos 3 días. El equipo debe priorizar su atención.`,'warn');
+  if(pctFin>=70) conclusiones+=pdfAlertBox(`El nivel de cumplimiento general es satisfactorio: <strong>${pctFin}%</strong> de los procesos han sido finalizados exitosamente.`,'ok');
+  else if(pctFin<40&&records.length>0) conclusiones+=pdfAlertBox(`El porcentaje de procesos finalizados es del <strong>${pctFin}%</strong>. Se recomienda revisar la capacidad operativa del equipo y la distribución de la carga.`,'warn');
+  if(!conclusiones) conclusiones=pdfAlertBox('El estado general de los procesos es normal. No se identifican alertas críticas en la fecha de emisión de este informe.','ok');
+  abrirPdf(`
+    ${pdfHeader('Informe General de Seguimiento Contractual','Consolidado de asesorías previas y procesos contractuales · '+new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long'}))}
+    ${pdfIntroBox('Este informe presenta un consolidado del estado actual de todos los procesos de asesoría previa y contratación registrados en el sistema. Incluye indicadores globales de gestión, tabla consolidada de registros y análisis de alertas con conclusiones automatizadas basadas en los datos actuales.')}
+    ${pdfKpiGrid([{label:'Total Procesos',value:records.length,color:PDF_NAVY,sub:'Registros en el sistema'},{label:'Asesorías Previas',value:asesorias.length,color:PDF_SKY,sub:Math.round(asesorias.length/Math.max(records.length,1)*100)+'% del total'},{label:'Proc. Contractuales',value:contractuales.length,color:PDF_TEAL,sub:Math.round(contractuales.length/Math.max(records.length,1)*100)+'% del total'},{label:'Finalizados',value:finalizados.length,color:PDF_GREEN,sub:pctFin+'% cumplimiento'},{label:'Activos',value:activos.length,color:'#7C3AED',sub:'En trámite'},{label:'Vencidos',value:vencidos.length,color:PDF_RED,sub:'Requieren acción'},{label:'Vencen Hoy',value:hoy.length,color:'#DC2626',sub:'Urgente'},{label:'Vencen 3 Días',value:prox3.length,color:'#EA580C',sub:'Alta prioridad'}])}
+    ${pdfSectionTitle('📋','Análisis y Conclusiones')}${conclusiones}
+    ${pdfSectionTitle('📋','Listado Consolidado de Procesos')}
+    ${pdfTable(['Ticket','Tipo','Objeto del proceso','Abogado','Estado','F. Adjudicación','Alerta'],rows,['7%','9%','28%','15%','13%','10%','14%'])}
+    ${pdfFooter()}`,'Informe General');
+}
+
+function pdfPorAbogado(records){
+  const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+  if(!abogados.length){alert('No hay procesos con abogado asignado.');return;}
+  const metricas=abogados.map(ab=>{
+    const proc=records.filter(r=>r.abogado===ab);
+    const fin=proc.filter(r=>estadoIsTerminal(r.tipo,r.estado));
+    const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+    const venc=activos.filter(r=>r.fechaAdjudicacion&&diasHasta(r.fechaAdjudicacion)<0);
+    const dias=fin.filter(r=>r.fechaAsignacion&&(r.fechaAdjudicacion||r.fechaAdjudicacion)).map(r=>{const d=Math.round((new Date((r.fechaAdjudicacion||r.fechaAdjudicacion)+'T00:00:00')-new Date(r.fechaAsignacion+'T00:00:00'))/(1000*60*60*24));return d>=0?d:null;}).filter(d=>d!==null);
+    const avg=dias.length?Math.round(dias.reduce((a,b)=>a+b,0)/dias.length):null;
+    return{ab,proc,fin,activos,venc,avg};
+  });
+  const resRows=metricas.map(m=>[`<b style="color:${PDF_NAVY};">${escHtml(m.ab)}</b>`,m.proc.length,m.proc.filter(r=>r.tipo==='asesoria').length,m.proc.filter(r=>r.tipo==='contractual').length,m.fin.length,m.activos.length,m.avg!==null?`<span style="font-family:monospace;font-weight:700;color:${m.avg<=15?PDF_GREEN:m.avg<=30?'#D97706':PDF_RED};">${m.avg}d</span>`:'Sin datos',m.venc.length>0?`<span style="color:${PDF_RED};font-weight:700;">⚠️ ${m.venc.length}</span>`:`<span style="color:${PDF_GREEN};">✅ 0</span>`]);
+  const masVencidos=[...metricas].sort((a,b)=>b.venc.length-a.venc.length)[0];
+  const masLento=[...metricas].filter(m=>m.avg!==null).sort((a,b)=>b.avg-a.avg)[0];
+  const masRapido=[...metricas].filter(m=>m.avg!==null).sort((a,b)=>a.avg-b.avg)[0];
+  const masCarga=[...metricas].sort((a,b)=>b.activos.length-a.activos.length)[0];
+  let conclusiones='';
+  if(masCarga?.activos.length>0) conclusiones+=pdfAlertBox(`El abogado <strong>${masCarga.ab}</strong> tiene la mayor carga activa con <strong>${masCarga.activos.length} proceso${masCarga.activos.length!==1?'s':''}</strong> en trámite. Se recomienda evaluar la distribución de trabajo.`,'info');
+  if(masRapido&&masLento&&masRapido.ab!==masLento.ab) conclusiones+=pdfAlertBox(`En tiempos de respuesta, <strong>${masRapido.ab}</strong> registra el mejor promedio con <strong>${masRapido.avg} días</strong>. <strong>${masLento.ab}</strong> presenta el mayor promedio con <strong>${masLento.avg} días</strong> (diferencia: ${masLento.avg-masRapido.avg} días).`,'info');
+  if(masVencidos?.venc.length>0) conclusiones+=pdfAlertBox(`El abogado <strong>${masVencidos.ab}</strong> tiene <strong>${masVencidos.venc.length} proceso${masVencidos.venc.length!==1?'s':''} vencido${masVencidos.venc.length!==1?'s':''}</strong>. Se recomienda revisar estos casos con carácter prioritario.`,'danger');
+  const sinVenc=metricas.filter(m=>m.venc.length===0&&m.proc.length>0);
+  if(sinVenc.length) conclusiones+=pdfAlertBox(`Sin procesos vencidos: <strong>${sinVenc.map(m=>m.ab).join(', ')}</strong>. Se destaca su gestión oportuna.`,'ok');
+  let detalles='';
+  [...metricas].sort((a,b)=>a.ab.localeCompare(b.ab)).forEach(m=>{
+    const rows=m.proc.sort((a,b)=>(a.ticket||'').localeCompare(b.ticket||'')).map(r=>{
+      const est=getEstado(r.tipo,r.estado);
+      const d=r.fechaAdjudicacion&&!estadoIsTerminal(r.tipo,r.estado)?diasHasta(r.fechaAdjudicacion):null;
+      const alerta=d===null?'Finalizado':d<0?`<span style="color:${PDF_RED};font-weight:700;">Vencido</span>`:d===0?`<span style="color:${PDF_RED};">Hoy</span>`:d<=3?`<span style="color:#C2410C;">${d}d</span>`:d<=7?`<span style="color:#D97706;">${d}d</span>`:'Al día';
+      return [`<b style="font-family:monospace;">${escHtml(r.ticket||'—')}</b>`,`<span style="font-size:10px;padding:1px 5px;border-radius:6px;background:${r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE'};color:${r.tipo==='asesoria'?PDF_SKY:PDF_TEAL};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,`<span style="font-size:10px;">${escHtml((r.objeto||'').slice(0,48))}${(r.objeto||'').length>48?'…':''}</span>`,`<span style="padding:1px 6px;border-radius:6px;font-size:10px;background:#F1F5F9;color:${PDF_NAVY};font-weight:600;">${est.label}</span>`,fmtDate(r.fechaAdjudicacion)||'—',alerta];
+    });
+    detalles+=`<div style="margin-bottom:24px;page-break-inside:avoid;"><div style="background:${PDF_BG};border-left:4px solid ${PDF_SKY};border-radius:0 8px 8px 0;padding:10px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><div><div style="font-size:13px;font-weight:700;color:${PDF_NAVY};">⚖️ ${escHtml(m.ab)}</div><div style="font-size:10px;color:${PDF_GRAY};margin-top:2px;">${m.proc.length} procesos · ${m.fin.length} finalizados${m.avg!==null?' · Promedio: '+m.avg+' días':''}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;"><span style="background:#E0F2FE;color:${PDF_SKY};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">Asesorías: ${m.proc.filter(r=>r.tipo==='asesoria').length}</span><span style="background:#CFFAFE;color:${PDF_TEAL};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">Contractuales: ${m.proc.filter(r=>r.tipo==='contractual').length}</span>${m.venc.length>0?`<span style="background:#FEE2E2;color:${PDF_RED};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">⚠️ Vencidos: ${m.venc.length}</span>`:''}</div></div>${pdfTable(['Ticket','Tipo','Objeto','Estado','F. Adjudicación','Alerta'],rows,['8%','11%','34%','16%','12%','15%'])}</div>`;
+  });
+  abrirPdf(`${pdfHeader('Informe de Procesos por Abogado','Distribución de carga de trabajo, rendimiento y alertas por abogado asignado')}${pdfIntroBox('Este informe presenta el estado de los procesos agrupados por abogado asignado. Permite evaluar la distribución de la carga de trabajo, el tiempo promedio de atención desde la asignación hasta la finalización, y detectar situaciones de riesgo como procesos vencidos o próximos a vencer.')}${pdfSectionTitle('📊','Resumen Ejecutivo por Abogado')}${pdfTable(['Abogado','Total','Asesorías','Contractuales','Finalizados','Activos','Promedio','Vencidos'],resRows,['22%','6%','8%','10%','9%','7%','12%','10%'])}${pdfSectionTitle('📋','Análisis y Conclusiones')}${conclusiones}${pdfSectionTitle('📁','Detalle de Procesos por Abogado')}${detalles}${pdfFooter()}`,'Informe por Abogado');
+}
+
+function pdfPorEstado(records){
+  const asesorias=records.filter(r=>r.tipo==='asesoria');
+  const contractuales=records.filter(r=>r.tipo==='contractual');
+  const statsA=ESTADOS.asesoria.map(e=>({...e,count:asesorias.filter(r=>r.estado===e.value).length}));
+  const statsC=ESTADOS.contractual.map(e=>({...e,count:contractuales.filter(r=>r.estado===e.value).length}));
+  const resRowsA=statsA.map(e=>[`<span style="font-weight:600;color:${PDF_NAVY};">${e.label}</span>`,e.count,asesorias.length?Math.round(e.count/asesorias.length*100)+'%':'0%',e.count>0?'●'.repeat(Math.min(e.count,15)):'–']);
+  const resRowsC=statsC.map(e=>[`<span style="font-weight:600;color:${PDF_NAVY};">${e.label}</span>`,e.count,contractuales.length?Math.round(e.count/contractuales.length*100)+'%':'0%',e.count>0?'●'.repeat(Math.min(e.count,15)):'–']);
+  const estadoMayorA=[...statsA].sort((a,b)=>b.count-a.count)[0];
+  const estadoMayorC=[...statsC].sort((a,b)=>b.count-a.count)[0];
+  const aprobados=asesorias.filter(r=>r.estado==='aprobado').length;
+  const contratados=contractuales.filter(r=>r.estado==='contratado').length;
+  const cancelados=contractuales.filter(r=>r.estado==='cancelado').length;
+  let conclusiones='';
+  if(estadoMayorA?.count>0) conclusiones+=pdfAlertBox(`En asesorías previas, el estado más frecuente es <strong>"${estadoMayorA.label}"</strong> con <strong>${estadoMayorA.count} proceso${estadoMayorA.count!==1?'s':''}</strong> (${asesorias.length?Math.round(estadoMayorA.count/asesorias.length*100):0}%). ${estadoMayorA.value==='aprobado'?'El alto número de aprobadas es un indicador positivo.':'Se recomienda monitorear el avance para evitar acumulaciones.'}`, 'info');
+  if(estadoMayorC?.count>0) conclusiones+=pdfAlertBox(`En procesos contractuales, el estado predominante es <strong>"${estadoMayorC.label}"</strong> con <strong>${estadoMayorC.count} proceso${estadoMayorC.count!==1?'s':''}</strong> (${contractuales.length?Math.round(estadoMayorC.count/contractuales.length*100):0}%).`,'info');
+  if(cancelados>0) conclusiones+=pdfAlertBox(`Se registran <strong>${cancelados} proceso${cancelados!==1?'s':''} cancelado${cancelados!==1?'s':''}</strong>. Se recomienda documentar las causas para mejorar la planificación futura.`,'warn');
+  if(aprobados+contratados>0) conclusiones+=pdfAlertBox(`Se han finalizado exitosamente <strong>${aprobados} asesoría${aprobados!==1?'s':''} aprobada${aprobados!==1?'s':''}</strong> y <strong>${contratados} proceso${contratados!==1?'s':''} contratado${contratados!==1?'s':''}</strong>.`,'ok');
+  const colsA=['#FCD34D','#93C5FD','#C4B5FD','#6EE7B7'];
+  const colsC=['#FCD34D','#67E8F9','#93C5FD','#FDBA74','#C4B5FD','#6EE7B7','#FCA5A5'];
+  let detalles='';
+  [{titulo:'Asesoría Previa',color:PDF_SKY,stats:statsA,proc:asesorias,cols:colsA},{titulo:'Proceso Contractual',color:PDF_TEAL,stats:statsC,proc:contractuales,cols:colsC}].forEach(grupo=>{
+    detalles+=`<div style="background:${grupo.color}22;border-radius:8px;padding:10px 16px;margin:20px 0 14px;"><div style="font-size:13px;font-weight:700;color:${grupo.color};">${grupo.titulo} — ${grupo.proc.length} proceso${grupo.proc.length!==1?'s':''}</div></div>`;
+    grupo.stats.forEach((est,ei)=>{
+      const proc=grupo.proc.filter(r=>r.estado===est.value);
+      if(!proc.length) return;
+      const rows=proc.map(r=>[`<b style="font-family:monospace;">${escHtml(r.ticket||'—')}</b>`,`<span style="font-size:10px;">${escHtml((r.objeto||'').slice(0,50))}${(r.objeto||'').length>50?'…':''}</span>`,escHtml(r.abogado||'—'),escHtml(r.git?r.git.replace('GIT ',''):r.dependencia||'—'),fmtDate(r.fechaAsignacion)||'—',fmtDate(r.fechaAdjudicacion)||'—']);
+      detalles+=`<div style="margin-bottom:16px;page-break-inside:avoid;"><div style="padding:7px 12px;background:white;border:1px solid ${PDF_BORDER};border-left:4px solid ${grupo.cols[ei]||grupo.color};border-radius:0 6px 6px 0;margin-bottom:8px;display:flex;align-items:center;gap:10px;"><span style="font-size:12px;font-weight:700;color:${PDF_NAVY};">${est.label}</span><span style="background:${PDF_NAVY};color:white;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700;">${proc.length}</span></div>${pdfTable(['Ticket','Objeto','Abogado','GIT / Dependencia','F. Asignación','F. Adjudicación'],rows,['8%','30%','16%','20%','12%','12%'])}</div>`;
+    });
+  });
+  abrirPdf(`${pdfHeader('Informe por Estado de los Procesos','Distribución y detalle de procesos según su estado actual de gestión')}${pdfIntroBox('Este informe agrupa todos los procesos registrados según su estado actual de avance, diferenciando entre asesorías previas y procesos contractuales. Permite identificar en qué etapa se concentra la mayor carga, detectar estados que representen cuellos de botella, y hacer seguimiento al progreso general de la actividad contractual del Ministerio.')}${pdfSectionTitle('📊','Distribución de Asesorías Previas por Estado')}${pdfTable(['Estado','Procesos','Porcentaje','Representación'],resRowsA,['35%','15%','15%','35%'])}${pdfSectionTitle('📊','Distribución de Procesos Contractuales por Estado')}${pdfTable(['Estado','Procesos','Porcentaje','Representación'],resRowsC,['35%','15%','15%','35%'])}${pdfSectionTitle('📋','Análisis y Conclusiones')}${conclusiones}${pdfSectionTitle('📁','Detalle de Procesos por Estado')}${detalles}${pdfFooter()}`,'Informe por Estado');
+}
+
+function pdfVencimiento(records){
+  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+  const conFecha=activos.filter(r=>r.fechaAdjudicacion);
+  const vencidos=conFecha.filter(r=>diasHasta(r.fechaAdjudicacion)<0).sort((a,b)=>a.fechaAdjudicacion.localeCompare(b.fechaAdjudicacion));
+  const hoy=conFecha.filter(r=>diasHasta(r.fechaAdjudicacion)===0);
+  const prox3=conFecha.filter(r=>{const d=diasHasta(r.fechaAdjudicacion);return d>0&&d<=3;}).sort((a,b)=>a.fechaAdjudicacion.localeCompare(b.fechaAdjudicacion));
+  const prox7=conFecha.filter(r=>{const d=diasHasta(r.fechaAdjudicacion);return d>3&&d<=7;}).sort((a,b)=>a.fechaAdjudicacion.localeCompare(b.fechaAdjudicacion));
+  const sinFecha=activos.filter(r=>!r.fechaAdjudicacion);
+  const totalRiesgo=vencidos.length+hoy.length+prox3.length;
+  function alertRows(proc){return proc.map(r=>{const d=diasHasta(r.fechaAdjudicacion);const est=getEstado(r.tipo,r.estado);return[`<b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,`<span style="padding:1px 6px;border-radius:8px;font-size:10px;background:${r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE'};color:${r.tipo==='asesoria'?PDF_SKY:PDF_TEAL};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,`<span style="font-size:10px;">${escHtml((r.objeto||'').slice(0,42))}${(r.objeto||'').length>42?'…':''}</span>`,escHtml(r.abogado||'—'),est.label,`<b style="font-family:monospace;">${fmtDate(r.fechaAdjudicacion)}</b>`,d<0?`<b style="color:${PDF_RED};">${Math.abs(d)} días vencido</b>`:d===0?`<b style="color:${PDF_RED};">Vence hoy</b>`:`<span style="color:#C2410C;">${d}d restante${d!==1?'s':''}</span>`];});}
+  const nivelRiesgo=totalRiesgo>10?'crítico':totalRiesgo>5?'alto':totalRiesgo>2?'moderado':'bajo';
+  const colorRiesgo={'crítico':PDF_RED,'alto':'#C2410C','moderado':'#D97706','bajo':PDF_GREEN}[nivelRiesgo];
+  let conclusiones=pdfAlertBox(`El nivel de riesgo contractual es <strong style="color:${colorRiesgo};">${nivelRiesgo.toUpperCase()}</strong>. Se identifican <strong>${totalRiesgo} proceso${totalRiesgo!==1?'s':''}</strong> en situación de riesgo inmediato (vencidos, que vencen hoy o en los próximos 3 días).`,nivelRiesgo==='bajo'?'ok':nivelRiesgo==='moderado'?'warn':'danger');
+  if(vencidos.length>0){const abogadosVenc=[...new Set(vencidos.map(r=>r.abogado).filter(Boolean))];conclusiones+=pdfAlertBox(`Los procesos <strong>${vencidos.slice(0,5).map(r=>r.ticket).join(', ')}${vencidos.length>5?' y otros':''}</strong> han superado su fecha límite. Abogados responsables: <strong>${abogadosVenc.join(', ')||'sin asignar'}</strong>. Se recomienda: prórroga documentada, cierre o reasignación urgente.`,'danger');}
+  if(hoy.length>0) conclusiones+=pdfAlertBox(`<strong>${hoy.length} proceso${hoy.length!==1?'s':''}</strong> con fecha de entrega para hoy. Validar estado antes del cierre de jornada.`,'danger');
+  if(prox3.length>0) conclusiones+=pdfAlertBox(`<strong>${prox3.length} proceso${prox3.length!==1?'s':''}</strong> vencen en 3 días. Priorizar en la agenda de trabajo del equipo.`,'warn');
+  if(prox7.length>0) conclusiones+=pdfAlertBox(`<strong>${prox7.length} proceso${prox7.length!==1?'s':''}</strong> vencen en 4–7 días. Incluir en el seguimiento semanal.`,'warn');
+  if(sinFecha.length>0) conclusiones+=pdfAlertBox(`<strong>${sinFecha.length} proceso${sinFecha.length!==1?'s':''} activo${sinFecha.length!==1?'s':''}</strong> sin fecha de entrega registrada. Completar esta información para el seguimiento oportuno.`,'warn');
+  if(totalRiesgo===0) conclusiones+=pdfAlertBox('No se identifican procesos en situación de riesgo inmediato. Todos los procesos activos se encuentran dentro de sus plazos.','ok');
+  abrirPdf(`${pdfHeader('Informe de Alertas de Vencimiento','Procesos en riesgo que requieren atención prioritaria · '+new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'}))}${pdfIntroBox('Este informe identifica los procesos en situación de riesgo por vencimiento de plazos, clasificados en cuatro categorías: procesos ya vencidos, que vencen hoy, en los próximos 3 días, y en los próximos 7 días. El objetivo es facilitar la toma de decisiones y la priorización de la gestión del equipo responsable.')}${pdfKpiGrid([{label:'Procesos Vencidos',value:vencidos.length,color:PDF_RED,sub:'Acción inmediata'},{label:'Vencen Hoy',value:hoy.length,color:'#DC2626',sub:'Urgente'},{label:'Vencen en 3 Días',value:prox3.length,color:'#EA580C',sub:'Alta prioridad'},{label:'Vencen en 7 Días',value:prox7.length,color:'#D97706',sub:'En seguimiento'},{label:'Sin Fecha',value:sinFecha.length,color:PDF_GRAY,sub:'Completar info'},{label:'Total en Riesgo',value:totalRiesgo,color:PDF_RED,sub:'Vencidos+Hoy+3d'}])}${pdfSectionTitle('📋','Análisis y Conclusiones')}${conclusiones}${vencidos.length?pdfSectionTitle('🔴','Procesos Vencidos — Acción Inmediata')+'<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:11px;color:#991B1B;">Estos procesos han superado su fecha de entrega y requieren gestión urgente.</div>'+pdfTable(['Ticket','Tipo','Objeto','Abogado','Estado','F. Adjudicación','Situación'],alertRows(vencidos),['7%','9%','27%','16%','13%','11%','13%']):''}${hoy.length?pdfSectionTitle('🔴','Vencen Hoy')+pdfTable(['Ticket','Tipo','Objeto','Abogado','Estado','F. Adjudicación','Situación'],alertRows(hoy),['7%','9%','27%','16%','13%','11%','13%']):''}${prox3.length?pdfSectionTitle('🟠','Vencen en los Próximos 3 Días')+pdfTable(['Ticket','Tipo','Objeto','Abogado','Estado','F. Adjudicación','Días restantes'],alertRows(prox3),['7%','9%','27%','16%','13%','11%','13%']):''}${prox7.length?pdfSectionTitle('🟡','Vencen entre 4 y 7 Días')+pdfTable(['Ticket','Tipo','Objeto','Abogado','Estado','F. Adjudicación','Días restantes'],alertRows(prox7),['7%','9%','27%','16%','13%','11%','13%']):''}${sinFecha.length?pdfSectionTitle('⚠️','Procesos Activos Sin Fecha de Entrega')+pdfTable(['Ticket','Tipo','Objeto','Abogado','Estado'],sinFecha.map(r=>[`<b style="font-family:monospace;">${escHtml(r.ticket||'—')}</b>`,`<span style="font-size:10px;padding:1px 5px;border-radius:6px;background:${r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE'};color:${r.tipo==='asesoria'?PDF_SKY:PDF_TEAL};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,`<span style="font-size:10px;">${escHtml((r.objeto||'').slice(0,52))}${(r.objeto||'').length>52?'…':''}</span>`,escHtml(r.abogado||'—'),getEstado(r.tipo,r.estado).label]),['7%','9%','40%','20%','20%']):''}${pdfFooter()}`,'Alertas de Vencimiento');
+}
+
+function generarPDF(tipo){
+  closePdfModal();
+  const records=window._records||[];
+  if(!records.length){alert('No hay registros para generar el informe.');return;}
+  if(tipo==='general') pdfGeneral(records);
+  else if(tipo==='abogado') pdfPorAbogado(records);
+  else if(tipo==='estado') pdfPorEstado(records);
+  else if(tipo==='vencimiento') pdfVencimiento(records);
+}
+
+/* ═══ EXPORT CSV/XLSX ═══ */
+function exportCSV(){
+  const records=window._records||[];
+  const hdrs=['Ticket','Tipo','Objeto','Encargado','Abogado','Dependencia','SECOP','Estado','F.Asignación','Docs.Def.','F. Adjudicación','F. Adjudicación','Observaciones','Entradas Avance'];
+  const rows=records.map(r=>[r.ticket,r.tipo==='contractual'?'Proceso Contractual':'Asesoría Previa',r.objeto||'',r.encargado||'',r.abogado||'',r.dependencia||'',r.secop||'',getEstado(r.tipo,r.estado).label,fmtDate(r.fechaAsignacion)||'',fmtDate(r.fechaDocumentos)||'',fmtDate(r.fechaAdjudicacion)||'',fmtDate(r.fechaAdjudicacion)||'',r.obs||'',(r.bitacora||[]).length+''].map(v=>`"${(v||'').replace(/"/g,'""')}"`));
+  dl('seguimiento_contractual.csv',[hdrs.join(','),...rows.map(r=>r.join(','))].join('\n'),'text/csv');
+}
+function exportXLSX(){
+  if(typeof XLSX==='undefined'){alert('La librería aún carga. Intenta en unos segundos.');return;}
+  const records=window._records||[];
+  const hdrs=['Ticket','Tipo','Objeto','Encargado','Abogado','Dependencia','SECOP','Estado','F.Asignación','Docs.Def.','F. Adjudicación','F. Adjudicación','Observaciones','Entradas Avance'];
+  const rows=records.map(r=>[r.ticket,r.tipo==='contractual'?'Proceso Contractual':'Asesoría Previa',r.objeto||'',r.encargado||'',r.abogado||'',r.dependencia||'',r.secop||'',getEstado(r.tipo,r.estado).label,fmtDate(r.fechaAsignacion)||'',fmtDate(r.fechaDocumentos)||'',fmtDate(r.fechaAdjudicacion)||'',fmtDate(r.fechaAdjudicacion)||'',r.obs||'',(r.bitacora||[]).length]);
+  const ws=XLSX.utils.aoa_to_sheet([hdrs,...rows]);
+  ws['!cols']=[{wch:12},{wch:20},{wch:40},{wch:22},{wch:22},{wch:36},{wch:16},{wch:22},{wch:13},{wch:13},{wch:13},{wch:13},{wch:28},{wch:8}];
+  // Hoja bitácora
+  const bitHdrs=['Ticket','Tipo','Objeto','Encargado','Estado','Fecha Avance','Registrado por','Descripción'];
+  const bitData=[bitHdrs];
+  records.forEach(r=>{
+    const ent=(r.bitacora||[]).slice().sort((a,b)=>a.date.localeCompare(b.date));
+    if(!ent.length){bitData.push([r.ticket,r.tipo==='contractual'?'Contractual':'Asesoría',r.objeto||'',r.encargado||'',getEstado(r.tipo,r.estado).label,'','','Sin entradas']);}
+    else ent.forEach((e,i)=>{bitData.push([i===0?(r.ticket||''):'',i===0?(r.tipo==='contractual'?'Contractual':'Asesoría'):'',i===0?(r.objeto||''):'',i===0?(r.encargado||''):'',i===0?getEstado(r.tipo,r.estado).label:'',fmtDate(e.date)||e.date||'',e.author||'',e.text||'']);});
+    bitData.push(Array(8).fill(''));
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Registros');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(bitData),'Bitácora');
+  XLSX.writeFile(wb,'seguimiento_contractual.xlsx');
+}
+function dl(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();}
+
+/* ═══ EVENTOS ═══ */
+['modal-overlay','user-overlay','bitacora-overlay','pdf-overlay'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('click',function(e){
+    if(e.target===this){if(id==='modal-overlay')closeModal();else if(id==='user-overlay')closeUserModal();else if(id==='pdf-overlay')closePdfModal();else closeBitacora();}
+  });
+});
+window.addEventListener('resize',()=>{if(document.getElementById('page-dash')?.classList.contains('active'))renderDashboard();});
+// Inicializar opciones de estado
+updateEstadoOptions();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</body>
+</html>
