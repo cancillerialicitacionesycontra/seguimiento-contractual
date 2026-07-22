@@ -618,6 +618,8 @@ textarea#entry-text:focus{border-color:var(--accent);}
       <button class="btn btn-primary" id="btn-nuevo" onclick="openModal()">＋ Nuevo Registro</button>
       <button class="btn btn-ghost" onclick="exportCSV()">⬇ CSV</button>
       <button class="btn btn-ghost" onclick="exportXLSX()" style="color:#059669;border-color:#6EE7B7;">⬇ Excel</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('import-excel-input').click()" style="color:#059669;border-color:#6EE7B7;" id="btn-import-excel">⬆ Importar Excel</button>
+      <input type="file" id="import-excel-input" accept=".xlsx,.xls" style="display:none;" onchange="importarExcel(this)">
       <button class="btn btn-ghost" onclick="openPdfModal()" style="color:#DC2626;border-color:#FECACA;">📄 Informes PDF</button>
       <button class="btn btn-ghost" onclick="openBitacoraGeneral()" style="color:#7C3AED;border-color:#C4B5FD;">📓 Bitácora</button>
       <div class="search-wrap">
@@ -1173,6 +1175,47 @@ textarea#entry-text:focus{border-color:var(--accent);}
   </div>
 </div>
 
+<!-- MODAL IMPORTAR EXCEL -->
+<div class="overlay" id="import-overlay">
+  <div class="modal" style="max-width:780px;">
+    <div class="modal-header">
+      <h2>📥 Importar desde Excel</h2>
+      <button class="modal-close" onclick="cerrarImport()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="import-resumen" style="margin-bottom:14px;padding:12px 16px;border-radius:10px;font-size:13px;background:#F0FDF4;border:1px solid #86EFAC;color:#166534;display:none;"></div>
+      <div id="import-errores" style="margin-bottom:14px;padding:12px 16px;border-radius:10px;font-size:12px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;display:none;"></div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+        Vista previa de los registros a importar. Se actualizan los existentes (por Ticket) y se crean los nuevos.
+      </div>
+      <div style="overflow-x:auto;max-height:380px;border:1px solid var(--border);border-radius:8px;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;" id="import-preview-table">
+          <thead style="background:var(--navy);color:white;position:sticky;top:0;">
+            <tr>
+              <th style="padding:8px 10px;text-align:left;">Estado</th>
+              <th style="padding:8px 10px;text-align:left;">Ticket</th>
+              <th style="padding:8px 10px;text-align:left;">Tipo</th>
+              <th style="padding:8px 10px;text-align:left;">Objeto</th>
+              <th style="padding:8px 10px;text-align:left;">Abogado</th>
+              <th style="padding:8px 10px;text-align:left;">GIT</th>
+              <th style="padding:8px 10px;text-align:left;">Dependencia</th>
+              <th style="padding:8px 10px;text-align:left;">SECOP</th>
+              <th style="padding:8px 10px;text-align:left;">Estado proceso</th>
+              <th style="padding:8px 10px;text-align:left;">F. Asignación</th>
+              <th style="padding:8px 10px;text-align:left;">F. Máx. Gestión</th>
+            </tr>
+          </thead>
+          <tbody id="import-preview-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cerrarImport()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-confirmar-import" onclick="confirmarImport()" disabled>💾 Confirmar importación (<span id="import-count">0</span> registros)</button>
+    </div>
+  </div>
+</div>
+
 <!-- PANEL DETALLE MÓVIL -->
 <div class="mc-detail-overlay" id="mc-detail-overlay" onclick="if(event.target===this)closeMcDetail()">
   <div class="mc-detail-panel" id="mc-detail-panel">
@@ -1479,6 +1522,7 @@ function applyUserUI(){
   const adm=u.role==='admin';
   document.getElementById('tab-admin').style.display=adm?'':'none';
   document.getElementById('btn-nuevo').disabled=!adm;
+  document.getElementById('btn-import-excel').style.display=adm?'':'none';
   const fab=document.getElementById('fab-nuevo');
   if(fab) fab.style.display=adm?'flex':'none';
   // Banner de vista filtrada para abogados
@@ -2849,12 +2893,219 @@ function exportXLSX(){
 }
 function dl(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();}
 
+/* ═══ IMPORTAR EXCEL ═══ */
+let _importData=[];
+
+// Mapa de columnas del Excel a campos internos
+const IMPORT_COL_MAP={
+  'ticket':'ticket','tipo':'tipo','objeto':'objeto','abogado':'abogado',
+  'git':'git','dependencia':'dependencia','secop':'secop','estado':'estado',
+  'estado proceso':'estado',
+  'f.asignación':'fechaAsignacion','f. asignación':'fechaAsignacion','f.asignacion':'fechaAsignacion',
+  'docs.def.':'fechaDocumentos','docs def':'fechaDocumentos',
+  'f. adjudicación':'fechaAdjudicacion','f.adjudicación':'fechaAdjudicacion',
+  'f. máx. gestión':'fechaMaxGestion','f.máx.gestión':'fechaMaxGestion',
+  'f. max. gestion':'fechaMaxGestion','f.max.gestión':'fechaMaxGestion',
+  'observaciones':'obs','obs':'obs',
+};
+
+// Mapa de valores de tipo legibles → internos
+const IMPORT_TIPO_MAP={
+  'asesoría previa':'asesoria','asesoria previa':'asesoria','asesoria':'asesoria','asesoría':'asesoria',
+  'proceso contractual':'contractual','contractual':'contractual',
+};
+
+// Mapa de estados legibles → internos
+const IMPORT_ESTADO_MAP={
+  'asignado':'asignado',
+  'en revisión l y c':'en-revision-lyc','en revision l y c':'en-revision-lyc','en revisión lyc':'en-revision-lyc',
+  'en revisión a.t.':'en-revision-at','en revision a.t.':'en-revision-at','en revisión at':'en-revision-at',
+  'en revisión jefe l y c':'en-revision-jlc','en revision jefe l y c':'en-revision-jlc',
+  'aprobado':'aprobado','aprobado ✅':'aprobado',
+  'en estructuración':'en-estructuracion','en estructuracion':'en-estructuracion',
+  'publicado en secop':'publicado-secop','publicado secop':'publicado-secop',
+  'en evaluación':'en-evaluacion','en evaluacion':'en-evaluacion',
+  'adjudicado':'adjudicado','contratado':'contratado','cancelado':'cancelado',
+};
+
+// Convierte fecha dd/mm/yyyy o yyyy-mm-dd a yyyy-mm-dd
+function parseFechaImport(v){
+  if(!v)return '';
+  const s=String(v).trim();
+  // formato dd/mm/yyyy
+  const m1=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(m1) return `${m1[3]}-${m1[2]}-${m1[1]}`;
+  // formato yyyy-mm-dd
+  const m2=s.match(/^\d{4}-\d{2}-\d{2}$/);
+  if(m2) return s;
+  // número serial de Excel
+  if(/^\d+$/.test(s)){
+    const d=new Date(Math.round((parseInt(s)-25569)*86400*1000));
+    if(!isNaN(d)) return d.toISOString().slice(0,10);
+  }
+  return '';
+}
+
+function importarExcel(input){
+  if(!isAdmin()){alert('Solo los administradores pueden importar datos.');input.value='';return;}
+  if(typeof XLSX==='undefined'){alert('La librería Excel aún carga. Intenta en unos segundos.');input.value='';return;}
+  const file=input.files[0];
+  if(!file){return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]]; // primera hoja
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      if(!rows.length){alert('El archivo está vacío.');return;}
+
+      // Detectar cabeceras
+      const headers=rows[0].map(h=>String(h).toLowerCase().trim());
+      const colIdx={};
+      headers.forEach((h,i)=>{
+        const campo=IMPORT_COL_MAP[h];
+        if(campo!==undefined&&!(campo in colIdx)) colIdx[campo]=i;
+      });
+
+      if(!('ticket' in colIdx)){
+        alert('El archivo no tiene una columna "Ticket". Verifica que estés usando el Excel exportado desde la aplicación.');
+        input.value='';return;
+      }
+
+      const existingRecords=window._records||[];
+      const errores=[];
+      const parsed=[];
+
+      rows.slice(1).forEach((row,ri)=>{
+        const rawTicket=String(row[colIdx['ticket']]||'').trim();
+        if(!rawTicket) return; // fila vacía
+
+        const rawTipo=String(row[colIdx['tipo']]||'').trim();
+        const tipo=IMPORT_TIPO_MAP[rawTipo.toLowerCase()]||'asesoria';
+
+        const rawEstado=String(row[colIdx['estado']]||'').trim();
+        const estado=IMPORT_ESTADO_MAP[rawEstado.toLowerCase()]||'asignado';
+
+        const abogado=String(row[colIdx['abogado']]||'').trim().toUpperCase();
+
+        // Validar abogado si se especificó
+        const abogadosValidos=BUILTIN_USERS.filter(u=>u.abogado).map(u=>u.abogado);
+        if(abogado&&!abogadosValidos.includes(abogado)){
+          errores.push(`Fila ${ri+2}: Abogado "${abogado}" no reconocido (se importará igual).`);
+        }
+
+        const rec={
+          ticket: rawTicket,
+          tipo,
+          objeto:    String(row[colIdx['objeto']]||'').trim(),
+          abogado,
+          git:       String(row[colIdx['git']]||'').trim(),
+          dependencia: String(row[colIdx['dependencia']]||'').trim(),
+          secop:     String(row[colIdx['secop']]||'').trim(),
+          estado,
+          fechaAsignacion:  parseFechaImport(row[colIdx['fechaAsignacion']]),
+          fechaDocumentos:  parseFechaImport(row[colIdx['fechaDocumentos']]),
+          fechaAdjudicacion:parseFechaImport(row[colIdx['fechaAdjudicacion']]),
+          fechaMaxGestion:  parseFechaImport(row[colIdx['fechaMaxGestion']]),
+          obs: String(row[colIdx['obs']]||'').trim(),
+        };
+
+        // Buscar si ya existe (por ticket)
+        const existing=existingRecords.find(r=>normStr(r.ticket)===normStr(rawTicket));
+        rec._id=existing?existing.id:('imp_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
+        rec._esNuevo=!existing;
+        parsed.push(rec);
+      });
+
+      if(!parsed.length){alert('No se encontraron filas con datos para importar.');input.value='';return;}
+
+      _importData=parsed;
+
+      // Mostrar resumen
+      const nuevos=parsed.filter(r=>r._esNuevo).length;
+      const actualizados=parsed.length-nuevos;
+      const resEl=document.getElementById('import-resumen');
+      resEl.style.display='block';
+      resEl.innerHTML=`✅ <strong>${parsed.length} registros listos para importar:</strong> ${nuevos} nuevos + ${actualizados} a actualizar.`;
+
+      const errEl=document.getElementById('import-errores');
+      if(errores.length){
+        errEl.style.display='block';
+        errEl.innerHTML='⚠️ Advertencias (no bloquean la importación):<br>'+errores.map(e=>`• ${e}`).join('<br>');
+      } else {
+        errEl.style.display='none';
+      }
+
+      // Tabla de vista previa
+      const tbody=document.getElementById('import-preview-body');
+      tbody.innerHTML=parsed.map(r=>{
+        const est=getEstado(r.tipo,r.estado);
+        const badge=r._esNuevo
+          ? '<span style="background:#D1FAE5;color:#065F46;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;">NUEVO</span>'
+          : '<span style="background:#DBEAFE;color:#1D4ED8;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;">ACTUALIZAR</span>';
+        return `<tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:7px 10px;">${badge}</td>
+          <td style="padding:7px 10px;font-family:var(--mono);font-weight:700;">${escHtml(r.ticket)}</td>
+          <td style="padding:7px 10px;">${r.tipo==='contractual'?'Contractual':'Asesoría'}</td>
+          <td style="padding:7px 10px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.objeto)}</td>
+          <td style="padding:7px 10px;">${escHtml(r.abogado)}</td>
+          <td style="padding:7px 10px;font-size:11px;">${escHtml((r.git||'').replace('GIT ',''))}</td>
+          <td style="padding:7px 10px;font-size:11px;">${escHtml(r.dependencia)}</td>
+          <td style="padding:7px 10px;font-family:var(--mono);font-size:11px;">${escHtml(r.secop)}</td>
+          <td style="padding:7px 10px;"><span class="${est.css}" style="padding:2px 7px;border-radius:6px;font-size:11px;">${est.label}</span></td>
+          <td style="padding:7px 10px;font-family:var(--mono);font-size:11px;">${fmtDate(r.fechaAsignacion)||'—'}</td>
+          <td style="padding:7px 10px;font-family:var(--mono);font-size:11px;">${fmtDate(r.fechaMaxGestion)||'—'}</td>
+        </tr>`;
+      }).join('');
+
+      document.getElementById('import-count').textContent=parsed.length;
+      document.getElementById('btn-confirmar-import').disabled=false;
+      document.getElementById('import-overlay').classList.add('open');
+    }catch(err){
+      console.error(err);
+      alert('Error al leer el archivo Excel: '+err.message);
+    }
+    input.value=''; // resetear input para permitir reimportar mismo archivo
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function cerrarImport(){
+  document.getElementById('import-overlay').classList.remove('open');
+  _importData=[];
+  document.getElementById('btn-confirmar-import').disabled=true;
+  document.getElementById('import-resumen').style.display='none';
+  document.getElementById('import-errores').style.display='none';
+  document.getElementById('import-preview-body').innerHTML='';
+}
+
+async function confirmarImport(){
+  if(!_importData.length) return;
+  const btn=document.getElementById('btn-confirmar-import');
+  btn.disabled=true;btn.textContent='Guardando...';
+  let ok=0,err=0;
+  for(const rec of _importData){
+    try{
+      const {_id,_esNuevo,...data}=rec;
+      const existing=_esNuevo?null:(window._records||[]).find(r=>normStr(r.ticket)===normStr(data.ticket));
+      const id=existing?existing.id:_id;
+      // Preservar bitácora si es actualización
+      if(!_esNuevo&&existing&&existing.bitacora) data.bitacora=existing.bitacora;
+      await window._saveRecord({id,...data});
+      ok++;
+    }catch(e){console.error(e);err++;}
+  }
+  cerrarImport();
+  showSyncToast(`✅ Importación completada: ${ok} guardados${err?', '+err+' errores':''}`);
+}
+
 /* ═══ EVENTOS ═══ */
-['modal-overlay','user-overlay','bitacora-overlay','pdf-overlay','bit-gen-overlay'].forEach(id=>{
+['modal-overlay','user-overlay','bitacora-overlay','pdf-overlay','bit-gen-overlay','import-overlay'].forEach(id=>{
   document.getElementById(id)?.addEventListener('click',function(e){
     if(e.target===this){
       if(id==='modal-overlay') closeModal();
       else if(id==='user-overlay') closeUserModal();
+      else if(id==='import-overlay') cerrarImport();
       else if(id==='pdf-overlay') closePdfModal();
       else if(id==='bit-gen-overlay') closeBitacoraGeneral();
       else closeBitacora();
