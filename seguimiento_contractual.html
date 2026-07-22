@@ -135,6 +135,7 @@ tbody td{padding:12px 14px;vertical-align:middle;}
 .status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
 .sb-asignado{background:#FEF9C3;color:#92400E;}
 .sb-en-revision-lyc{background:var(--accent-light);color:#1D4ED8;}
+.sb-en-revision-jlc{background:#E0E7FF;color:#3730A3;}
 .sb-en-revision-at{background:var(--purple-light);color:#5B21B6;}
 .sb-aprobado{background:var(--green-light);color:#065F46;}
 /* Proceso contractual */
@@ -1263,10 +1264,11 @@ function todayISO(){return new Date().toISOString().slice(0,10);}
 /* ═══ ESTADOS POR TIPO ═══ */
 const ESTADOS={
   asesoria:[
-    {value:'asignado',        label:'Asignado',          css:'sb-asignado'},
-    {value:'en-revision-lyc', label:'En Revisión L y C', css:'sb-en-revision-lyc'},
-    {value:'en-revision-at',  label:'En Revisión A.T.',  css:'sb-en-revision-at'},
-    {value:'aprobado',        label:'Aprobado',           css:'sb-aprobado'},
+    {value:'asignado',        label:'Asignado',               css:'sb-asignado'},
+    {value:'en-revision-lyc', label:'En Revisión L y C',      css:'sb-en-revision-lyc'},
+    {value:'en-revision-at',  label:'En Revisión A.T.',        css:'sb-en-revision-at'},
+    {value:'en-revision-jlc', label:'En Revisión Jefe L y C', css:'sb-en-revision-jlc'},
+    {value:'aprobado',        label:'Aprobado ✅',             css:'sb-aprobado'},
   ],
   contractual:[
     {value:'asignado',          label:'Asignado',             css:'sb-pc-asignado'},
@@ -1814,7 +1816,7 @@ function closeMcDetail(){
 // Helpers para colores de estado en el panel
 function getEstadoBg(tipo,valor){
   const map={
-    'asignado':'#FEF9C3','en-revision-lyc':'#DBEAFE','en-revision-at':'#EDE9FE','aprobado':'#D1FAE5',
+    'asignado':'#FEF9C3','en-revision-lyc':'#DBEAFE','en-revision-at':'#EDE9FE','en-revision-jlc':'#E0E7FF','aprobado':'#D1FAE5',
     'en-estructuracion':'#CFFAFE','publicado-secop':'#DBEAFE','en-evaluacion':'#FFEDD5',
     'adjudicado':'#EDE9FE','contratado':'#D1FAE5','cancelado':'#FEE2E2'
   };
@@ -1822,7 +1824,7 @@ function getEstadoBg(tipo,valor){
 }
 function getEstadoColor(tipo,valor){
   const map={
-    'asignado':'#92400E','en-revision-lyc':'#1D4ED8','en-revision-at':'#5B21B6','aprobado':'#065F46',
+    'asignado':'#92400E','en-revision-lyc':'#1D4ED8','en-revision-at':'#5B21B6','en-revision-jlc':'#3730A3','aprobado':'#065F46',
     'en-estructuracion':'#0E7490','publicado-secop':'#1D4ED8','en-evaluacion':'#C2410C',
     'adjudicado':'#5B21B6','contratado':'#065F46','cancelado':'#991B1B'
   };
