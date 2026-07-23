@@ -850,7 +850,7 @@ textarea#entry-text:focus{border-color:var(--accent);}
       <div class="form-section">
         <div class="form-section-title">🏷️ Identificación</div>
         <div class="form-grid">
-          <div class="form-group"><label>Ticket *</label><input type="text" id="f-ticket" placeholder="Ej. AC-001 / PC-001"></div>
+          <div class="form-group"><label>Ticket <span style="font-size:10px;color:var(--muted);font-weight:400;">(asignado automáticamente)</span></label><input type="text" id="f-ticket" placeholder="Auto" readonly style="background:var(--bg);color:var(--muted);"></div>
           <div class="form-group"><label>Tipo de proceso *</label>
             <select id="f-tipo" onchange="updateEstadoOptions()">
               <option value="asesoria">🔵 Asesoría Previa</option>
@@ -1610,7 +1610,16 @@ function renderTable(){
     }
     return true;
   });
-  data.sort((a,b)=>{let va=(a[sortField]||'').toLowerCase(),vb=(b[sortField]||'').toLowerCase();return va<vb?(sortDir==='asc'?-1:1):va>vb?(sortDir==='asc'?1:-1):0;});
+  data.sort((a,b)=>{
+    const va=(a[sortField]||''), vb=(b[sortField]||'');
+    // Sort numérico cuando ambos valores son números puros
+    const na=parseFloat(va), nb=parseFloat(vb);
+    const ambosNum=!isNaN(na)&&!isNaN(nb)&&String(na)===va.trim()&&String(nb)===vb.trim();
+    if(ambosNum) return sortDir==='asc'?na-nb:nb-na;
+    // Sort natural (ej. "AC-10" vs "AC-2")
+    const cmp=va.localeCompare(vb,undefined,{numeric:true,sensitivity:'base'});
+    return sortDir==='asc'?cmp:-cmp;
+  });
   const adm=isAdmin();
 
   // ── Tabla desktop ──
@@ -1966,12 +1975,34 @@ function updateStats(allRecords){
 }
 
 /* ═══ MODAL REGISTRO ═══ */
+function getNextTicket(){
+  const records=window._records||[];
+  // Tomar solo los tickets que son números puros
+  const nums=records
+    .map(r=>parseInt(r.ticket||''))
+    .filter(n=>!isNaN(n)&&n>0);
+  return nums.length ? Math.max(...nums)+1 : 1;
+}
+
 function openModal(id=null){
   if(!isAdmin()){alert('Solo los administradores pueden agregar registros.');return;}
   editingId=id;
   const r=id?(window._records||[]).find(x=>x.id===id):null;
   document.getElementById('modal-title').textContent=r?'Editar Registro':'Nuevo Registro';
-  document.getElementById('f-ticket').value=r?.ticket||'';
+  const ticketInput=document.getElementById('f-ticket');
+  if(r){
+    // Edición: mostrar ticket existente, editable
+    ticketInput.value=r.ticket||'';
+    ticketInput.readOnly=false;
+    ticketInput.style.background='';
+    ticketInput.style.color='';
+  } else {
+    // Nuevo: auto-asignar siguiente número, solo lectura
+    ticketInput.value=getNextTicket();
+    ticketInput.readOnly=true;
+    ticketInput.style.background='var(--bg)';
+    ticketInput.style.color='var(--muted)';
+  }
   document.getElementById('f-tipo').value=r?.tipo||'asesoria';
   updateEstadoOptions();
   document.getElementById('f-estado').value=r?.estado||'asignado';
@@ -1993,7 +2024,7 @@ async function saveRecord(){
   const ticket=sanitize(document.getElementById('f-ticket').value.trim(),50);
   const abogado=document.getElementById('f-abogado').value;
   const objeto=sanitize(document.getElementById('f-objeto').value.trim(),1000);
-  if(!ticket||!abogado||!objeto){alert('Completa: Ticket, Abogado y Objeto.');return;}
+  if(!ticket||!abogado||!objeto){alert('Completa los campos obligatorios: Abogado y Objeto.');return;}
   const existing=editingId?(window._records||[]).find(r=>r.id===editingId):null;
   const data={
     id:editingId||('r'+Date.now()),
