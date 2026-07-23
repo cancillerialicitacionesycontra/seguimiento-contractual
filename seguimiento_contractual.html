@@ -1171,6 +1171,7 @@ textarea#entry-text:focus{border-color:var(--accent);}
       <button class="btn btn-ghost" onclick="document.getElementById('import-liq-input').click()" style="color:#059669;border-color:#6EE7B7;" id="btn-import-liq">⬆ Importar Excel</button>
       <input type="file" id="import-liq-input" accept=".xlsx,.xls" style="display:none;" onchange="importarLiq(this)">
       <button class="btn btn-ghost" onclick="pdfLiq()" style="color:#DC2626;border-color:#FECACA;">📄 Informe PDF</button>
+      <button class="btn btn-ghost" onclick="openBitacoraGeneralLiq()" style="color:#7C3AED;border-color:#C4B5FD;">📓 Bitácora</button>
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
         <input type="text" id="search-liq" placeholder="Buscar N° contrato, contratista, abogado…" oninput="renderLiq()">
@@ -1187,7 +1188,7 @@ textarea#entry-text:focus{border-color:var(--accent);}
           <th>N° Contrato</th><th>N° Proceso</th><th>Unid. Admin</th><th>Trámite</th><th>Persona</th><th>Contratista / Proveedor</th><th>Abogado</th>
           <th>GIT</th><th>Dependencia</th>
           <th>F. Finalización</th><th>F. Máx para Liqu</th><th>F. Cierre</th><th>F. Liquidación</th>
-          <th>Estado</th><th>Acciones</th>
+          <th>Estado</th><th>Avance</th><th>Acciones</th>
         </tr></thead>
         <tbody id="liq-table-body"></tbody>
       </table>
@@ -1522,6 +1523,38 @@ textarea#entry-text:focus{border-color:var(--accent);}
     </div>
   </div>
 
+  <!-- BITÁCORA LIQUIDACIONES -->
+  <div class="overlay" id="bitacora-liq-overlay">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h2>📓 Bitácora de Avance — Liquidación</h2>
+        <button class="modal-close" onclick="closeBitacoraLiq()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="bit-header" id="bit-liq-header"></div>
+        <div class="new-entry-box" id="new-liq-entry-box">
+          <div id="new-liq-entry-form">
+            <div class="new-entry-top">
+              <label style="font-size:12px;font-weight:500;color:var(--navy);text-transform:uppercase;">Fecha</label>
+              <input type="date" id="liq-entry-date">
+              <span id="liq-entry-author-name" style="font-size:12px;color:var(--muted);margin-left:8px;"></span>
+            </div>
+            <textarea id="liq-entry-text" placeholder="Describe el avance de esta liquidación…"></textarea>
+            <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+              <button class="btn btn-primary" style="padding:5px 14px;font-size:12px;" onclick="addLiqEntry()">＋ Agregar</button>
+            </div>
+          </div>
+          <div id="new-liq-entry-locked" class="locked-note" style="display:none;">🔒 Solo los administradores pueden agregar avances.</div>
+        </div>
+        <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px;">Historial (<span id="liq-entries-count">0</span> entradas)</p>
+        <div class="entries-list" id="liq-entries-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeBitacoraLiq()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ADMIN -->
   <div class="page" id="page-admin">
     <div class="admin-wrap">
@@ -1803,6 +1836,36 @@ textarea#entry-text:focus{border-color:var(--accent);}
   </div>
 </div>
 
+<!-- BITÁCORA GENERAL LIQUIDACIONES -->
+<div class="bit-gen-overlay" id="bit-gen-liq-overlay">
+  <div class="bit-gen-modal">
+    <div class="bit-gen-header" style="background:linear-gradient(135deg,#059669,#0D9488);">
+      <h2>📓 Bitácora General — Liquidaciones y Cierres</h2>
+      <button class="modal-close" onclick="closeBitacoraGeneralLiq()">✕</button>
+    </div>
+    <div class="bit-gen-toolbar">
+      <select class="bit-gen-filter" id="blg-tramite" onchange="renderBitacoraGeneralLiq()">
+        <option value="">Todos los trámites</option>
+        <option value="Liquidacion">Liquidación</option>
+        <option value="Cierre">Cierre</option>
+      </select>
+      <select class="bit-gen-filter" id="blg-abogado" onchange="renderBitacoraGeneralLiq()">
+        <option value="">Todos los abogados</option>
+      </select>
+      <select class="bit-gen-filter" id="blg-solo-avances" onchange="renderBitacoraGeneralLiq()">
+        <option value="">Todas las liquidaciones</option>
+        <option value="1">Solo con avances</option>
+        <option value="0">Solo sin avances</option>
+      </select>
+      <input type="text" class="bit-gen-search" id="blg-search" placeholder="🔍 Buscar N° contrato o contratista…" oninput="renderBitacoraGeneralLiq()">
+      <span class="bit-gen-count" id="blg-count">0 liquidaciones</span>
+    </div>
+    <div class="bit-gen-body" id="bit-gen-liq-body">
+      <div class="bit-gen-empty">Cargando avances...</div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL PDF -->
 <div class="overlay" id="pdf-overlay">
   <div class="modal" style="max-width:520px;">
@@ -1990,6 +2053,7 @@ window._saveModRecord=async(data)=>{const{id,...r}=data;await setDoc(doc(db,'mod
 window._deleteModRecord=async(id)=>{await deleteDoc(doc(db,'modificaciones',id));};
 window._saveLiqRecord=async(data)=>{const{id,...r}=data;await setDoc(doc(db,'liquidaciones',id),r);};
 window._deleteLiqRecord=async(id)=>{await deleteDoc(doc(db,'liquidaciones',id));};
+window._saveBitacoraLiq=async(id,bitacoraLiq)=>{await updateDoc(doc(db,'liquidaciones',id),{bitacoraLiq});};
 
 onSnapshot(collection(db,'modificaciones'),snap=>{
   window._modRecords=[];
@@ -2891,6 +2955,74 @@ async function deleteEntry(recordId,entryId){
 }
 function closeBitacora(){document.getElementById('bitacora-overlay').classList.remove('open');bitacoraRecordId=null;}
 
+/* ═══ BITÁCORA LIQUIDACIONES ═══ */
+let bitacoraLiqId=null;
+function openBitacoraLiq(id){
+  bitacoraLiqId=id;
+  const r=(window._liqRecords||[]).find(x=>x.id===id);if(!r)return;
+  const est=getEstadoLiq(r.estado);
+  // Header igual que Procesos
+  document.getElementById('bit-liq-header').innerHTML=`
+    <span class="ticket-badge">${escHtml(r.ticket||'—')}</span>
+    <span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:#F1F5F9;color:var(--navy);">${escHtml(r.tramite||'Liquidación')}</span>
+    <span class="${est.css}" style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;">${est.label}</span>
+    <span style="font-size:11px;color:var(--muted);margin-left:auto;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(r.contratista||'')}</span>`;
+  const fEl=document.getElementById('new-liq-entry-form');
+  const lEl=document.getElementById('new-liq-entry-locked');
+  const bEl=document.getElementById('new-liq-entry-box');
+  const canEdit=isAdmin();
+  if(canEdit){
+    bEl.classList.remove('locked');
+    fEl.style.display='block';
+    lEl.style.display='none';
+    document.getElementById('liq-entry-date').value=todayISO();
+    document.getElementById('liq-entry-text').value='';
+    document.getElementById('liq-entry-author-name').textContent='Por: '+currentUser.name;
+  } else {
+    bEl.classList.add('locked');
+    fEl.style.display='none';
+    lEl.style.display='flex';
+  }
+  renderLiqEntries(r);
+  document.getElementById('bitacora-liq-overlay').classList.add('open');
+}
+function renderLiqEntries(r){
+  const entries=[...(r.bitacoraLiq||[])].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('liq-entries-count').textContent=entries.length;
+  const list=document.getElementById('liq-entries-list');
+  if(!entries.length){list.innerHTML=`<div class="no-entries">📭 Sin avances registrados aún.</div>`;return;}
+  const canDel=isAdmin();
+  list.innerHTML=entries.map(e=>`<div class="entry-item">
+    <div class="entry-date"><span>📅 ${fmtDate(e.date)||e.date}</span><span class="entry-author">Por: ${escHtml(e.author||'—')}</span></div>
+    <div class="entry-text">${escHtml(e.text)}</div>
+    ${canDel?`<button class="entry-del" onclick="deleteLiqEntry('${r.id}','${e.id}')">✕</button>`:''}
+  </div>`).join('');
+}
+async function addLiqEntry(){
+  const r=(window._liqRecords||[]).find(x=>x.id===bitacoraLiqId);if(!r)return;
+  if(!isAdmin())return;
+  const date=document.getElementById('liq-entry-date').value;
+  const text=document.getElementById('liq-entry-text').value.trim();
+  if(!date||!text){alert('Selecciona fecha y escribe el avance.');return;}
+  const bitacoraLiq=[...(r.bitacoraLiq||[]),{id:'e'+Date.now(),date,text,author:currentUser.name,ts:Date.now()}];
+  showSyncToast('Guardando avance...',3000);
+  await window._saveBitacoraLiq(r.id,bitacoraLiq);
+  showSyncToast('✅ Avance guardado');
+  document.getElementById('liq-entry-text').value='';
+  document.getElementById('liq-entry-date').value=todayISO();
+  const updated=(window._liqRecords||[]).find(x=>x.id===r.id);
+  if(updated)renderLiqEntries(updated);
+}
+async function deleteLiqEntry(recordId,entryId){
+  const r=(window._liqRecords||[]).find(x=>x.id===recordId);if(!r)return;
+  if(!confirm('¿Eliminar esta entrada?'))return;
+  const bitacoraLiq=(r.bitacoraLiq||[]).filter(e=>e.id!==entryId);
+  await window._saveBitacoraLiq(r.id,bitacoraLiq);
+  const updated=(window._liqRecords||[]).find(x=>x.id===r.id);
+  if(updated)renderLiqEntries(updated);
+}
+function closeBitacoraLiq(){document.getElementById('bitacora-liq-overlay').classList.remove('open');bitacoraLiqId=null;}
+
 /* ═══ ADMIN USUARIOS ═══ */
 let editingUserId=null;
 function renderAdminPanel(){
@@ -3331,6 +3463,88 @@ function renderBitacoraGeneral(){
         <span class="bp-ticket">${escHtml(r.ticket||'—')}</span>
         <span style="padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:${tipoBg};color:${tipoColor};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>
         <span class="bp-objeto">${escHtml(r.objeto||'Sin objeto')}</span>
+        <span class="bp-abogado">⚖️ ${escHtml(r.abogado||'—')}</span>
+        <span style="padding:2px 8px;border-radius:6px;font-size:10px;background:#F1F5F9;color:var(--navy);font-weight:600;">${est.label}</span>
+        <span class="bp-count ${nE===0?'empty':''}">${nE} entrada${nE!==1?'s':''}</span>
+        <span class="bp-toggle" id="arr-${cardId}">▶</span>
+      </div>
+      <div class="bit-proceso-entries ${nE>0?'open':''}" id="${cardId}">
+        ${entriesHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══ BITÁCORA GENERAL LIQUIDACIONES ═══ */
+function openBitacoraGeneralLiq(){
+  const records=window._liqRecords||[];
+  const abogadoFiltro=getAbogadoFiltro();
+  const sel=document.getElementById('blg-abogado');
+  if(abogadoFiltro){
+    sel.parentElement.style.display='none';
+  } else {
+    sel.parentElement.style.display='';
+    const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+    sel.innerHTML='<option value="">Todos los abogados</option>'+
+      abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
+  }
+  document.getElementById('blg-tramite').value='';
+  document.getElementById('blg-solo-avances').value='';
+  document.getElementById('blg-search').value='';
+  document.getElementById('bit-gen-liq-overlay').classList.add('open');
+  renderBitacoraGeneralLiq();
+}
+function closeBitacoraGeneralLiq(){
+  document.getElementById('bit-gen-liq-overlay').classList.remove('open');
+}
+function renderBitacoraGeneralLiq(){
+  const allRecords=window._liqRecords||[];
+  const abogadoFiltro=getAbogadoFiltro();
+  const baseRecords=abogadoFiltro
+    ? allRecords.filter(r=>normStr(r.abogado)===normStr(abogadoFiltro))
+    : allRecords;
+  const tramite=document.getElementById('blg-tramite').value;
+  const abogado=document.getElementById('blg-abogado').value;
+  const soloAvances=document.getElementById('blg-solo-avances').value;
+  const q=(document.getElementById('blg-search').value||'').toLowerCase();
+
+  let data=baseRecords.filter(r=>{
+    if(tramite&&r.tramite!==tramite) return false;
+    if(abogado&&r.abogado!==abogado) return false;
+    if(soloAvances==='1'&&!(r.bitacoraLiq||[]).length) return false;
+    if(soloAvances==='0'&&(r.bitacoraLiq||[]).length) return false;
+    if(q&&!((r.ticket||'').toLowerCase().includes(q)||(r.contratista||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  document.getElementById('blg-count').textContent=`${data.length} liquidación${data.length!==1?'es':''}`;
+  const body=document.getElementById('bit-gen-liq-body');
+
+  if(!data.length){
+    body.innerHTML='<div class="bit-gen-empty">Sin registros que coincidan.</div>';
+    return;
+  }
+
+  body.innerHTML=data.map((r,i)=>{
+    const est=getEstadoLiq(r.estado);
+    const entries=[...(r.bitacoraLiq||[])].sort((a,b)=>b.date.localeCompare(a.date));
+    const nE=entries.length;
+    const cardId='blq-'+r.id;
+    const entriesHtml=nE>0
+      ? entries.map(e=>`<div class="bit-entry-item">
+          <div class="bit-entry-meta">
+            <span class="bit-entry-date">📅 ${fmtDate(e.date)||e.date}</span>
+            <span class="bit-entry-author">${escHtml(e.author||'—')}</span>
+          </div>
+          <div class="bit-entry-text">${escHtml(e.text||'')}</div>
+        </div>`).join('')
+      : '<div class="bit-no-entries">Sin entradas de avance registradas.</div>';
+
+    return `<div class="bit-proceso-card">
+      <div class="bit-proceso-head" onclick="toggleBitCard('${cardId}')">
+        <span class="bp-ticket">${escHtml(r.ticket||'—')}</span>
+        <span style="padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:#D1FAE5;color:#065F46;">${escHtml(r.tramite||'—')}</span>
+        <span class="bp-objeto">${escHtml((r.contratista||'Sin contratista').slice(0,50))}</span>
         <span class="bp-abogado">⚖️ ${escHtml(r.abogado||'—')}</span>
         <span style="padding:2px 8px;border-radius:6px;font-size:10px;background:#F1F5F9;color:var(--navy);font-weight:600;">${est.label}</span>
         <span class="bp-count ${nE===0?'empty':''}">${nE} entrada${nE!==1?'s':''}</span>
@@ -4101,7 +4315,7 @@ async function confirmarImport(){
 }
 
 /* ═══ EVENTOS ═══ */
-['modal-overlay','user-overlay','bitacora-overlay','pdf-overlay','bit-gen-overlay','import-overlay','mod-modal-overlay','liq-modal-overlay'].forEach(id=>{
+['modal-overlay','user-overlay','bitacora-overlay','pdf-overlay','bit-gen-overlay','import-overlay','mod-modal-overlay','liq-modal-overlay','bitacora-liq-overlay','bit-gen-liq-overlay'].forEach(id=>{
   document.getElementById(id)?.addEventListener('click',function(e){
     if(e.target===this){
       if(id==='modal-overlay') closeModal();
@@ -4109,6 +4323,8 @@ async function confirmarImport(){
       else if(id==='import-overlay') cerrarImport();
       else if(id==='mod-modal-overlay') closeModalMod();
       else if(id==='liq-modal-overlay') closeModalLiq();
+      else if(id==='bitacora-liq-overlay') closeBitacoraLiq();
+      else if(id==='bit-gen-liq-overlay') closeBitacoraGeneralLiq();
       else if(id==='pdf-overlay') closePdfModal();
       else if(id==='bit-gen-overlay') closeBitacoraGeneral();
       else closeBitacora();
@@ -4664,6 +4880,11 @@ function renderLiq(){
           <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(r.fechaCierre)||'—'}</td>
           <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(r.fechaLiquidacion)||'—'}</td>
           <td><span class="${est.css}" style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;">${est.label}</span></td>
+          <td style="text-align:center;">
+            <button class="icon-btn" onclick="openBitacoraLiq('${r.id}')" title="Avance">
+              ${(r.bitacoraLiq||[]).length>0?`<span style="font-size:10px;background:var(--accent);color:white;border-radius:10px;padding:1px 6px;font-weight:700;">${(r.bitacoraLiq||[]).length}</span>`:'📝'}
+            </button>
+          </td>
           <td style="white-space:nowrap;">
             ${adm?`<button class="action-btn edit" onclick="openModalLiq('${r.id}')" title="Editar">✏️</button>`:''}
             ${adm?`<button class="action-btn del" onclick="deleteLiqRecord('${r.id}')" title="Eliminar">🗑️</button>`:''}
@@ -4699,6 +4920,7 @@ function renderLiq(){
             ${r.fechaLiquidacion?`<div class="mc-row"><span class="mc-lbl">F. Liquidación</span><span class="mc-val">${fmtDate(r.fechaLiquidacion)}</span></div>`:''}
           </div>
           <div class="mc-footer" onclick="event.stopPropagation()">
+            <button class="mc-btn log" onclick="openBitacoraLiq('${r.id}')">📝 Avance</button>
             ${adm?`<button class="mc-btn" onclick="openModalLiq('${r.id}')">✏️ Editar</button>`:''}
             ${adm?`<button class="mc-btn del" onclick="deleteLiqRecord('${r.id}')">🗑️</button>`:''}
           </div>
@@ -4829,8 +5051,34 @@ function exportLiqXLSX(){
   const rows=data.map(r=>[r.ticket,r.numeroProceso||'',r.unidadAdmin||'',r.tramite||'',r.persona||'',r.contratista||'',r.abogado||'',r.git||'',r.dependencia||'',fmtDate(r.fechaInicio)||'',fmtDate(r.fechaTerminacion)||'',fmtDate(r.fechaCierre)||'',fmtDate(r.fechaLiquidacion)||'',getEstadoLiq(r.estado).label,r.obs||'']);
   const ws=XLSX.utils.aoa_to_sheet([hdrs,...rows]);
   ws['!cols']=[{wch:14},{wch:14},{wch:16},{wch:12},{wch:12},{wch:32},{wch:22},{wch:28},{wch:28},{wch:13},{wch:13},{wch:13},{wch:13},{wch:26},{wch:28}];
+  // Hoja Bitácora
+  const bitHdrs=['N° Contrato','Trámite','Contratista / Proveedor','Abogado','Estado','Fecha Avance','Registrado por','Descripción del avance'];
+  const bitData=[bitHdrs];
+  data.forEach(r=>{
+    const ent=(r.bitacoraLiq||[]).slice().sort((a,b)=>a.date.localeCompare(b.date));
+    if(!ent.length){
+      bitData.push([r.ticket,r.tramite||'',r.contratista||'',r.abogado||'',getEstadoLiq(r.estado).label,'','','Sin entradas']);
+    } else {
+      ent.forEach((e,i)=>{
+        bitData.push([
+          i===0?r.ticket:'',
+          i===0?(r.tramite||''):'',
+          i===0?(r.contratista||''):'',
+          i===0?(r.abogado||''):'',
+          i===0?getEstadoLiq(r.estado).label:'',
+          fmtDate(e.date)||e.date||'',
+          e.author||'',
+          e.text||''
+        ]);
+      });
+    }
+    bitData.push(Array(8).fill(''));
+  });
+  const wsBit=XLSX.utils.aoa_to_sheet(bitData);
+  wsBit['!cols']=[{wch:14},{wch:12},{wch:32},{wch:22},{wch:26},{wch:13},{wch:20},{wch:55}];
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Liquidaciones');
+  XLSX.utils.book_append_sheet(wb,wsBit,'Bitácora');
   XLSX.writeFile(wb,'liquidaciones.xlsx');
 }
 function importarLiq(input){
