@@ -948,76 +948,142 @@ textarea#entry-text:focus{border-color:var(--accent);}
   <!-- DASHBOARD LIQUIDACIONES -->
   <div class="page" id="page-dash-liq">
     <div class="dash-wrap">
-      <div class="dash-banner" style="background:linear-gradient(135deg,#059669 0%,#0D9488 100%);">
+
+      <!-- Banner -->
+      <div class="dash-banner" style="background:linear-gradient(135deg,#064E3B 0%,#059669 60%,#0D9488 100%);">
         <div class="dash-banner-left">
           <h2>Dashboard — Liquidaciones y Cierres</h2>
           <p>Ministerio de Relaciones Exteriores · Datos en tiempo real</p>
         </div>
-        <div class="dash-banner-right"><span id="dash-liq-date-label"></span>Actualización en tiempo real</div>
+        <div class="dash-banner-right">
+          <span id="dash-liq-date-label" style="display:block;font-size:11px;opacity:.8;margin-bottom:2px;"></span>
+          <span style="font-size:11px;">🟢 Actualización en tiempo real</span>
+        </div>
       </div>
+
       <div class="dash-body">
-        <!-- KPIs -->
-        <div class="dash-kpis">
+
+        <!-- KPIs fila 1: Volumen -->
+        <div class="dash-divider"><span class="dash-divider-icon">📊</span>Volumen General</div>
+        <div class="dash-kpis" style="grid-template-columns:repeat(5,1fr);">
           <div class="kpi kt">
             <span class="kpct" id="dl-pct-total"></span>
             <span class="kn" id="dl-total">0</span>
-            <span class="kl">Total Liquidaciones</span>
+            <span class="kl">Total Registros</span>
           </div>
-          <div class="kpi ka">
-            <span class="kpct" id="dl-pct-pendiente"></span>
-            <span class="kn" id="dl-pendiente">0</span>
-            <span class="kl">Pendiente enviar</span>
+          <div class="kpi" style="border-top:3px solid #F59E0B;">
+            <span class="kpct" id="dl-pct-liquidacion" style="color:#F59E0B;"></span>
+            <span class="kn" id="dl-liq-count" style="color:#F59E0B;">0</span>
+            <span class="kl">Liquidaciones</span>
           </div>
-          <div class="kpi kc">
-            <span class="kpct" id="dl-pct-tramite"></span>
-            <span class="kn" id="dl-tramite">0</span>
-            <span class="kl">En trámite</span>
+          <div class="kpi" style="border-top:3px solid var(--teal);">
+            <span class="kpct" id="dl-pct-cierre" style="color:var(--teal);"></span>
+            <span class="kn" id="dl-cie-count" style="color:var(--teal);">0</span>
+            <span class="kl">Cierres</span>
           </div>
-          <div class="kpi kap">
-            <span class="kpct" id="dl-pct-revision"></span>
-            <span class="kn" id="dl-revision">0</span>
+          <div class="kpi" style="border-top:3px solid #7C3AED;">
+            <span class="kpct" id="dl-pct-juridica" style="color:#7C3AED;"></span>
+            <span class="kn" id="dl-jur-count" style="color:#7C3AED;">0</span>
+            <span class="kl">Persona Jurídica</span>
+          </div>
+          <div class="kpi" style="border-top:3px solid var(--sky);">
+            <span class="kpct" id="dl-pct-natural" style="color:var(--sky);"></span>
+            <span class="kn" id="dl-nat-count" style="color:var(--sky);">0</span>
+            <span class="kl">Persona Natural</span>
+          </div>
+        </div>
+
+        <!-- KPIs fila 2: Estado del trámite -->
+        <div class="dash-divider"><span class="dash-divider-icon">🔄</span>Estado del Trámite</div>
+        <div class="dash-kpis" style="grid-template-columns:repeat(5,1fr);">
+          <div class="kpi" style="border-top:3px solid #F59E0B;">
+            <span class="kpct" id="dl-pct-pendiente" style="color:#F59E0B;"></span>
+            <span class="kn" id="dl-pendiente" style="color:#F59E0B;">0</span>
+            <span class="kl">Pdte enviar</span>
+          </div>
+          <div class="kpi" style="border-top:3px solid var(--sky);">
+            <span class="kpct" id="dl-pct-asesoria" style="color:var(--sky);"></span>
+            <span class="kn" id="dl-asesoria-count" style="color:var(--sky);">0</span>
+            <span class="kl">En asesoría</span>
+          </div>
+          <div class="kpi" style="border-top:3px solid #EA580C;">
+            <span class="kpct" id="dl-pct-obs" style="color:#EA580C;"></span>
+            <span class="kn" id="dl-obs-count" style="color:#EA580C;">0</span>
+            <span class="kl">Obs. en el área</span>
+          </div>
+          <div class="kpi" style="border-top:3px solid #7C3AED;">
+            <span class="kpct" id="dl-pct-revision" style="color:#7C3AED;"></span>
+            <span class="kn" id="dl-revision" style="color:#7C3AED;">0</span>
+            <span class="kl">En revisión</span>
+          </div>
+          <div class="kpi" style="border-top:3px solid var(--green);">
+            <span class="kpct" id="dl-pct-finalizados" style="color:var(--green);"></span>
+            <span class="kn" id="dl-fin-count" style="color:var(--green);">0</span>
             <span class="kl">Liquidados / Cerrados</span>
           </div>
         </div>
-        <!-- Distribución por estado -->
-        <div class="dash-divider"><span class="dash-divider-icon">📊</span>Distribución por Estado</div>
+
+        <!-- Distribución por estado + por unidad -->
+        <div class="dash-divider"><span class="dash-divider-icon">📋</span>Distribución Detallada</div>
         <div class="charts-row">
-          <div class="chart-card" style="grid-column:1/-1;">
+          <div class="chart-card">
             <div class="chart-card-header">
-              <div><h3>Estado de Liquidaciones</h3><p>Todos los procesos por estado actual</p></div>
+              <div><h3>Por Estado</h3><p>Todos los registros por estado actual</p></div>
               <span class="chart-card-tag" style="background:#D1FAE5;color:#059669;">🔒 Liquidaciones</span>
             </div>
             <div class="estado-list" id="dl-estado-list"></div>
           </div>
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div><h3>Por Unidad Administrativa</h3><p>FRMRE vs MRE</p></div>
+              <span class="chart-card-tag" style="background:#E0F2FE;color:var(--sky);">🏛️ Unidades</span>
+            </div>
+            <div class="estado-list" id="dl-unidad-list"></div>
+          </div>
         </div>
-        <!-- Tablas por responsable -->
-        <div class="dash-divider"><span class="dash-divider-icon">👥</span>Detalle por Responsable</div>
-        <div class="dash-tables-row">
+
+        <!-- Tabla por abogado -->
+        <div class="dash-divider"><span class="dash-divider-icon">⚖️</span>Carga por Abogado</div>
+        <div class="dash-tables-row" style="grid-template-columns:1fr;">
           <div class="dash-table-card">
             <div class="dash-table-card-header">
-              <h4>Por Abogado</h4>
+              <h4>Detalle por Abogado Responsable</h4>
               <span class="dtc-badge" id="dl-dtc-abog">0</span>
             </div>
             <table class="dash-table">
               <thead><tr>
-                <th>Abogado</th><th>Total</th><th>Pendiente</th><th>En trámite</th><th>Revisión</th>
+                <th>Abogado</th>
+                <th>Total</th>
+                <th>Liquidaciones</th>
+                <th>Cierres</th>
+                <th>Pdte enviar</th>
+                <th>En asesoría</th>
+                <th>Obs. área</th>
+                <th>En revisión</th>
+                <th>Finalizados</th>
               </tr></thead>
               <tbody id="dl-abog-body"></tbody>
             </table>
           </div>
+        </div>
+
+        <!-- Avances recientes -->
+        <div class="dash-divider"><span class="dash-divider-icon">📓</span>Últimos Avances Registrados</div>
+        <div class="dash-tables-row" style="grid-template-columns:1fr;">
           <div class="dash-table-card">
             <div class="dash-table-card-header">
-              <h4>Por GIT</h4>
-              <span class="dtc-badge" id="dl-dtc-git">0</span>
+              <h4>Actividad reciente en bitácora</h4>
+              <span class="dtc-badge" id="dl-dtc-avances">0</span>
             </div>
             <table class="dash-table">
               <thead><tr>
-                <th>GIT</th><th>Total</th><th>Pendiente</th><th>En trámite</th>
+                <th>N° Contrato</th><th>Contratista</th><th>Abogado</th><th>Fecha Avance</th><th>Registrado por</th><th>Descripción</th>
               </tr></thead>
-              <tbody id="dl-git-body"></tbody>
+              <tbody id="dl-avances-body"></tbody>
             </table>
           </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -3260,74 +3326,121 @@ function renderDashLiq(){
   const allRecords=window._liqRecords||[];
   const records=abogadoFiltro?allRecords.filter(r=>normStr(r.abogado)===normStr(abogadoFiltro)):allRecords;
   const tot=records.length;
-  const pendiente=records.filter(r=>r.estado==='pendiente-enviar').length;
-  const tramite=records.filter(r=>['en-asesoria','observaciones-area','revision-coord','aval-radicar','radicado-git','radicado-competente'].includes(r.estado)).length;
-  const revision=records.filter(r=>r.estado==='liquidado-pte-cerrar'||r.estado==='liquidado-cerrado'||r.estado==='cierre-contractual').length;
   const pct=v=>tot?Math.round(v/tot*100)+'%':'—';
 
   // Fecha
-  const dl=document.getElementById('dash-liq-date-label');
-  if(dl) dl.textContent=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'})+' · ';
+  const dlEl=document.getElementById('dash-liq-date-label');
+  if(dlEl) dlEl.textContent=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
 
-  // KPIs
+  // KPI fila 1: volumen
+  const liqCount=records.filter(r=>r.tramite==='Liquidacion').length;
+  const cieCount=records.filter(r=>r.tramite==='Cierre').length;
+  const jurCount=records.filter(r=>r.persona==='Juridica').length;
+  const natCount=records.filter(r=>r.persona==='Natural').length;
   document.getElementById('dl-total').textContent=tot;
-  document.getElementById('dl-pendiente').textContent=pendiente;
-  document.getElementById('dl-tramite').textContent=tramite;
-  document.getElementById('dl-revision').textContent=revision;
+  document.getElementById('dl-liq-count').textContent=liqCount;
+  document.getElementById('dl-cie-count').textContent=cieCount;
+  document.getElementById('dl-jur-count').textContent=jurCount;
+  document.getElementById('dl-nat-count').textContent=natCount;
   document.getElementById('dl-pct-total').textContent='100%';
-  document.getElementById('dl-pct-pendiente').textContent=pct(pendiente);
-  document.getElementById('dl-pct-tramite').textContent=pct(tramite);
-  document.getElementById('dl-pct-revision').textContent=pct(revision);
+  document.getElementById('dl-pct-liquidacion').textContent=pct(liqCount);
+  document.getElementById('dl-pct-cierre').textContent=pct(cieCount);
+  document.getElementById('dl-pct-juridica').textContent=pct(jurCount);
+  document.getElementById('dl-pct-natural').textContent=pct(natCount);
 
-  // Barras de estado
+  // KPI fila 2: estados
+  const pendiente=records.filter(r=>r.estado==='pendiente-enviar').length;
+  const asesoriaCount=records.filter(r=>r.estado==='en-asesoria').length;
+  const obsCount=records.filter(r=>r.estado==='observaciones-area').length;
+  const revisionCount=records.filter(r=>['revision-coord','aval-radicar','radicado-git','radicado-competente'].includes(r.estado)).length;
+  const finalizados=records.filter(r=>['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(r.estado)).length;
+  document.getElementById('dl-pendiente').textContent=pendiente;
+  document.getElementById('dl-asesoria-count').textContent=asesoriaCount;
+  document.getElementById('dl-obs-count').textContent=obsCount;
+  document.getElementById('dl-revision').textContent=revisionCount;
+  document.getElementById('dl-fin-count').textContent=finalizados;
+  document.getElementById('dl-pct-pendiente').textContent=pct(pendiente);
+  document.getElementById('dl-pct-asesoria').textContent=pct(asesoriaCount);
+  document.getElementById('dl-pct-obs').textContent=pct(obsCount);
+  document.getElementById('dl-pct-revision').textContent=pct(revisionCount);
+  document.getElementById('dl-pct-finalizados').textContent=pct(finalizados);
+
+  // Barras por estado
   renderEstadoList('dl-estado-list', records, ESTADOS_LIQ,
-    ['#FCD34D','#7DD3FC','#FDBA74','#C4B5FD']);
+    ['#FCD34D','#7DD3FC','#FDBA74','#C4B5FD','#A5B4FC','#67E8F9','#93C5FD','#6EE7B7','#FCA5A5','#A7F3D0']);
+
+  // Barras por unidad
+  const ulEl=document.getElementById('dl-unidad-list');
+  if(ulEl){
+    const unidades=[{v:'FRMRE',color:'#7DD3FC'},{v:'MRE',color:'#6EE7B7'},{v:'',label:'Sin definir',color:'#E2E8F0'}];
+    ulEl.innerHTML=[
+      {v:'FRMRE',label:'FRMRE',color:'#7DD3FC'},
+      {v:'MRE',label:'MRE',color:'#6EE7B7'},
+      {v:'',label:'Sin definir',color:'#CBD5E1'},
+    ].map(u=>{
+      const cnt=records.filter(r=>(r.unidadAdmin||'')===(u.v)).length;
+      if(!cnt&&u.v==='') return '';
+      const p=tot?Math.round(cnt/tot*100):0;
+      return `<div class="estado-row">
+        <span class="estado-row-label">${u.label}</span>
+        <div class="estado-row-bar"><div class="estado-row-fill" style="width:${p}%;background:${u.color};"></div></div>
+        <span class="estado-row-count">${cnt}</span>
+        <span class="estado-row-pct">${p}%</span>
+      </div>`;
+    }).join('');
+  }
 
   // Tabla por abogado
   const byAbog={};
   records.forEach(r=>{
     const k=r.abogado||'Sin asignar';
-    if(!byAbog[k]) byAbog[k]={total:0,pendiente:0,tramite:0,revision:0};
+    if(!byAbog[k]) byAbog[k]={total:0,liq:0,cie:0,pend:0,ases:0,obs:0,rev:0,fin:0};
     byAbog[k].total++;
-    if(r.estado==='pendiente-enviar') byAbog[k].pendiente++;
-    else if(['en-asesoria','observaciones-area','revision-coord','aval-radicar','radicado-git','radicado-competente'].includes(r.estado)) byAbog[k].tramite++;
-    else if(['liquidado-pte-cerrar','liquidado-cerrado','cierre-contractual'].includes(r.estado)) byAbog[k].revision++;
+    if(r.tramite==='Liquidacion') byAbog[k].liq++;
+    else if(r.tramite==='Cierre') byAbog[k].cie++;
+    if(r.estado==='pendiente-enviar') byAbog[k].pend++;
+    else if(r.estado==='en-asesoria') byAbog[k].ases++;
+    else if(r.estado==='observaciones-area') byAbog[k].obs++;
+    else if(['revision-coord','aval-radicar','radicado-git','radicado-competente'].includes(r.estado)) byAbog[k].rev++;
+    else if(['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(r.estado)) byAbog[k].fin++;
   });
   const abNames=Object.keys(byAbog).sort();
   document.getElementById('dl-dtc-abog').textContent=abNames.length;
   const abogBody=document.getElementById('dl-abog-body');
   if(abogBody) abogBody.innerHTML=abNames.length?abNames.map(n=>{
     const d=byAbog[n];
+    const barPct=tot?Math.round(d.total/tot*100):0;
     return `<tr>
-      <td style="font-weight:600;color:var(--navy);font-size:12px;">${escHtml(n)}</td>
-      <td><span class="nc" style="color:var(--navy);">${d.total}</span></td>
-      <td><span class="nc" style="color:#F59E0B;">${d.pendiente}</span></td>
-      <td><span class="nc sky">${d.tramite}</span></td>
-      <td><span class="nc" style="color:#7C3AED;">${d.revision}</span></td>
+      <td style="font-weight:600;color:var(--navy);font-size:12px;">
+        ${escHtml(n)}
+        <div style="margin-top:3px;height:3px;background:#E2E8F0;border-radius:2px;"><div style="width:${barPct}%;height:100%;background:#059669;border-radius:2px;"></div></div>
+      </td>
+      <td><span class="nc" style="color:var(--navy);font-weight:700;">${d.total}</span></td>
+      <td><span class="nc" style="color:#F59E0B;">${d.liq}</span></td>
+      <td><span class="nc" style="color:var(--teal);">${d.cie}</span></td>
+      <td><span class="nc" style="color:#F59E0B;">${d.pend||0}</span></td>
+      <td><span class="nc sky">${d.ases||0}</span></td>
+      <td><span class="nc" style="color:#EA580C;">${d.obs||0}</span></td>
+      <td><span class="nc" style="color:#7C3AED;">${d.rev||0}</span></td>
+      <td>${d.fin>0?`<span style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">${d.fin}</span>`:`<span style="color:var(--muted);font-size:12px;">0</span>`}</td>
     </tr>`;
-  }).join(''):`<tr><td colspan="5" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin datos</td></tr>`;
+  }).join(''):`<tr><td colspan="9" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin datos</td></tr>`;
 
-  // Tabla por GIT
-  const byGit={};
-  records.forEach(r=>{
-    const k=r.git?r.git.replace('GIT ',''):'Sin GIT';
-    if(!byGit[k]) byGit[k]={total:0,pendiente:0,tramite:0};
-    byGit[k].total++;
-    if(r.estado==='pendiente-enviar') byGit[k].pendiente++;
-    else if(['en-asesoria','observaciones-area','revision-coord','aval-radicar','radicado-git','radicado-competente'].includes(r.estado)) byGit[k].tramite++;
-  });
-  const gitNames=Object.keys(byGit).sort((a,b)=>byGit[b].total-byGit[a].total);
-  document.getElementById('dl-dtc-git').textContent=gitNames.length;
-  const gitBody=document.getElementById('dl-git-body');
-  if(gitBody) gitBody.innerHTML=gitNames.length?gitNames.map(n=>{
-    const d=byGit[n];
-    return `<tr>
-      <td style="font-weight:500;color:var(--navy);font-size:11px;">${escHtml(n)}</td>
-      <td><span class="nc" style="color:var(--navy);">${d.total}</span></td>
-      <td><span class="nc" style="color:#F59E0B;">${d.pendiente}</span></td>
-      <td><span class="nc sky">${d.tramite}</span></td>
-    </tr>`;
-  }).join(''):`<tr><td colspan="4" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin datos</td></tr>`;
+  // Ultimos avances
+  const avances=[];
+  records.forEach(r=>(r.bitacoraLiq||[]).forEach(e=>avances.push({...e,ticket:r.ticket,contratista:r.contratista,abogado:r.abogado})));
+  avances.sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const top15=avances.slice(0,15);
+  document.getElementById('dl-dtc-avances').textContent=avances.length;
+  const avBody=document.getElementById('dl-avances-body');
+  if(avBody) avBody.innerHTML=top15.length?top15.map(e=>`<tr>
+    <td><span class="ticket-badge" style="font-size:10px;">${escHtml(e.ticket||'—')}</span></td>
+    <td style="font-size:11px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(e.contratista||'—')}</td>
+    <td style="font-size:11px;color:var(--navy);font-weight:500;">${escHtml(e.abogado||'—')}</td>
+    <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(e.date)||e.date||'—'}</td>
+    <td style="font-size:11px;color:var(--muted);">${escHtml(e.author||'—')}</td>
+    <td style="font-size:11px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(e.text||'—')}</td>
+  </tr>`).join(''):`<tr><td colspan="6" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin avances registrados aun.</td></tr>`;
 }
 
 function renderPromedioAbogado(records){
