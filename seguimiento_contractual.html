@@ -1245,8 +1245,8 @@ textarea#entry-text:focus{border-color:var(--accent);}
     </div>
     <div class="stats-bar">
       <div class="stat-card stat-card-total"><div><span class="stat-num" id="liq-stat-total">0</span><span class="stat-label">Total</span></div></div>
-      <div class="stat-card stat-card-asesoria"><div><span class="stat-num" id="liq-stat-pendiente" style="color:#F59E0B">0</span><span class="stat-label">Pendientes</span></div></div>
-      <div class="stat-card stat-card-ok"><div><span class="stat-num" id="liq-stat-liquidado" style="color:var(--green)">0</span><span class="stat-label">Liquidados</span></div></div>
+      <div class="stat-card stat-card-asesoria"><div><span class="stat-num" id="liq-stat-pendiente" style="color:#F59E0B">0</span><span class="stat-label">En Trámite</span></div></div>
+      <div class="stat-card stat-card-ok"><div><span class="stat-num" id="liq-stat-liquidado" style="color:var(--green)">0</span><span class="stat-label">Liquidados / Cerrados</span></div></div>
     </div>
     <div class="table-wrap">
       <table>
@@ -4627,27 +4627,194 @@ function pdfConsolidadoGeneral(){
   const total=proc.length+mod.length+liq.length;
   if(!total){alert('No hay datos para generar el informe.');return;}
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+
   const procActivos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+  const procFin=proc.filter(r=>estadoIsTerminal(r.tipo,r.estado));
   const procVenc=procActivos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
+  const procHoy=procActivos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))===0);
   const modActivos=mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+  const modFin=mod.filter(r=>estadoIsTerminal(r.tipo,r.estado));
   const modVenc=modActivos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
+  const liqFin=liq.filter(r=>['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(r.estado));
+  const liqTram=liq.filter(r=>['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','aval-radicar','radicado-git','radicado-competente'].includes(r.estado));
+  const totalRiesgo=procVenc.length+procHoy.length+modVenc.length;
+
+  // Función minibarra
+  const miniBar=(v,tot,color)=>{
+    const p=tot?Math.round(v/tot*100):0;
+    return `<div style="display:flex;align-items:center;gap:6px;">
+      <div style="flex:1;background:#F1F5F9;border-radius:3px;height:6px;">
+        <div style="width:${p}%;height:100%;background:${color};border-radius:3px;"></div>
+      </div>
+      <span style="font-size:10px;color:${PDF_GRAY};min-width:28px;">${p}%</span>
+    </div>`;
+  };
+
+  // Conclusiones automáticas
+  const conclusions=[];
+  const pctFinLiq=liq.length?Math.round(liqFin.length/liq.length*100):0;
+  if(pctFinLiq>=50) conclusions.push({tipo:'ok',txt:`<strong>${pctFinLiq}%</strong> de las liquidaciones y cierres han completado su proceso. La gestión de cartera muestra avance significativo.`});
+  if(totalRiesgo>0) conclusions.push({tipo:'alert',txt:`Se identifican <strong>${totalRiesgo} procesos/modificaciones</strong> vencidos o que vencen hoy. Requieren atención inmediata de los abogados responsables.`});
+  if(procVenc.length>0){
+    const abVenc=[...new Set(procVenc.map(r=>r.abogado).filter(Boolean))];
+    conclusions.push({tipo:'warn',txt:`<strong>${procVenc.length} procesos</strong> han superado su fecha límite. Abogados afectados: ${abVenc.slice(0,4).join(', ')}${abVenc.length>4?' y otros':''}.`});
+  }
+  if(liqTram.length>0) conclusions.push({tipo:'warn',txt:`<strong>${liqTram.length} liquidaciones/cierres</strong> se encuentran en trámite activo (${liq.length?Math.round(liqTram.length/liq.length*100):0}% de la cartera). Verificar avance de cada etapa.`});
+
   abrirPdf(`
-    ${pdfHeader('Resumen Ejecutivo Global','Consolidado de toda la actividad contractual · '+fechaHoy)}
-    ${pdfIntroBox('Este informe consolida la actividad contractual del Ministerio de Relaciones Exteriores en sus tres módulos: Procesos, Modificaciones y Liquidaciones/Cierres.')}
-    ${pdfKpiGrid([
-      {label:'Total General',value:total,color:PDF_NAVY,sub:'Todos los módulos'},
-      {label:'Procesos',value:proc.length,color:PDF_SKY,sub:'Asesorías y contractuales'},
-      {label:'Modificaciones',value:mod.length,color:'#7C3AED',sub:'Adiciones contractuales'},
-      {label:'Liquidaciones',value:liq.length,color:'#059669',sub:'Cierres y liquidaciones'},
-      {label:'Activos (Proc)',value:procActivos.length,color:PDF_TEAL,sub:'Procesos en trámite'},
-      {label:'Vencidos (Proc)',value:procVenc.length,color:PDF_RED,sub:'Requieren acción'},
-    ])}
-    ${pdfSectionTitle('📋','Procesos — Resumen')}
-    ${pdfTable(['Indicador','Cantidad','% del total'],[ ['Total procesos',proc.length,'100%'], ['Asesorías previas',proc.filter(r=>r.tipo==='asesoria').length,proc.length?Math.round(proc.filter(r=>r.tipo==='asesoria').length/proc.length*100)+'%':'—'], ['Procesos contractuales',proc.filter(r=>r.tipo==='contractual').length,proc.length?Math.round(proc.filter(r=>r.tipo==='contractual').length/proc.length*100)+'%':'—'], ['Activos',procActivos.length,proc.length?Math.round(procActivos.length/proc.length*100)+'%':'—'], ['Finalizados',proc.filter(r=>estadoIsTerminal(r.tipo,r.estado)).length,proc.length?Math.round(proc.filter(r=>estadoIsTerminal(r.tipo,r.estado)).length/proc.length*100)+'%':'—'], ['Vencidos',procVenc.length,procActivos.length?Math.round(procVenc.length/procActivos.length*100)+'%':'—'] ],['50%','25%','25%'])}
-    ${pdfSectionTitle('✏️','Modificaciones — Resumen')}
-    ${pdfTable(['Indicador','Cantidad'],[ ['Total modificaciones',mod.length], ['Activas',modActivos.length], ['Finalizadas',mod.filter(r=>estadoIsTerminal(r.tipo,r.estado)).length], ['Vencidas',modVenc.length] ],['70%','30%'])}
-    ${pdfSectionTitle('🔒','Liquidaciones — Resumen')}
-    ${pdfTable(['Estado','Cantidad'],ESTADOS_LIQ.map(e=>[e.label,liq.filter(r=>r.estado===e.value).length]),['75%','25%'])}
+    ${pdfHeader('Resumen Ejecutivo Global — Gestión Contractual','Consolidado de toda la actividad · '+fechaHoy)}
+
+    ${pdfIntroBox(`Informe ejecutivo de la actividad contractual integral del Ministerio de Relaciones Exteriores. Consolida <strong>${total} registros</strong> distribuidos en tres módulos: Procesos (${proc.length}), Modificaciones (${mod.length}) y Liquidaciones/Cierres (${liq.length}). Preparado el ${fechaHoy} a las ${hora} horas para presentación en comité.`)}
+
+    <!-- KPIs principales -->
+    ${pdfSectionTitle('📊','Indicadores Generales por Módulo')}
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:28px;">
+
+      <!-- Procesos -->
+      <div style="border:1px solid ${PDF_BORDER};border-radius:12px;overflow:hidden;">
+        <div style="background:#0F1F3D;padding:12px 16px;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">📋</span>
+          <div>
+            <div style="color:white;font-weight:700;font-size:13px;">Procesos</div>
+            <div style="color:rgba(255,255,255,.55);font-size:10px;">Asesorías y contractuales</div>
+          </div>
+          <div style="margin-left:auto;font-size:28px;font-weight:800;color:${PDF_GOLD};font-family:monospace;">${proc.length}</div>
+        </div>
+        <div style="padding:12px 16px;background:white;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <div style="text-align:center;padding:8px;background:#F8FAFC;border-radius:6px;">
+              <div style="font-size:16px;font-weight:700;color:${PDF_SKY};">${procActivos.length}</div>
+              <div style="font-size:9px;color:${PDF_GRAY};text-transform:uppercase;">Activos</div>
+            </div>
+            <div style="text-align:center;padding:8px;background:#F0FDF4;border-radius:6px;">
+              <div style="font-size:16px;font-weight:700;color:${PDF_GREEN};">${procFin.length}</div>
+              <div style="font-size:9px;color:${PDF_GRAY};text-transform:uppercase;">Finalizados</div>
+            </div>
+          </div>
+          ${procVenc.length>0?`<div style="background:#FEF2F2;border-radius:6px;padding:6px 10px;font-size:10px;color:#991B1B;font-weight:600;">⚠️ ${procVenc.length} vencido${procVenc.length!==1?'s':''}</div>`:`<div style="background:#F0FDF4;border-radius:6px;padding:6px 10px;font-size:10px;color:#065F46;font-weight:600;">✅ Sin vencidos</div>`}
+        </div>
+      </div>
+
+      <!-- Modificaciones -->
+      <div style="border:1px solid ${PDF_BORDER};border-radius:12px;overflow:hidden;">
+        <div style="background:#4C1D95;padding:12px 16px;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">✏️</span>
+          <div>
+            <div style="color:white;font-weight:700;font-size:13px;">Modificaciones</div>
+            <div style="color:rgba(255,255,255,.55);font-size:10px;">Adiciones contractuales</div>
+          </div>
+          <div style="margin-left:auto;font-size:28px;font-weight:800;color:#C4B5FD;font-family:monospace;">${mod.length}</div>
+        </div>
+        <div style="padding:12px 16px;background:white;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <div style="text-align:center;padding:8px;background:#F8FAFC;border-radius:6px;">
+              <div style="font-size:16px;font-weight:700;color:#7C3AED;">${modActivos.length}</div>
+              <div style="font-size:9px;color:${PDF_GRAY};text-transform:uppercase;">Activas</div>
+            </div>
+            <div style="text-align:center;padding:8px;background:#F0FDF4;border-radius:6px;">
+              <div style="font-size:16px;font-weight:700;color:${PDF_GREEN};">${modFin.length}</div>
+              <div style="font-size:9px;color:${PDF_GRAY};text-transform:uppercase;">Finalizadas</div>
+            </div>
+          </div>
+          ${modVenc.length>0?`<div style="background:#FEF2F2;border-radius:6px;padding:6px 10px;font-size:10px;color:#991B1B;font-weight:600;">⚠️ ${modVenc.length} vencida${modVenc.length!==1?'s':''}</div>`:`<div style="background:#F0FDF4;border-radius:6px;padding:6px 10px;font-size:10px;color:#065F46;font-weight:600;">✅ Sin vencidas</div>`}
+        </div>
+      </div>
+
+      <!-- Liquidaciones -->
+      <div style="border:1px solid ${PDF_BORDER};border-radius:12px;overflow:hidden;">
+        <div style="background:#064E3B;padding:12px 16px;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">🔒</span>
+          <div>
+            <div style="color:white;font-weight:700;font-size:13px;">Liquidaciones</div>
+            <div style="color:rgba(255,255,255,.55);font-size:10px;">Cierres y liquidaciones</div>
+          </div>
+          <div style="margin-left:auto;font-size:28px;font-weight:800;color:#6EE7B7;font-family:monospace;">${liq.length}</div>
+        </div>
+        <div style="padding:12px 16px;background:white;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <div style="text-align:center;padding:8px;background:#F8FAFC;border-radius:6px;">
+              <div style="font-size:16px;font-weight:700;color:${PDF_SKY};">${liqTram.length}</div>
+              <div style="font-size:9px;color:${PDF_GRAY};text-transform:uppercase;">En trámite</div>
+            </div>
+            <div style="text-align:center;padding:8px;background:#F0FDF4;border-radius:6px;">
+              <div style="font-size:16px;font-weight:700;color:${PDF_GREEN};">${liqFin.length}</div>
+              <div style="font-size:9px;color:${PDF_GRAY};text-transform:uppercase;">Finalizadas</div>
+            </div>
+          </div>
+          <div style="background:#F0FDF4;border-radius:6px;padding:6px 10px;font-size:10px;color:#065F46;font-weight:600;">${pctFinLiq}% de cartera liquidada</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen en tabla -->
+    ${pdfSectionTitle('📋','Tabla Comparativa por Módulo')}
+    <table style="width:100%;border-collapse:collapse;border:1px solid ${PDF_BORDER};border-radius:8px;overflow:hidden;margin-bottom:28px;">
+      <thead><tr style="background:${PDF_NAVY};">
+        <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.07em;">Módulo</th>
+        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:white;">Total</th>
+        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:white;">Activos / En trámite</th>
+        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:white;">Finalizados</th>
+        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:white;">Alertas</th>
+        <th style="padding:10px 14px;font-size:10px;font-weight:700;color:white;">Avance</th>
+      </tr></thead>
+      <tbody>
+        <tr style="background:white;">
+          <td style="padding:11px 14px;font-weight:700;color:${PDF_NAVY};font-size:12px;">📋 Procesos</td>
+          <td style="padding:11px 14px;text-align:center;font-size:13px;font-weight:700;color:${PDF_NAVY};">${proc.length}</td>
+          <td style="padding:11px 14px;text-align:center;font-size:12px;color:${PDF_SKY};font-weight:600;">${procActivos.length}</td>
+          <td style="padding:11px 14px;text-align:center;font-size:12px;color:${PDF_GREEN};font-weight:600;">${procFin.length}</td>
+          <td style="padding:11px 14px;text-align:center;">${procVenc.length>0?`<span style="background:#FEF2F2;color:#991B1B;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:700;">⚠️ ${procVenc.length}</span>`:`<span style="color:${PDF_GREEN};font-size:12px;">✅</span>`}</td>
+          <td style="padding:11px 14px;width:120px;">${miniBar(procFin.length,proc.length,PDF_GREEN)}</td>
+        </tr>
+        <tr style="background:#F8FAFC;">
+          <td style="padding:11px 14px;font-weight:700;color:${PDF_NAVY};font-size:12px;">✏️ Modificaciones</td>
+          <td style="padding:11px 14px;text-align:center;font-size:13px;font-weight:700;color:${PDF_NAVY};">${mod.length}</td>
+          <td style="padding:11px 14px;text-align:center;font-size:12px;color:#7C3AED;font-weight:600;">${modActivos.length}</td>
+          <td style="padding:11px 14px;text-align:center;font-size:12px;color:${PDF_GREEN};font-weight:600;">${modFin.length}</td>
+          <td style="padding:11px 14px;text-align:center;">${modVenc.length>0?`<span style="background:#FEF2F2;color:#991B1B;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:700;">⚠️ ${modVenc.length}</span>`:`<span style="color:${PDF_GREEN};font-size:12px;">✅</span>`}</td>
+          <td style="padding:11px 14px;width:120px;">${miniBar(modFin.length,mod.length,PDF_GREEN)}</td>
+        </tr>
+        <tr style="background:white;">
+          <td style="padding:11px 14px;font-weight:700;color:${PDF_NAVY};font-size:12px;">🔒 Liquidaciones</td>
+          <td style="padding:11px 14px;text-align:center;font-size:13px;font-weight:700;color:${PDF_NAVY};">${liq.length}</td>
+          <td style="padding:11px 14px;text-align:center;font-size:12px;color:${PDF_SKY};font-weight:600;">${liqTram.length}</td>
+          <td style="padding:11px 14px;text-align:center;font-size:12px;color:${PDF_GREEN};font-weight:600;">${liqFin.length}</td>
+          <td style="padding:11px 14px;text-align:center;"><span style="color:${PDF_GRAY};font-size:11px;">N/A</span></td>
+          <td style="padding:11px 14px;width:120px;">${miniBar(liqFin.length,liq.length,PDF_GREEN)}</td>
+        </tr>
+        <tr style="background:#0F1F3D;">
+          <td style="padding:11px 14px;font-weight:700;color:${PDF_GOLD};font-size:12px;">TOTAL GENERAL</td>
+          <td style="padding:11px 14px;text-align:center;font-size:14px;font-weight:800;color:white;">${total}</td>
+          <td style="padding:11px 14px;text-align:center;font-size:12px;color:#93C5FD;font-weight:700;">${procActivos.length+modActivos.length+liqTram.length}</td>
+          <td style="padding:11px 14px;text-align:center;font-size:12px;color:#6EE7B7;font-weight:700;">${procFin.length+modFin.length+liqFin.length}</td>
+          <td style="padding:11px 14px;text-align:center;font-size:12px;color:#FCA5A5;font-weight:700;">${totalRiesgo>0?'⚠️ '+totalRiesgo:'✅ 0'}</td>
+          <td style="padding:11px 14px;width:120px;">${miniBar(procFin.length+modFin.length+liqFin.length,total,'#6EE7B7')}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Distribución liquidaciones por estado -->
+    ${pdfSectionTitle('🔒','Estado de Liquidaciones y Cierres')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px;">
+      ${ESTADOS_LIQ.map(e=>{
+        const cnt=liq.filter(r=>r.estado===e.value).length;
+        const pct=liq.length?Math.round(cnt/liq.length*100):0;
+        const isFin=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(e.value);
+        const color=isFin?PDF_GREEN:PDF_SKY;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:${isFin?'#F0FDF4':'#F8FAFC'};border-radius:8px;border-left:3px solid ${color};">
+          <div style="flex:1;font-size:11px;font-weight:600;color:${PDF_NAVY};">${e.label}</div>
+          <div style="width:80px;background:#E2E8F0;border-radius:3px;height:6px;"><div style="width:${pct}%;height:100%;background:${color};border-radius:3px;"></div></div>
+          <div style="font-size:12px;font-weight:700;color:${color};min-width:24px;text-align:right;">${cnt}</div>
+          <div style="font-size:10px;color:${PDF_GRAY};min-width:28px;text-align:right;">${pct}%</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- Análisis -->
+    ${pdfSectionTitle('💡','Análisis y Conclusiones')}
+    ${pdfConclusions(conclusions)}
+
     ${pdfFooter()}
   `,'Resumen Ejecutivo Global');
 }
@@ -4657,18 +4824,100 @@ function pdfConsolidadoAbogado(){
   const proc=window._records||[];
   const mod=window._modRecords||[];
   const liq=window._liqRecords||[];
-  const fechaHoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
+  const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const abogados=[...new Set([...proc,...mod,...liq].map(r=>r.abogado).filter(Boolean))].sort();
   if(!abogados.length){alert('No hay datos para generar el informe.');return;}
-  const rows=abogados.map(ab=>[
-    `<b style="color:${PDF_NAVY};">${escHtml(ab)}</b>`,
-    proc.filter(r=>r.abogado===ab).length,
-    mod.filter(r=>r.abogado===ab).length,
-    liq.filter(r=>r.abogado===ab).length,
-    proc.filter(r=>r.abogado===ab).length+mod.filter(r=>r.abogado===ab).length+liq.filter(r=>r.abogado===ab).length,
-    (()=>{const vp=proc.filter(r=>r.abogado===ab&&!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;const vm=mod.filter(r=>r.abogado===ab&&!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;const v=vp+vm;return v>0?`<span style="color:${PDF_RED};font-weight:700;">⚠️ ${v}</span>`:`<span style="color:${PDF_GREEN};">✅ 0</span>`;})(),
-  ]);
-  abrirPdf(`${pdfHeader('Carga Global por Abogado','Procesos, modificaciones y liquidaciones por responsable · '+fechaHoy)}${pdfIntroBox('Este informe consolida la carga total de trabajo por abogado en los tres módulos del sistema.')}${pdfSectionTitle('👥','Distribución por Abogado')}${pdfTable(['Abogado','Procesos','Modificaciones','Liquidaciones','Total','Vencidos'],rows,['26%','12%','14%','13%','10%','12%'])}${pdfFooter()}`,'Carga Global por Abogado');
+
+  const totProc=proc.length, totMod=mod.length, totLiq=liq.length;
+  const granTotal=totProc+totMod+totLiq;
+
+  const rows=abogados.map((ab,i)=>{
+    const p=proc.filter(r=>r.abogado===ab);
+    const m=mod.filter(r=>r.abogado===ab);
+    const l=liq.filter(r=>r.abogado===ab);
+    const tot=p.length+m.length+l.length;
+    const vp=p.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
+    const vm=m.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
+    const vencidos=vp+vm;
+    const liqFin=l.filter(r=>['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(r.estado)).length;
+    const pctTot=granTotal?Math.round(tot/granTotal*100):0;
+    return `<tr style="background:${i%2===0?'white':'#F8FAFC'};">
+      <td style="padding:10px 12px;font-weight:700;color:${PDF_NAVY};font-size:11px;">
+        ${escHtml(ab)}
+        <div style="margin-top:3px;height:3px;background:#E2E8F0;border-radius:2px;">
+          <div style="width:${pctTot}%;height:100%;background:#0284C7;border-radius:2px;"></div>
+        </div>
+      </td>
+      <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:${PDF_NAVY};">${tot}</td>
+      <td style="padding:10px 12px;text-align:center;font-size:12px;color:${PDF_SKY};font-weight:600;">${p.length}</td>
+      <td style="padding:10px 12px;text-align:center;font-size:12px;color:#7C3AED;font-weight:600;">${m.length}</td>
+      <td style="padding:10px 12px;text-align:center;font-size:12px;color:#059669;font-weight:600;">${l.length}</td>
+      <td style="padding:10px 12px;text-align:center;">
+        ${liqFin>0?`<span style="background:#D1FAE5;color:#065F46;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;">${liqFin}</span>`:`<span style="color:#CBD5E1;font-size:11px;">0</span>`}
+      </td>
+      <td style="padding:10px 12px;text-align:center;">
+        ${vencidos>0?`<span style="background:#FEF2F2;color:#991B1B;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;">⚠️ ${vencidos}</span>`:`<span style="color:${PDF_GREEN};font-size:11px;">✅</span>`}
+      </td>
+      <td style="padding:10px 12px;font-size:10px;color:${PDF_GRAY};text-align:center;">${pctTot}%</td>
+    </tr>`;
+  }).join('');
+
+  // Totales fila
+  const totalVenc=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length
+    + mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
+  const totalLiqFin=liq.filter(r=>['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(r.estado)).length;
+
+  abrirPdf(`
+    ${pdfHeader('Carga Global por Abogado Responsable','Consolidado de procesos, modificaciones y liquidaciones · '+fechaHoy)}
+
+    ${pdfIntroBox(`Informe de distribución de carga de trabajo por abogado responsable en los tres módulos del sistema. Permite identificar desequilibrios en la asignación, abogados con mayor exposición a riesgo de vencimiento y rendimiento en liquidaciones. Total: <strong>${granTotal} expedientes</strong> asignados a <strong>${abogados.length} abogados</strong>. Generado el ${fechaHoy} a las ${hora} horas.`)}
+
+    ${pdfSectionTitle('📊','Resumen Ejecutivo')}
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;">
+      ${[
+        {label:'Abogados activos',value:abogados.length,color:PDF_NAVY,icon:'👥'},
+        {label:'Prom. expedientes',value:Math.round(granTotal/abogados.length),color:PDF_SKY,icon:'📊'},
+        {label:'Liqu. finalizadas',value:totalLiqFin,color:PDF_GREEN,icon:'✅'},
+        {label:'Total con alertas',value:totalVenc,color:totalVenc>0?PDF_RED:PDF_GREEN,icon:totalVenc>0?'⚠️':'✅'},
+      ].map(k=>`<div style="background:white;border:1px solid ${PDF_BORDER};border-radius:10px;padding:14px 16px;text-align:center;border-top:4px solid ${k.color};">
+        <div style="font-size:22px;margin-bottom:6px;">${k.icon}</div>
+        <div style="font-size:26px;font-weight:800;color:${k.color};font-family:monospace;">${k.value}</div>
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:${PDF_GRAY};margin-top:4px;">${k.label}</div>
+      </div>`).join('')}
+    </div>
+
+    ${pdfSectionTitle('⚖️','Carga por Abogado — Detalle Completo')}
+    <table style="width:100%;border-collapse:collapse;border:1px solid ${PDF_BORDER};border-radius:8px;overflow:hidden;margin-bottom:20px;">
+      <thead>
+        <tr style="background:${PDF_NAVY};">
+          <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.07em;">Abogado Responsable</th>
+          <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:white;">Total</th>
+          <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:#93C5FD;">Procesos</th>
+          <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:#C4B5FD;">Modif.</th>
+          <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:#6EE7B7;">Liquidaciones</th>
+          <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:#6EE7B7;">Liqu. Final.</th>
+          <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:#FCA5A5;">Alertas</th>
+          <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:${PDF_GOLD};">% Carga</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr style="background:#1E293B;">
+          <td style="padding:10px 12px;font-weight:700;color:${PDF_GOLD};font-size:11px;">TOTALES</td>
+          <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:800;color:white;">${granTotal}</td>
+          <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:#93C5FD;">${totProc}</td>
+          <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:#C4B5FD;">${totMod}</td>
+          <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:#6EE7B7;">${totLiq}</td>
+          <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:#6EE7B7;">${totalLiqFin}</td>
+          <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:#FCA5A5;">${totalVenc>0?'⚠️ '+totalVenc:'✅ 0'}</td>
+          <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:white;">100%</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    ${pdfFooter()}
+  `,'Carga Global por Abogado');
 }
 
 function pdfConsolidadoVencimiento(){
@@ -4676,37 +4925,98 @@ function pdfConsolidadoVencimiento(){
   const proc=window._records||[];
   const mod=window._modRecords||[];
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  // Combinar activos con fecha de los dos módulos
+  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+
   const activos=[
-    ...proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)).map(r=>({...r,_modulo:'Procesos'})),
-    ...mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)).map(r=>({...r,_modulo:'Modificaciones'})),
+    ...proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)).map(r=>({...r,_modulo:'Procesos',_obj:r.objeto})),
+    ...mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)).map(r=>({...r,_modulo:'Modificaciones',_obj:r.objeto})),
   ];
   const vencidos=activos.filter(r=>diasHasta(getFechaAlerta(r))<0).sort((a,b)=>getFechaAlerta(a).localeCompare(getFechaAlerta(b)));
   const hoy=activos.filter(r=>diasHasta(getFechaAlerta(r))===0);
   const prox3=activos.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;}).sort((a,b)=>getFechaAlerta(a).localeCompare(getFechaAlerta(b)));
   const prox7=activos.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=4&&d<=7;}).sort((a,b)=>getFechaAlerta(a).localeCompare(getFechaAlerta(b)));
   const totalRiesgo=vencidos.length+hoy.length+prox3.length;
-  const mkRows=arr=>arr.map(r=>{const d=diasHasta(getFechaAlerta(r));return[
-    `<b style="font-family:monospace;">${escHtml(r.ticket||'—')}</b>`,
-    `<span style="font-size:10px;padding:1px 5px;border-radius:5px;background:${r._modulo==='Procesos'?'#EFF6FF':'#F5F3FF'};color:${r._modulo==='Procesos'?PDF_SKY:'#7C3AED'};">${r._modulo}</span>`,
-    `<span style="font-size:10px;">${escHtml((r.objeto||'').slice(0,38))}${(r.objeto||'').length>38?'…':''}</span>`,
-    escHtml(r.abogado||'—'),
-    `<b style="font-family:monospace;font-size:10px;">${fmtDate(getFechaAlerta(r))}</b>`,
-    d<0?`<b style="color:${PDF_RED};">⚠ ${Math.abs(d)}d vencido</b>`:d===0?`<b style="color:${PDF_RED};">Hoy</b>`:`<span style="color:#C2410C;font-weight:700;">${d}d restantes</span>`,
-  ];});
-  const cols=['7%','13%','28%','18%','13%','14%'];
-  const hdrs=['Ticket','Módulo','Objeto','Abogado','Fecha Límite','Situación'];
+  const nivelRiesgo=totalRiesgo>10?'CRÍTICO':totalRiesgo>5?'ALTO':totalRiesgo>2?'MODERADO':'BAJO';
+  const colorRiesgo={'CRÍTICO':PDF_RED,'ALTO':'#C2410C','MODERADO':'#D97706','BAJO':PDF_GREEN}[nivelRiesgo];
+
+  const mkRows=arr=>arr.map((r,i)=>{
+    const d=diasHasta(getFechaAlerta(r));
+    const esProc=r._modulo==='Procesos';
+    return `<tr style="background:${i%2===0?'white':'#F8FAFC'};">
+      <td style="padding:9px 12px;"><b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b></td>
+      <td style="padding:9px 12px;"><span style="padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;background:${esProc?'#EFF6FF':'#F5F3FF'};color:${esProc?PDF_SKY:'#7C3AED'};">${r._modulo}</span></td>
+      <td style="padding:9px 12px;font-size:10px;max-width:180px;">${escHtml((r._obj||'').slice(0,45))}${(r._obj||'').length>45?'…':''}</td>
+      <td style="padding:9px 12px;font-size:11px;font-weight:600;color:${PDF_NAVY};">${escHtml(r.abogado||'—')}</td>
+      <td style="padding:9px 12px;font-family:monospace;font-size:11px;">${fmtDate(getFechaAlerta(r))}</td>
+      <td style="padding:9px 12px;text-align:center;">
+        ${d<0?`<span style="background:#FEF2F2;color:#991B1B;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;">⚠ ${Math.abs(d)}d vencido</span>`
+        :d===0?`<span style="background:#FEF2F2;color:#991B1B;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;">🔴 Vence hoy</span>`
+        :`<span style="background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;">${d}d restantes</span>`}
+      </td>
+    </tr>`;
+  }).join('');
+
+  const seccionAlerta=(emoji,titulo,arr,colorBg)=>arr.length?`
+    <div style="margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:${colorBg};border-radius:8px 8px 0 0;border-bottom:2px solid ${PDF_NAVY};">
+        <span style="font-size:16px;">${emoji}</span>
+        <span style="font-size:12px;font-weight:700;color:${PDF_NAVY};text-transform:uppercase;letter-spacing:.07em;">${titulo}</span>
+        <span style="margin-left:auto;background:${PDF_NAVY};color:white;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700;">${arr.length}</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;border:1px solid ${PDF_BORDER};border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">
+        <thead><tr style="background:#F8FAFC;">
+          <th style="padding:8px 12px;text-align:left;font-size:9px;font-weight:700;color:${PDF_GRAY};text-transform:uppercase;width:8%;">Ticket</th>
+          <th style="padding:8px 12px;font-size:9px;font-weight:700;color:${PDF_GRAY};text-transform:uppercase;width:13%;">Módulo</th>
+          <th style="padding:8px 12px;text-align:left;font-size:9px;font-weight:700;color:${PDF_GRAY};text-transform:uppercase;">Objeto</th>
+          <th style="padding:8px 12px;text-align:left;font-size:9px;font-weight:700;color:${PDF_GRAY};text-transform:uppercase;width:14%;">Abogado</th>
+          <th style="padding:8px 12px;text-align:left;font-size:9px;font-weight:700;color:${PDF_GRAY};text-transform:uppercase;width:11%;">Fecha Límite</th>
+          <th style="padding:8px 12px;text-align:center;font-size:9px;font-weight:700;color:${PDF_GRAY};text-transform:uppercase;width:13%;">Situación</th>
+        </tr></thead>
+        <tbody>${mkRows(arr)}</tbody>
+      </table>
+    </div>`:'';
+
   abrirPdf(`
-    ${pdfHeader('Alertas Globales de Vencimiento','Procesos y modificaciones próximos a vencer · '+fechaHoy)}
-    ${pdfIntroBox('Consolidado de alertas de vencimiento de los módulos Procesos y Modificaciones, usando la misma lógica del semáforo de la aplicación (prioriza Fecha Máxima de Gestión).')}
-    ${pdfKpiGrid([{label:'Vencidos',value:vencidos.length,color:PDF_RED,sub:'Acción inmediata'},{label:'Vencen Hoy',value:hoy.length,color:'#DC2626',sub:'Urgente'},{label:'Próximos 3 días',value:prox3.length,color:'#EA580C',sub:'Alta prioridad'},{label:'Próximos 7 días',value:prox7.length,color:'#D97706',sub:'En seguimiento'},{label:'Total en riesgo',value:totalRiesgo,color:PDF_RED,sub:'Vencidos+Hoy+3d'}])}
-    ${vencidos.length?pdfSectionTitle('🔴','Vencidos')+pdfTable(hdrs,mkRows(vencidos),cols):''}
-    ${hoy.length?pdfSectionTitle('🔴','Vencen Hoy')+pdfTable(hdrs,mkRows(hoy),cols):''}
-    ${prox3.length?pdfSectionTitle('🟠','Próximos 3 días')+pdfTable(hdrs,mkRows(prox3),cols):''}
-    ${prox7.length?pdfSectionTitle('🟡','Próximos 4–7 días')+pdfTable(hdrs,mkRows(prox7),cols):''}
-    ${totalRiesgo===0?pdfAlertBox('No se identifican procesos o modificaciones en situación de riesgo inmediato.','ok'):''}
+    ${pdfHeader('Informe de Alertas Globales de Vencimiento','Procesos y modificaciones en riesgo · '+fechaHoy)}
+
+    ${pdfIntroBox(`Informe crítico de alertas de vencimiento para los módulos Procesos y Modificaciones. Usa la misma lógica del semáforo de la aplicación (prioriza Fecha Máxima de Gestión sobre Fecha de Adjudicación). <strong>Total en riesgo inmediato: ${totalRiesgo} expedientes.</strong> Generado el ${fechaHoy} a las ${hora} horas.`)}
+
+    <!-- Nivel de riesgo -->
+    <div style="background:${colorRiesgo}15;border:2px solid ${colorRiesgo};border-radius:12px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:20px;">
+      <div style="width:64px;height:64px;border-radius:50%;background:${colorRiesgo};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span style="font-size:28px;">${nivelRiesgo==='BAJO'?'✅':nivelRiesgo==='MODERADO'?'⚠️':'🔴'}</span>
+      </div>
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:${colorRiesgo};font-weight:700;margin-bottom:4px;">Nivel de Riesgo Contractual</div>
+        <div style="font-size:24px;font-weight:800;color:${colorRiesgo};">${nivelRiesgo}</div>
+        <div style="font-size:11px;color:${PDF_GRAY};margin-top:2px;">${totalRiesgo} expediente${totalRiesgo!==1?'s':''} en situación de riesgo inmediato (vencidos, vencen hoy o en 3 días)</div>
+      </div>
+    </div>
+
+    <!-- KPIs semáforo -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:28px;">
+      ${[
+        {label:'Vencidos',value:vencidos.length,color:PDF_RED,icon:'🔴',sub:'Acción inmediata'},
+        {label:'Vencen Hoy',value:hoy.length,color:'#DC2626',icon:'🔴',sub:'Urgente'},
+        {label:'Próx. 3 días',value:prox3.length,color:'#EA580C',icon:'🟠',sub:'Alta prioridad'},
+        {label:'Próx. 7 días',value:prox7.length,color:'#D97706',icon:'🟡',sub:'En seguimiento'},
+        {label:'Total en riesgo',value:totalRiesgo,color:colorRiesgo,icon:'📊',sub:'Vencidos+Hoy+3d'},
+      ].map(k=>`<div style="background:white;border:1px solid ${PDF_BORDER};border-radius:10px;padding:14px;text-align:center;border-top:4px solid ${k.color};">
+        <div style="font-size:20px;margin-bottom:4px;">${k.icon}</div>
+        <div style="font-size:28px;font-weight:800;color:${k.color};font-family:monospace;line-height:1;">${k.value}</div>
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:${PDF_GRAY};margin:5px 0 3px;">${k.label}</div>
+        <div style="font-size:9px;color:${PDF_GRAY};">${k.sub}</div>
+      </div>`).join('')}
+    </div>
+
+    ${seccionAlerta('🔴','Procesos Vencidos — Acción Inmediata Requerida',vencidos,'#FEF2F2')}
+    ${seccionAlerta('🔴','Vencen Hoy',hoy,'#FEF2F2')}
+    ${seccionAlerta('🟠','Vencen en los Próximos 3 Días',prox3,'#FFFBEB')}
+    ${seccionAlerta('🟡','Vencen entre 4 y 7 Días',prox7,'#FEFCE8')}
+    ${totalRiesgo===0?pdfAlertBox('✅ No se identifican procesos o modificaciones en situación de riesgo inmediato. Todos los expedientes activos se encuentran dentro de sus plazos.','ok'):''}
+
     ${pdfFooter()}
-  `,'Alertas Globales');
+  `,'Alertas Globales de Vencimiento');
 }
 
 /* ═══ MÓDULO MODIFICACIONES ═══ */
@@ -4969,8 +5279,12 @@ function renderLiq(){
   });
   // Stats
   document.getElementById('liq-stat-total').textContent=data.length;
-  document.getElementById('liq-stat-pendiente').textContent=data.filter(r=>r.estado==='pendiente-enviar'||r.estado==='en-asesoria'||r.estado==='observaciones-at').length;
-  document.getElementById('liq-stat-liquidado').textContent=data.filter(r=>r.estado==='revision-jefe').length;
+  document.getElementById('liq-stat-pendiente').textContent=data.filter(r=>
+    ['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','aval-radicar','radicado-git','radicado-competente'].includes(r.estado)
+  ).length;
+  document.getElementById('liq-stat-liquidado').textContent=data.filter(r=>
+    ['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(r.estado)
+  ).length;
   const adm=isAdmin();
   const tbody=document.getElementById('liq-table-body');
   if(tbody){
@@ -5280,35 +5594,153 @@ function pdfLiq(){
   if(!isAdmin()){alert('Solo los administradores pueden generar informes.');return;}
   const records=window._liqRecords||[];
   if(!records.length){alert('No hay liquidaciones para generar el informe.');return;}
-  const fechaHoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
-  const rows=records.slice().sort((a,b)=>(a.ticket||'').localeCompare(b.ticket||'',undefined,{numeric:true})).map(r=>{
-    const est=getEstadoLiq(r.estado);
-    return[
-      `<b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
-      `<span style="font-family:monospace;font-size:10px;">${escHtml(r.numeroProceso||'—')}</span>`,
-      `<span style="font-size:10px;">${escHtml((r.contratista||'').slice(0,40))}${(r.contratista||'').length>40?'…':''}</span>`,
-      escHtml(r.abogado||'—'),
-      `<span style="font-size:10px;">${escHtml((r.dependencia||r.git||'—').slice(0,28))}</span>`,
-      `<span style="font-family:monospace;font-size:10px;">${fmtDate(r.fechaInicio)||'—'}</span>`,
-      `<span style="font-family:monospace;font-size:10px;">${fmtDate(r.fechaTerminacion)||'—'}</span>`,
-      `<span style="padding:2px 7px;border-radius:8px;font-size:10px;font-weight:600;background:#F1F5F9;color:${PDF_NAVY};">${est.label}</span>`,
-    ];
+  const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+
+  // Métricas
+  const tot=records.length;
+  const liqCount=records.filter(r=>r.tramite==='Liquidacion').length;
+  const cieCount=records.filter(r=>r.tramite==='Cierre').length;
+  const jurCount=records.filter(r=>r.persona==='Juridica').length;
+  const natCount=records.filter(r=>r.persona==='Natural').length;
+  const frmreCount=records.filter(r=>r.unidadAdmin==='FRMRE').length;
+  const mreCount=records.filter(r=>r.unidadAdmin==='MRE').length;
+  const tramiteStates=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','aval-radicar','radicado-git','radicado-competente'];
+  const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
+  const enTramite=records.filter(r=>tramiteStates.includes(r.estado)).length;
+  const finalizados=records.filter(r=>finStates.includes(r.estado)).length;
+  const pctFin=tot?Math.round(finalizados/tot*100):0;
+  const pctTram=tot?Math.round(enTramite/tot*100):0;
+
+  // Por estado con barras visuales
+  const maxEstado=Math.max(...ESTADOS_LIQ.map(e=>records.filter(r=>r.estado===e.value).length),1);
+  const estadoRows=ESTADOS_LIQ.map(e=>{
+    const cnt=records.filter(r=>r.estado===e.value).length;
+    const pct=tot?Math.round(cnt/tot*100):0;
+    const barW=maxEstado?Math.round(cnt/maxEstado*100):0;
+    const isFin=finStates.includes(e.value);
+    const barColor=isFin?PDF_GREEN:tramiteStates.includes(e.value)?PDF_SKY:'#94A3B8';
+    return `<tr style="background:white;">
+      <td style="padding:8px 12px;font-size:11px;font-weight:600;color:${PDF_NAVY};width:32%;">${e.label}</td>
+      <td style="padding:8px 12px;width:48%;">
+        <div style="background:#F1F5F9;border-radius:4px;height:10px;overflow:hidden;">
+          <div style="width:${barW}%;height:100%;background:${barColor};border-radius:4px;transition:width .3s;"></div>
+        </div>
+      </td>
+      <td style="padding:8px 12px;font-size:12px;font-weight:700;color:${barColor};text-align:center;width:10%;">${cnt}</td>
+      <td style="padding:8px 12px;font-size:11px;color:#64748B;text-align:center;width:10%;">${pct}%</td>
+    </tr>`;
+  }).join('');
+
+  // Por abogado
+  const byAbog={};
+  records.forEach(r=>{
+    const k=r.abogado||'Sin asignar';
+    if(!byAbog[k]) byAbog[k]={total:0,liq:0,cie:0,tram:0,fin:0};
+    byAbog[k].total++;
+    if(r.tramite==='Liquidacion') byAbog[k].liq++;
+    if(r.tramite==='Cierre') byAbog[k].cie++;
+    if(tramiteStates.includes(r.estado)) byAbog[k].tram++;
+    if(finStates.includes(r.estado)) byAbog[k].fin++;
   });
-  const byEstado=ESTADOS_LIQ.map(e=>({...e,count:records.filter(r=>r.estado===e.value).length}));
+  const abogRows=Object.keys(byAbog).sort((a,b)=>byAbog[b].total-byAbog[a].total).map((n,i)=>{
+    const d=byAbog[n];
+    const pctA=tot?Math.round(d.total/tot*100):0;
+    const pctFinA=d.total?Math.round(d.fin/d.total*100):0;
+    return `<tr style="background:${i%2===0?'white':'#F8FAFC'};">
+      <td style="padding:9px 12px;font-size:11px;font-weight:600;color:${PDF_NAVY};">${escHtml(n)}</td>
+      <td style="padding:9px 12px;font-size:12px;font-weight:700;color:${PDF_NAVY};text-align:center;">${d.total}</td>
+      <td style="padding:9px 12px;font-size:11px;color:#F59E0B;text-align:center;">${d.liq}</td>
+      <td style="padding:9px 12px;font-size:11px;color:${PDF_TEAL};text-align:center;">${d.cie}</td>
+      <td style="padding:9px 12px;font-size:11px;color:${PDF_SKY};text-align:center;">${d.tram}</td>
+      <td style="padding:9px 12px;text-align:center;">
+        ${d.fin>0?`<span style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">${d.fin}</span>`:'<span style="color:#CBD5E1;font-size:11px;">0</span>'}
+      </td>
+      <td style="padding:9px 12px;width:100px;">
+        <div style="background:#F1F5F9;border-radius:3px;height:6px;"><div style="width:${pctA}%;height:100%;background:${PDF_SKY};border-radius:3px;"></div></div>
+        <div style="font-size:9px;color:#94A3B8;margin-top:2px;text-align:right;">${pctFinA}% fin.</div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Conclusiones automáticas
+  const conclusions=[];
+  if(finalizados>0) conclusions.push({tipo:'ok',txt:`<strong>${finalizados} liquidaciones/cierres</strong> han completado su proceso (${pctFin}% del total). Refleja una gestión eficiente de la cartera contractual.`});
+  if(enTramite>0) conclusions.push({tipo:'warn',txt:`<strong>${enTramite} expedientes</strong> se encuentran actualmente en trámite (${pctTram}%). Se recomienda verificar los tiempos de respuesta de cada etapa para evitar represamiento.`});
+  const pendCount=records.filter(r=>r.estado==='pendiente-enviar').length;
+  if(pendCount>0) conclusions.push({tipo:'warn',txt:`<strong>${pendCount} proyectos de acta</strong> están pendientes de enviar al área correspondiente. Priorizar su despacho.`});
+  const obsCount=records.filter(r=>r.estado==='observaciones-area').length;
+  if(obsCount>0) conclusions.push({tipo:'alert',txt:`<strong>${obsCount} expedientes</strong> tienen observaciones del área técnica sin resolver. Requieren atención prioritaria de los abogados responsables.`});
+
   abrirPdf(`
-    ${pdfHeader('Informe de Liquidaciones y Cierres','Seguimiento de liquidaciones de contratos · '+fechaHoy)}
-    ${pdfIntroBox('Este informe presenta el estado de todas las liquidaciones y cierres contractuales registradas en el sistema, clasificadas por estado de tramitación y abogado responsable.')}
-    ${pdfKpiGrid([
-      {label:'Total Liquidaciones',value:records.length,color:PDF_NAVY,sub:'Registradas'},
-      {label:'Pendiente enviar',value:records.filter(r=>r.estado==='pendiente-enviar').length,color:'#F59E0B',sub:'Proyecto pendiente'},
-      {label:'En asesoría',value:records.filter(r=>r.estado==='en-asesoria').length,color:PDF_SKY,sub:'En revisión'},
-      {label:'Obs. en el área',value:records.filter(r=>r.estado==='observaciones-area').length,color:'#EA580C',sub:'Con observaciones'},
-      {label:'Liq. y cerrados',value:records.filter(r=>r.estado==='liquidado-cerrado'||r.estado==='cierre-contractual').length,color:PDF_GREEN,sub:'Finalizados'},
-    ])}
-    ${pdfSectionTitle('📊','Distribución por Estado')}
-    ${pdfTable(['Estado','Cantidad','Representación'],byEstado.map(e=>[`<b>${e.label}</b>`,e.count,e.count>0?'●'.repeat(Math.min(e.count,20)):'—']),['50%','15%','35%'])}
-    ${pdfSectionTitle('📋','Detalle de Liquidaciones')}
-    ${pdfTable(['N° Contrato','N° Proceso','Contratista','Abogado','Dependencia','F. Finalización','F. Máx Liqu','Estado'],rows,['10%','9%','22%','14%','14%','10%','10%','13%'])}
+    ${pdfHeader('Informe General — Liquidaciones y Cierres','Gestión contractual · '+fechaHoy)}
+
+    ${pdfIntroBox(`Informe ejecutivo sobre el estado de liquidaciones y cierres contractuales del Ministerio de Relaciones Exteriores. Consolida <strong>${tot} expedientes</strong> registrados en el sistema de seguimiento, incluyendo distribución por estado, trámite, tipo de persona y responsable. Generado el ${fechaHoy} a las ${hora} horas.`)}
+
+    <!-- KPIs Principales -->
+    ${pdfSectionTitle('📊','Indicadores Generales')}
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px;">
+      ${[
+        {label:'Total Expedientes',value:tot,color:PDF_NAVY,sub:'Registros activos',icon:'📁'},
+        {label:'En Trámite',value:enTramite,color:PDF_SKY,sub:`${pctTram}% del total`,icon:'🔄'},
+        {label:'Liquidados / Cerrados',value:finalizados,color:PDF_GREEN,sub:`${pctFin}% completado`,icon:'✅'},
+        {label:'Liquidaciones',value:liqCount,color:'#F59E0B',sub:`${tot?Math.round(liqCount/tot*100):0}% del total`,icon:'📄'},
+        {label:'Cierres',value:cieCount,color:PDF_TEAL,sub:`${tot?Math.round(cieCount/tot*100):0}% del total`,icon:'🔒'},
+      ].map(k=>`<div style="background:white;border:1px solid ${PDF_BORDER};border-radius:10px;padding:16px;border-top:4px solid ${k.color};text-align:center;">
+        <div style="font-size:20px;margin-bottom:6px;">${k.icon}</div>
+        <div style="font-size:28px;font-weight:800;color:${k.color};font-family:monospace;line-height:1;">${k.value}</div>
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:${PDF_GRAY};margin:6px 0 4px;">${k.label}</div>
+        <div style="font-size:10px;color:${PDF_GRAY};">${k.sub}</div>
+      </div>`).join('')}
+    </div>
+
+    <!-- KPIs Secundarios -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:28px;">
+      ${[
+        {label:'Persona Jurídica',value:jurCount,pct:tot?Math.round(jurCount/tot*100):0,color:'#7C3AED'},
+        {label:'Persona Natural',value:natCount,pct:tot?Math.round(natCount/tot*100):0,color:PDF_SKY},
+        {label:'FRMRE',value:frmreCount,pct:tot?Math.round(frmreCount/tot*100):0,color:'#0369A1'},
+        {label:'MRE',value:mreCount,pct:tot?Math.round(mreCount/tot*100):0,color:PDF_TEAL},
+      ].map(k=>`<div style="background:${k.color}12;border:1px solid ${k.color}33;border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:${k.color};text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">${k.label}</div>
+          <div style="font-size:22px;font-weight:800;color:${PDF_NAVY};font-family:monospace;">${k.value}</div>
+        </div>
+        <div style="font-size:18px;font-weight:800;color:${k.color};opacity:.5;">${k.pct}%</div>
+      </div>`).join('')}
+    </div>
+
+    <!-- Distribución por estado -->
+    ${pdfSectionTitle('📋','Distribución por Estado de Trámite')}
+    <table style="width:100%;border-collapse:collapse;border:1px solid ${PDF_BORDER};border-radius:8px;overflow:hidden;margin-bottom:28px;">
+      <thead><tr style="background:${PDF_NAVY};">
+        <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.07em;">Estado</th>
+        <th style="padding:10px 12px;font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.07em;">Distribución</th>
+        <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.07em;">Cantidad</th>
+        <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.07em;">%</th>
+      </tr></thead>
+      <tbody>${estadoRows}</tbody>
+    </table>
+
+    <!-- Análisis y recomendaciones -->
+    ${pdfSectionTitle('💡','Análisis y Recomendaciones')}
+    ${pdfConclusions(conclusions)}
+
+    <!-- Carga por abogado -->
+    ${pdfSectionTitle('⚖️','Carga de Trabajo por Abogado Responsable')}
+    <table style="width:100%;border-collapse:collapse;border:1px solid ${PDF_BORDER};border-radius:8px;overflow:hidden;margin-bottom:20px;">
+      <thead><tr style="background:${PDF_NAVY};">
+        <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.07em;">Abogado</th>
+        <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:700;color:white;">Total</th>
+        <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:700;color:white;">Liqu.</th>
+        <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:700;color:white;">Cierres</th>
+        <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:700;color:white;">En trámite</th>
+        <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:700;color:white;">Finalizados</th>
+        <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:700;color:white;">Participación</th>
+      </tr></thead>
+      <tbody>${abogRows}</tbody>
+    </table>
+
     ${pdfFooter()}
   `,'Informe Liquidaciones');
 }
