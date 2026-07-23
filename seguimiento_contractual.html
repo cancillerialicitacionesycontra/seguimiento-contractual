@@ -2253,7 +2253,7 @@ function renderDashboard(){
     if(!byAbog[k]) byAbog[k]={total:0,asesoria:0,contractual:0,vencidos:0};
     byAbog[k].total++;
     byAbog[k][r.tipo||'asesoria']=(byAbog[k][r.tipo||'asesoria']||0)+1;
-    if(!estadoIsTerminal(r.tipo,r.estado)&&r.fechaAdjudicacion&&diasHasta(r.fechaAdjudicacion)<=0)
+    if(!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<=0)
       byAbog[k].vencidos++;
   });
   const abNames=Object.keys(byAbog).sort();
@@ -2528,10 +2528,10 @@ function pdfAbogadoIndividual(abogado, proc, allRecords){
   const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
   const asesorias=proc.filter(r=>r.tipo==='asesoria');
   const contractuales=proc.filter(r=>r.tipo==='contractual');
-  const vencidos=activos.filter(r=>r.fechaAdjudicacion&&diasHasta(r.fechaAdjudicacion)<0);
-  const proxHoy=activos.filter(r=>r.fechaAdjudicacion&&diasHasta(r.fechaAdjudicacion)===0);
-  const prox3=activos.filter(r=>{const d=diasHasta(r.fechaAdjudicacion);return d>0&&d<=3;});
-  const prox7=activos.filter(r=>{const d=diasHasta(r.fechaAdjudicacion);return d>3&&d<=7;});
+  const vencidos=activos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
+  const proxHoy=activos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))===0);
+  const prox3=activos.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;});
+  const prox7=activos.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=4&&d<=7;});
   const fechaHoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
 
   // Promedio de días
@@ -2578,8 +2578,9 @@ function pdfAbogadoIndividual(abogado, proc, allRecords){
   // Tabla resumen de procesos
   const tablaRows=proc.slice().sort((a,b)=>(a.ticket||'').localeCompare(b.ticket||'')).map((r,i)=>{
     const est=getEstado(r.tipo,r.estado);
-    const d=r.fechaAdjudicacion&&!estadoIsTerminal(r.tipo,r.estado)?diasHasta(r.fechaAdjudicacion):null;
-    const alerta=d!==null?(d<0?`<b style="color:${PDF_RED};">🔴 ${Math.abs(d)}d vencido</b>`:d===0?`<b style="color:${PDF_RED};">🔴 Hoy</b>`:d<=3?`<span style="color:#C2410C;">🟠 ${d}d</span>`:d<=7?`<span style="color:#92400E;">🟡 ${d}d</span>`:'✅'):(estadoIsTerminal(r.tipo,r.estado)?'<span style="color:'+PDF_GREEN+';">Finalizado</span>':'—');
+    const fa=getFechaAlerta(r);
+    const d=fa&&!estadoIsTerminal(r.tipo,r.estado)?diasHasta(fa):null;
+    const alerta=d!==null?(d<0?`<b style="color:${PDF_RED};">🔴 ${Math.abs(d)}d vencido</b>`:d===0?`<b style="color:${PDF_RED};">🔴 Hoy</b>`:d<=3?`<span style="color:#C2410C;">🟠 ${d}d</span>`:d<=7?`<span style="color:#92400E;">🟡 ${d}d</span>`:'✅'):(estadoIsTerminal(r.tipo,r.estado)?'<span style="color:'+PDF_GREEN+';">Finalizado</span>':'Sin fecha');
     const tipoBg=r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE';
     const tipoColor=r.tipo==='asesoria'?PDF_SKY:PDF_TEAL;
     return [
@@ -2588,12 +2589,12 @@ function pdfAbogadoIndividual(abogado, proc, allRecords){
       `<span style="font-size:10px;">${escHtml((r.objeto||'—').slice(0,52))}${(r.objeto||'').length>52?'…':''}</span>`,
       `<span style="padding:2px 6px;border-radius:6px;font-size:10px;background:#F1F5F9;color:${PDF_NAVY};font-weight:600;">${est.label}</span>`,
       `<span style="font-family:monospace;font-size:10px;">${fmtDate(r.fechaAsignacion)||'—'}</span>`,
-      `<span style="font-family:monospace;font-size:10px;">${fmtDate(r.fechaAdjudicacion)||'—'}</span>`,
+      `<span style="font-family:monospace;font-size:10px;">${fmtDate(fa)||'—'}</span>`,
       alerta,
     ];
   });
 
-  const tablaHeader=['Ticket','Tipo','Objeto','Estado','F. Asignación','F. Adjudicación','Alerta'];
+  const tablaHeader=['Ticket','Tipo','Objeto','Estado','F. Asignación','F. Límite','Alerta'];
   const tablaWidths=['8%','11%','30%','15%','12%','12%','12%'];
 
   // Bitácora de avances
@@ -2760,22 +2761,23 @@ function pdfGeneral(records){
   const contractuales=records.filter(r=>r.tipo==='contractual');
   const finalizados=records.filter(r=>estadoIsTerminal(r.tipo,r.estado));
   const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
-  const vencidos=activos.filter(r=>r.fechaAdjudicacion&&diasHasta(r.fechaAdjudicacion)<0);
-  const hoy=activos.filter(r=>r.fechaAdjudicacion&&diasHasta(r.fechaAdjudicacion)===0);
-  const prox3=activos.filter(r=>{const d=diasHasta(r.fechaAdjudicacion);return d>0&&d<=3;});
+  const vencidos=activos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
+  const hoy=activos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))===0);
+  const prox3=activos.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;});
   const pctFin=records.length?Math.round(finalizados.length/records.length*100):0;
   const pctVenc=activos.length?Math.round(vencidos.length/activos.length*100):0;
   const rows=records.slice().sort((a,b)=>(a.tipo||'').localeCompare(b.tipo||'')||(a.ticket||'').localeCompare(b.ticket||'')).map(r=>{
     const est=getEstado(r.tipo,r.estado);
-    const d=r.fechaAdjudicacion&&!estadoIsTerminal(r.tipo,r.estado)?diasHasta(r.fechaAdjudicacion):null;
-    const alerta=d===null?'Finalizado':d<0?`<span style="color:${PDF_RED};font-weight:700;">Vencido (${Math.abs(d)}d)</span>`:d===0?`<span style="color:${PDF_RED};font-weight:700;">Hoy</span>`:d<=3?`<span style="color:#C2410C;">Urgente (${d}d)</span>`:d<=7?`<span style="color:#D97706;">Próximo (${d}d)</span>`:'Al día';
+    const fa=getFechaAlerta(r);
+    const d=fa&&!estadoIsTerminal(r.tipo,r.estado)?diasHasta(fa):null;
+    const alerta=estadoIsTerminal(r.tipo,r.estado)?'Finalizado':d===null?'Sin fecha':d<0?`<span style="color:${PDF_RED};font-weight:700;">Vencido (${Math.abs(d)}d)</span>`:d===0?`<span style="color:${PDF_RED};font-weight:700;">Hoy</span>`:d<=3?`<span style="color:#C2410C;">Urgente (${d}d)</span>`:d<=7?`<span style="color:#D97706;">Próximo (${d}d)</span>`:'Al día';
     return [
       `<b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
       `<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE'};color:${r.tipo==='asesoria'?PDF_SKY:PDF_TEAL};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,
       `<span style="font-size:10px;">${escHtml((r.objeto||'').slice(0,50))}${(r.objeto||'').length>50?'…':''}</span>`,
       escHtml(r.abogado||'—'),
       `<span style="padding:2px 6px;border-radius:8px;font-size:10px;background:#EFF6FF;color:${PDF_NAVY};font-weight:600;">${est.label}</span>`,
-      fmtDate(r.fechaAdjudicacion)||'—', alerta,
+      fmtDate(fa)||'—', alerta,
     ];
   });
   let conclusiones='';
@@ -2802,7 +2804,7 @@ function pdfPorAbogado(records){
     const proc=records.filter(r=>r.abogado===ab);
     const fin=proc.filter(r=>estadoIsTerminal(r.tipo,r.estado));
     const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
-    const venc=activos.filter(r=>r.fechaAdjudicacion&&diasHasta(r.fechaAdjudicacion)<0);
+    const venc=activos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
     const dias=fin.filter(r=>r.fechaAsignacion&&(r.fechaAdjudicacion||r.fechaAdjudicacion)).map(r=>{const d=Math.round((new Date((r.fechaAdjudicacion||r.fechaAdjudicacion)+'T00:00:00')-new Date(r.fechaAsignacion+'T00:00:00'))/(1000*60*60*24));return d>=0?d:null;}).filter(d=>d!==null);
     const avg=dias.length?Math.round(dias.reduce((a,b)=>a+b,0)/dias.length):null;
     return{ab,proc,fin,activos,venc,avg};
@@ -2822,9 +2824,9 @@ function pdfPorAbogado(records){
   [...metricas].sort((a,b)=>a.ab.localeCompare(b.ab)).forEach(m=>{
     const rows=m.proc.sort((a,b)=>(a.ticket||'').localeCompare(b.ticket||'')).map(r=>{
       const est=getEstado(r.tipo,r.estado);
-      const d=r.fechaAdjudicacion&&!estadoIsTerminal(r.tipo,r.estado)?diasHasta(r.fechaAdjudicacion):null;
-      const alerta=d===null?'Finalizado':d<0?`<span style="color:${PDF_RED};font-weight:700;">Vencido</span>`:d===0?`<span style="color:${PDF_RED};">Hoy</span>`:d<=3?`<span style="color:#C2410C;">${d}d</span>`:d<=7?`<span style="color:#D97706;">${d}d</span>`:'Al día';
-      return [`<b style="font-family:monospace;">${escHtml(r.ticket||'—')}</b>`,`<span style="font-size:10px;padding:1px 5px;border-radius:6px;background:${r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE'};color:${r.tipo==='asesoria'?PDF_SKY:PDF_TEAL};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,`<span style="font-size:10px;">${escHtml((r.objeto||'').slice(0,48))}${(r.objeto||'').length>48?'…':''}</span>`,`<span style="padding:1px 6px;border-radius:6px;font-size:10px;background:#F1F5F9;color:${PDF_NAVY};font-weight:600;">${est.label}</span>`,fmtDate(r.fechaAdjudicacion)||'—',alerta];
+      const d=getFechaAlerta(r)&&!estadoIsTerminal(r.tipo,r.estado)?diasHasta(getFechaAlerta(r)):null;
+      const alerta=d===null?(estadoIsTerminal(r.tipo,r.estado)?'Finalizado':'Sin fecha'):d<0?`<span style="color:${PDF_RED};font-weight:700;">Vencido</span>`:d===0?`<span style="color:${PDF_RED};">Hoy</span>`:d<=3?`<span style="color:#C2410C;">${d}d</span>`:d<=7?`<span style="color:#D97706;">${d}d</span>`:'Al día';
+      return [`<b style="font-family:monospace;">${escHtml(r.ticket||'—')}</b>`,`<span style="font-size:10px;padding:1px 5px;border-radius:6px;background:${r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE'};color:${r.tipo==='asesoria'?PDF_SKY:PDF_TEAL};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,`<span style="font-size:10px;">${escHtml((r.objeto||'').slice(0,48))}${(r.objeto||'').length>48?'…':''}</span>`,`<span style="padding:1px 6px;border-radius:6px;font-size:10px;background:#F1F5F9;color:${PDF_NAVY};font-weight:600;">${est.label}</span>`,fmtDate(getFechaAlerta(r))||'—',alerta];
     });
     detalles+=`<div style="margin-bottom:24px;page-break-inside:avoid;"><div style="background:${PDF_BG};border-left:4px solid ${PDF_SKY};border-radius:0 8px 8px 0;padding:10px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><div><div style="font-size:13px;font-weight:700;color:${PDF_NAVY};">⚖️ ${escHtml(m.ab)}</div><div style="font-size:10px;color:${PDF_GRAY};margin-top:2px;">${m.proc.length} procesos · ${m.fin.length} finalizados${m.avg!==null?' · Promedio: '+m.avg+' días':''}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;"><span style="background:#E0F2FE;color:${PDF_SKY};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">Asesorías: ${m.proc.filter(r=>r.tipo==='asesoria').length}</span><span style="background:#CFFAFE;color:${PDF_TEAL};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">Contractuales: ${m.proc.filter(r=>r.tipo==='contractual').length}</span>${m.venc.length>0?`<span style="background:#FEE2E2;color:${PDF_RED};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">⚠️ Vencidos: ${m.venc.length}</span>`:''}</div></div>${pdfTable(['Ticket','Tipo','Objeto','Estado','F. Adjudicación','Alerta'],rows,['8%','11%','34%','16%','12%','15%'])}</div>`;
   });
@@ -2864,25 +2866,104 @@ function pdfPorEstado(records){
 }
 
 function pdfVencimiento(records){
+  // Usar getFechaAlerta (igual que el semáforo de la app: prioriza fechaMaxGestion)
   const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
-  const conFecha=activos.filter(r=>r.fechaAdjudicacion);
-  const vencidos=conFecha.filter(r=>diasHasta(r.fechaAdjudicacion)<0).sort((a,b)=>a.fechaAdjudicacion.localeCompare(b.fechaAdjudicacion));
-  const hoy=conFecha.filter(r=>diasHasta(r.fechaAdjudicacion)===0);
-  const prox3=conFecha.filter(r=>{const d=diasHasta(r.fechaAdjudicacion);return d>0&&d<=3;}).sort((a,b)=>a.fechaAdjudicacion.localeCompare(b.fechaAdjudicacion));
-  const prox7=conFecha.filter(r=>{const d=diasHasta(r.fechaAdjudicacion);return d>3&&d<=7;}).sort((a,b)=>a.fechaAdjudicacion.localeCompare(b.fechaAdjudicacion));
-  const sinFecha=activos.filter(r=>!r.fechaAdjudicacion);
+  const conFecha=activos.filter(r=>getFechaAlerta(r));
+  const sinFecha=activos.filter(r=>!getFechaAlerta(r));
+
+  const vencidos=conFecha.filter(r=>diasHasta(getFechaAlerta(r))<0)
+    .sort((a,b)=>getFechaAlerta(a).localeCompare(getFechaAlerta(b)));
+  const hoy=conFecha.filter(r=>diasHasta(getFechaAlerta(r))===0);
+  const prox3=conFecha.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;})
+    .sort((a,b)=>getFechaAlerta(a).localeCompare(getFechaAlerta(b)));
+  const prox7=conFecha.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=4&&d<=7;})
+    .sort((a,b)=>getFechaAlerta(a).localeCompare(getFechaAlerta(b)));
+
   const totalRiesgo=vencidos.length+hoy.length+prox3.length;
-  function alertRows(proc){return proc.map(r=>{const d=diasHasta(r.fechaAdjudicacion);const est=getEstado(r.tipo,r.estado);return[`<b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,`<span style="padding:1px 6px;border-radius:8px;font-size:10px;background:${r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE'};color:${r.tipo==='asesoria'?PDF_SKY:PDF_TEAL};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,`<span style="font-size:10px;">${escHtml((r.objeto||'').slice(0,42))}${(r.objeto||'').length>42?'…':''}</span>`,escHtml(r.abogado||'—'),est.label,`<b style="font-family:monospace;">${fmtDate(r.fechaAdjudicacion)}</b>`,d<0?`<b style="color:${PDF_RED};">${Math.abs(d)} días vencido</b>`:d===0?`<b style="color:${PDF_RED};">Vence hoy</b>`:`<span style="color:#C2410C;">${d}d restante${d!==1?'s':''}</span>`];});}
-  const nivelRiesgo=totalRiesgo>10?'crítico':totalRiesgo>5?'alto':totalRiesgo>2?'moderado':'bajo';
-  const colorRiesgo={'crítico':PDF_RED,'alto':'#C2410C','moderado':'#D97706','bajo':PDF_GREEN}[nivelRiesgo];
-  let conclusiones=pdfAlertBox(`El nivel de riesgo contractual es <strong style="color:${colorRiesgo};">${nivelRiesgo.toUpperCase()}</strong>. Se identifican <strong>${totalRiesgo} proceso${totalRiesgo!==1?'s':''}</strong> en situación de riesgo inmediato (vencidos, que vencen hoy o en los próximos 3 días).`,nivelRiesgo==='bajo'?'ok':nivelRiesgo==='moderado'?'warn':'danger');
-  if(vencidos.length>0){const abogadosVenc=[...new Set(vencidos.map(r=>r.abogado).filter(Boolean))];conclusiones+=pdfAlertBox(`Los procesos <strong>${vencidos.slice(0,5).map(r=>r.ticket).join(', ')}${vencidos.length>5?' y otros':''}</strong> han superado su fecha límite. Abogados responsables: <strong>${abogadosVenc.join(', ')||'sin asignar'}</strong>. Se recomienda: prórroga documentada, cierre o reasignación urgente.`,'danger');}
-  if(hoy.length>0) conclusiones+=pdfAlertBox(`<strong>${hoy.length} proceso${hoy.length!==1?'s':''}</strong> con fecha de entrega para hoy. Validar estado antes del cierre de jornada.`,'danger');
-  if(prox3.length>0) conclusiones+=pdfAlertBox(`<strong>${prox3.length} proceso${prox3.length!==1?'s':''}</strong> vencen en 3 días. Priorizar en la agenda de trabajo del equipo.`,'warn');
-  if(prox7.length>0) conclusiones+=pdfAlertBox(`<strong>${prox7.length} proceso${prox7.length!==1?'s':''}</strong> vencen en 4–7 días. Incluir en el seguimiento semanal.`,'warn');
-  if(sinFecha.length>0) conclusiones+=pdfAlertBox(`<strong>${sinFecha.length} proceso${sinFecha.length!==1?'s':''} activo${sinFecha.length!==1?'s':''}</strong> sin fecha de entrega registrada. Completar esta información para el seguimiento oportuno.`,'warn');
-  if(totalRiesgo===0) conclusiones+=pdfAlertBox('No se identifican procesos en situación de riesgo inmediato. Todos los procesos activos se encuentran dentro de sus plazos.','ok');
-  abrirPdf(`${pdfHeader('Informe de Alertas de Vencimiento','Procesos en riesgo que requieren atención prioritaria · '+new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'}))}${pdfIntroBox('Este informe identifica los procesos en situación de riesgo por vencimiento de plazos, clasificados en cuatro categorías: procesos ya vencidos, que vencen hoy, en los próximos 3 días, y en los próximos 7 días. El objetivo es facilitar la toma de decisiones y la priorización de la gestión del equipo responsable.')}${pdfKpiGrid([{label:'Procesos Vencidos',value:vencidos.length,color:PDF_RED,sub:'Acción inmediata'},{label:'Vencen Hoy',value:hoy.length,color:'#DC2626',sub:'Urgente'},{label:'Vencen en 3 Días',value:prox3.length,color:'#EA580C',sub:'Alta prioridad'},{label:'Vencen en 7 Días',value:prox7.length,color:'#D97706',sub:'En seguimiento'},{label:'Sin Fecha',value:sinFecha.length,color:PDF_GRAY,sub:'Completar info'},{label:'Total en Riesgo',value:totalRiesgo,color:PDF_RED,sub:'Vencidos+Hoy+3d'}])}${pdfSectionTitle('📋','Análisis y Conclusiones')}${conclusiones}${vencidos.length?pdfSectionTitle('🔴','Procesos Vencidos — Acción Inmediata')+'<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:11px;color:#991B1B;">Estos procesos han superado su fecha de entrega y requieren gestión urgente.</div>'+pdfTable(['Ticket','Tipo','Objeto','Abogado','Estado','F. Adjudicación','Situación'],alertRows(vencidos),['7%','9%','27%','16%','13%','11%','13%']):''}${hoy.length?pdfSectionTitle('🔴','Vencen Hoy')+pdfTable(['Ticket','Tipo','Objeto','Abogado','Estado','F. Adjudicación','Situación'],alertRows(hoy),['7%','9%','27%','16%','13%','11%','13%']):''}${prox3.length?pdfSectionTitle('🟠','Vencen en los Próximos 3 Días')+pdfTable(['Ticket','Tipo','Objeto','Abogado','Estado','F. Adjudicación','Días restantes'],alertRows(prox3),['7%','9%','27%','16%','13%','11%','13%']):''}${prox7.length?pdfSectionTitle('🟡','Vencen entre 4 y 7 Días')+pdfTable(['Ticket','Tipo','Objeto','Abogado','Estado','F. Adjudicación','Días restantes'],alertRows(prox7),['7%','9%','27%','16%','13%','11%','13%']):''}${sinFecha.length?pdfSectionTitle('⚠️','Procesos Activos Sin Fecha de Entrega')+pdfTable(['Ticket','Tipo','Objeto','Abogado','Estado'],sinFecha.map(r=>[`<b style="font-family:monospace;">${escHtml(r.ticket||'—')}</b>`,`<span style="font-size:10px;padding:1px 5px;border-radius:6px;background:${r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE'};color:${r.tipo==='asesoria'?PDF_SKY:PDF_TEAL};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,`<span style="font-size:10px;">${escHtml((r.objeto||'').slice(0,52))}${(r.objeto||'').length>52?'…':''}</span>`,escHtml(r.abogado||'—'),getEstado(r.tipo,r.estado).label]),['7%','9%','40%','20%','20%']):''}${pdfFooter()}`,'Alertas de Vencimiento');
+  const nivelRiesgo=totalRiesgo>10?'CRÍTICO':totalRiesgo>5?'ALTO':totalRiesgo>2?'MODERADO':'BAJO';
+  const colorRiesgo={'CRÍTICO':PDF_RED,'ALTO':'#C2410C','MODERADO':'#D97706','BAJO':PDF_GREEN}[nivelRiesgo];
+
+  // Filas para tablas — usa getFechaAlerta
+  function alertRows(proc){
+    return proc.map(r=>{
+      const fechaA=getFechaAlerta(r);
+      const d=diasHasta(fechaA);
+      const esFMax=!!r.fechaMaxGestion;
+      const est=getEstado(r.tipo,r.estado);
+      const tipoLabel=r.tipo==='contractual'?'Contractual':'Asesoría';
+      const tipoBg=r.tipo==='contractual'?'#CFFAFE':'#E0F2FE';
+      const tipoColor=r.tipo==='contractual'?PDF_TEAL:PDF_SKY;
+      const situacion=d<0
+        ?`<b style="color:${PDF_RED};">⚠ ${Math.abs(d)}d vencido</b>`
+        :d===0
+        ?`<b style="color:${PDF_RED};">🔴 Vence hoy</b>`
+        :`<span style="color:#C2410C;font-weight:700;">${d}d restante${d!==1?'s':''}</span>`;
+      return [
+        `<b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
+        `<span style="padding:1px 6px;border-radius:8px;font-size:10px;background:${tipoBg};color:${tipoColor};font-weight:700;">${tipoLabel}</span>`,
+        `<span style="font-size:10px;">${escHtml((r.objeto||'').slice(0,42))}${(r.objeto||'').length>42?'…':''}</span>`,
+        escHtml(r.abogado||'—'),
+        `<span style="font-size:10px;">${est.label}</span>`,
+        `<b style="font-family:monospace;font-size:10px;">${fmtDate(fechaA)||'—'}</b><br><span style="font-size:9px;color:var(--muted);">${esFMax?'F. Máx. Gestión':'F. Adjudicación'}</span>`,
+        situacion,
+      ];
+    });
+  }
+
+  // Conclusiones
+  const concls=[];
+  concls.push(pdfAlertBox(
+    `Nivel de riesgo contractual: <strong style="color:${colorRiesgo};">${nivelRiesgo}</strong> — Se identifican <strong>${totalRiesgo} proceso${totalRiesgo!==1?'s':''}</strong> en situación de riesgo inmediato (vencidos, que vencen hoy o en los próximos 3 días).`,
+    nivelRiesgo==='BAJO'?'ok':nivelRiesgo==='MODERADO'?'warn':'danger'
+  ));
+  if(vencidos.length>0){
+    const abogadosVenc=[...new Set(vencidos.map(r=>r.abogado).filter(Boolean))];
+    concls.push(pdfAlertBox(`<strong>${vencidos.length} proceso${vencidos.length!==1?'s':''}</strong> han superado su fecha límite. Responsables: <strong>${abogadosVenc.join(', ')||'sin asignar'}</strong>. Acción requerida: prórroga, cierre o reasignación urgente.`,'danger'));
+  }
+  if(hoy.length>0) concls.push(pdfAlertBox(`<strong>${hoy.length} proceso${hoy.length!==1?'s':''}</strong> vence${hoy.length===1?'':'n'} hoy. Validar estado antes del cierre de jornada.`,'danger'));
+  if(prox3.length>0) concls.push(pdfAlertBox(`<strong>${prox3.length} proceso${prox3.length!==1?'s':''}</strong> vence${prox3.length===1?'':'n'} en los próximos 3 días. Priorizar en la agenda del equipo.`,'warn'));
+  if(prox7.length>0) concls.push(pdfAlertBox(`<strong>${prox7.length} proceso${prox7.length!==1?'s':''}</strong> vence${prox7.length===1?'':'n'} entre 4 y 7 días. Incluir en seguimiento semanal.`,'warn'));
+  if(sinFecha.length>0) concls.push(pdfAlertBox(`<strong>${sinFecha.length} proceso${sinFecha.length!==1?'s':''} activo${sinFecha.length!==1?'s':''}</strong> sin fecha de gestión registrada. Completar esta información para el seguimiento oportuno.`,'warn'));
+  if(totalRiesgo===0&&sinFecha.length===0) concls.push(pdfAlertBox('✅ No se identifican procesos en situación de riesgo inmediato. Todos los procesos activos se encuentran dentro de sus plazos.','ok'));
+
+  const cols=['7%','10%','26%','15%','13%','13%','12%'];
+  const hdrs=['Ticket','Tipo','Objeto','Abogado','Estado','Fecha Límite','Situación'];
+
+  // Sección sin fecha
+  const sinFechaRows=sinFecha.map(r=>[
+    `<b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
+    `<span style="padding:1px 6px;border-radius:8px;font-size:10px;background:${r.tipo==='contractual'?'#CFFAFE':'#E0F2FE'};color:${r.tipo==='contractual'?PDF_TEAL:PDF_SKY};font-weight:700;">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,
+    `<span style="font-size:10px;">${escHtml((r.objeto||'').slice(0,52))}${(r.objeto||'').length>52?'…':''}</span>`,
+    escHtml(r.abogado||'—'),
+    `<span style="font-size:10px;">${getEstado(r.tipo,r.estado).label}</span>`,
+  ]);
+
+  abrirPdf(`
+    ${pdfHeader('Informe de Alertas de Vencimiento','Procesos en riesgo que requieren atención prioritaria · '+new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'}))}
+    ${pdfIntroBox('Este informe identifica los procesos con fecha de gestión próxima a vencer o ya vencida. Se clasifican usando la misma lógica del semáforo de la aplicación: prioriza la Fecha Máxima de Gestión y, si no existe, usa la Fecha de Adjudicación. Permite priorizar la atención del equipo responsable.')}
+    ${pdfKpiGrid([
+      {label:'Procesos Vencidos',   value:vencidos.length, color:PDF_RED,     sub:'Acción inmediata'},
+      {label:'Vencen Hoy',          value:hoy.length,      color:'#DC2626',   sub:'Urgente'},
+      {label:'Próximos 3 días',     value:prox3.length,    color:'#EA580C',   sub:'Alta prioridad'},
+      {label:'Próximos 7 días',     value:prox7.length,    color:'#D97706',   sub:'En seguimiento'},
+      {label:'Sin Fecha Registrada',value:sinFecha.length,  color:PDF_GRAY,   sub:'Completar info'},
+      {label:'Total en Riesgo',     value:totalRiesgo,     color:colorRiesgo, sub:'Vencidos+Hoy+3d'},
+    ])}
+    ${pdfSectionTitle('📋','Análisis y Recomendaciones')}${concls.join('')}
+    ${vencidos.length?pdfSectionTitle('🔴','Procesos Vencidos — Requieren Acción Inmediata')
+      +'<div style="background:#FEF2F2;border:1.5px solid #FECACA;border-radius:8px;padding:10px 16px;margin-bottom:12px;font-size:11px;color:#991B1B;font-weight:600;">⚠ Estos procesos han superado su Fecha Máxima de Gestión o Fecha de Adjudicación. Requieren gestión urgente.</div>'
+      +pdfTable(hdrs,alertRows(vencidos),cols):''}
+    ${hoy.length?pdfSectionTitle('🔴','Vencen Hoy')
+      +pdfTable(hdrs,alertRows(hoy),cols):''}
+    ${prox3.length?pdfSectionTitle('🟠','Vencen en los Próximos 3 Días')
+      +pdfTable(hdrs,alertRows(prox3),cols):''}
+    ${prox7.length?pdfSectionTitle('🟡','Vencen entre 4 y 7 Días')
+      +pdfTable(hdrs,alertRows(prox7),cols):''}
+    ${sinFecha.length?pdfSectionTitle('⚪','Procesos Activos Sin Fecha de Gestión Registrada')
+      +'<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 16px;margin-bottom:12px;font-size:11px;color:#64748B;">Estos procesos no tienen Fecha Máxima de Gestión ni Fecha de Adjudicación registrada. Se recomienda completar esta información para incluirlos en el seguimiento.</div>'
+      +pdfTable(['Ticket','Tipo','Objeto','Abogado','Estado'],sinFechaRows,['7%','10%','43%','20%','18%']):''}
+    ${pdfFooter()}
+  `,'Alertas de Vencimiento');
 }
 
 function generarPDF(tipo){
