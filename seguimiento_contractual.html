@@ -359,6 +359,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 
 /* ── SEMÁFORO DE VENCIMIENTO ── */
 .semaforo-wrap{padding:12px 32px 0;}
+.semaforo-bar{padding:12px 32px 0;}
 .semaforo-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
 .semaforo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:4px;}
 .sema-card{border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;border:1px solid transparent;cursor:pointer;transition:all .15s;}
@@ -1107,6 +1108,24 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
         <input type="text" id="search-mod" placeholder="Buscar ticket, objeto, abogado…" oninput="renderMod()">
+      </div>
+    </div>
+    <!-- Semáforo de vencimiento -->
+    <div class="semaforo-bar">
+      <div class="semaforo-title">🚦 Alertas de Vencimiento — clic para filtrar</div>
+      <div class="semaforo-grid">
+        <div class="sema-card rojo" onclick="filtrarVencimientoMod('hoy')" title="Ver modificaciones que vencen hoy o ya vencidas">
+          <span class="sema-dot rojo"></span>
+          <div class="sema-info"><strong class="rojo" id="mod-sema-hoy">0</strong><span>Vence hoy</span></div>
+        </div>
+        <div class="sema-card naranja" onclick="filtrarVencimientoMod('3dias')" title="Ver modificaciones que vencen en los próximos 3 días">
+          <span class="sema-dot naranja"></span>
+          <div class="sema-info"><strong class="naranja" id="mod-sema-3">0</strong><span>Próximos 3 días</span></div>
+        </div>
+        <div class="sema-card amarillo" onclick="filtrarVencimientoMod('7dias')" title="Ver modificaciones que vencen entre 4 y 7 días">
+          <span class="sema-dot amarillo"></span>
+          <div class="sema-info"><strong class="amarillo" id="mod-sema-7">0</strong><span>Próximos 7 días</span></div>
+        </div>
       </div>
     </div>
     <div class="stats-bar">
@@ -2356,6 +2375,7 @@ function launchApp(){
   window._appReady=true;
   activeTipo='all';
   vencimientoFilter=null;
+  vencimientoFilterMod=null;
   document.querySelectorAll('.tipo-chip').forEach(c=>c.className='tipo-chip');
   document.getElementById('chip-all')?.classList.add('active-all');
   const si=document.getElementById('search-input');if(si)si.value='';
@@ -2807,6 +2827,29 @@ function filtrarVencimiento(tipo){
   renderTable();
 }
 
+let vencimientoFilterMod=null;
+function filtrarVencimientoMod(tipo){
+  vencimientoFilterMod=vencimientoFilterMod===tipo?null:tipo;
+  renderMod();
+}
+function updateSemaforoMod(records){
+  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r));
+  let hoy=0,tres=0,siete=0;
+  activos.forEach(r=>{
+    const d=diasHasta(getFechaAlerta(r));
+    if(d===null) return;
+    if(d<=0)       hoy++;
+    else if(d<=3)  tres++;
+    else if(d<=7)  siete++;
+  });
+  const elHoy=document.getElementById('mod-sema-hoy');
+  const el3=document.getElementById('mod-sema-3');
+  const el7=document.getElementById('mod-sema-7');
+  if(elHoy) elHoy.textContent=hoy;
+  if(el3)   el3.textContent=tres;
+  if(el7)   el7.textContent=siete;
+}
+
 function getFechaAlerta(r){
   return r.fechaMaxGestion||r.fechaAdjudicacion||null;
 }
@@ -3039,13 +3082,11 @@ function openBitacoraMod(id){
   const terminal=estadoIsTerminal(r.tipo,r.estado);
   const canEdit=!terminal&&isAdmin();
   const est=getEstado(r.tipo,r.estado);
-  const tipoBg=r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE';
-  const tipoCol=r.tipo==='asesoria'?'var(--sky)':'var(--teal)';
   document.getElementById('bit-mod-header').innerHTML=`
     <span class="ticket-badge">${escHtml(r.ticket||'—')}</span>
-    <span style="padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;background:${tipoBg};color:${tipoCol};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>
+    <span class="tipo-badge ${r.tipo||'asesoria'}">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>
     <span class="status-badge ${est.css}" style="font-size:11px;padding:2px 8px;">${est.label}</span>
-    <span style="font-size:11px;color:var(--muted);margin-left:auto;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(r.objeto||'')}</span>`;
+    <span style="font-size:11px;color:var(--muted);margin-left:auto;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(r.objeto||'')}</span>`;
   const fEl=document.getElementById('new-mod-entry-form');
   const lEl=document.getElementById('new-mod-entry-locked');
   const bEl=document.getElementById('new-mod-entry-box');
@@ -3086,6 +3127,9 @@ async function addModEntry(){
   showSyncToast('✅ Avance guardado');
   document.getElementById('mod-entry-text').value='';
   document.getElementById('mod-entry-date').value=todayISO();
+  // Actualizar array local inmediatamente (onSnapshot llegará después)
+  const idx=(window._modRecords||[]).findIndex(x=>x.id===r.id);
+  if(idx>=0) window._modRecords[idx]={...window._modRecords[idx],bitacora};
   const updated=(window._modRecords||[]).find(x=>x.id===r.id);
   if(updated)renderModEntries(updated);
 }
@@ -3094,62 +3138,102 @@ async function deleteModEntry(recordId,entryId){
   if(!confirm('¿Eliminar esta entrada?'))return;
   const bitacora=(r.bitacora||[]).filter(e=>e.id!==entryId);
   await window._saveBitacoraMod(r.id,bitacora);
-  const updated=(window._modRecords||[]).find(x=>x.id===r.id);
+  const idx=(window._modRecords||[]).findIndex(x=>x.id===recordId);
+  if(idx>=0) window._modRecords[idx]={...window._modRecords[idx],bitacora};
+  const updated=(window._modRecords||[]).find(x=>x.id===recordId);
   if(updated)renderModEntries(updated);
 }
 function closeBitacoraMod(){document.getElementById('bitacora-mod-overlay').classList.remove('open');bitacoraModId=null;}
 
 /* ═══ BITÁCORA GENERAL MODIFICACIONES ═══ */
 function openBitacoraGeneralMod(){
-  const records=(window._modRecords||[]).filter(r=>registroEsDelUsuario(r));
-  const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+  const records=window._modRecords||[];
+  const abogadoFiltro=getAbogadoFiltro();
   const sel=document.getElementById('bmg-abogado');
-  sel.innerHTML='<option value="">Todos los abogados</option>'+abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
+  if(abogadoFiltro){
+    sel.parentElement.style.display='none';
+  } else {
+    sel.parentElement.style.display='';
+    const abogados=[...new Set(records.filter(r=>registroEsDelUsuario(r)).map(r=>r.abogado).filter(Boolean))].sort();
+    sel.innerHTML='<option value="">Todos los abogados</option>'+
+      abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
+  }
   document.getElementById('bmg-tipo').value='';
   document.getElementById('bmg-solo-avances').value='';
   document.getElementById('bmg-search').value='';
-  document.getElementById('bit-gen-mod-overlay').style.display='flex';
+  document.getElementById('bit-gen-mod-overlay').classList.add('open');
   renderBitacoraGeneralMod();
 }
-function closeBitacoraGeneralMod(){document.getElementById('bit-gen-mod-overlay').style.display='none';}
+function closeBitacoraGeneralMod(){
+  document.getElementById('bit-gen-mod-overlay').classList.remove('open');
+}
 function renderBitacoraGeneralMod(){
+  const allRecords=window._modRecords||[];
+  const baseRecords=allRecords.filter(r=>registroEsDelUsuario(r));
   const tipo=document.getElementById('bmg-tipo').value;
   const abogado=document.getElementById('bmg-abogado').value;
   const soloAvances=document.getElementById('bmg-solo-avances').value;
   const q=(document.getElementById('bmg-search').value||'').toLowerCase();
-  let records=(window._modRecords||[]).filter(r=>registroEsDelUsuario(r));
-  if(tipo) records=records.filter(r=>r.tipo===tipo);
-  if(abogado) records=records.filter(r=>normStr(r.abogado)===normStr(abogado));
-  if(soloAvances==='1') records=records.filter(r=>(r.bitacora||[]).length>0);
-  if(soloAvances==='0') records=records.filter(r=>(r.bitacora||[]).length===0);
-  if(q) records=records.filter(r=>(r.ticket||'').toLowerCase().includes(q)||(r.objeto||'').toLowerCase().includes(q));
-  records=records.slice().sort((a,b)=>(a.ticket||'').localeCompare(b.ticket||'',undefined,{numeric:true}));
-  document.getElementById('bmg-count').textContent=records.length+' modificaciones';
+
+  let data=baseRecords.filter(r=>{
+    if(tipo&&r.tipo!==tipo) return false;
+    if(abogado&&r.abogado!==abogado) return false;
+    if(soloAvances==='1'&&!(r.bitacora||[]).length) return false;
+    if(soloAvances==='0'&&(r.bitacora||[]).length) return false;
+    if(q&&!((r.ticket||'').toLowerCase().includes(q)||(r.objeto||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  data.sort((a,b)=>{
+    const na=(a.bitacora||[]).length,nb=(b.bitacora||[]).length;
+    if(na!==nb) return nb-na;
+    return (a.ticket||'').localeCompare(b.ticket||'');
+  });
+
+  const totalEntradas=data.reduce((s,r)=>s+(r.bitacora||[]).length,0);
+  document.getElementById('bmg-count').textContent=
+    `${data.length} modificación${data.length!==1?'es':''} · ${totalEntradas} entrada${totalEntradas!==1?'s':''}`;
+
   const body=document.getElementById('bit-gen-mod-body');
-  if(!records.length){body.innerHTML=`<div class="bit-gen-empty">Sin modificaciones para los filtros seleccionados.</div>`;return;}
-  body.innerHTML=records.map(r=>{
-    const est=getEstado(r.tipo,r.estado);
+  if(!data.length){
+    body.innerHTML=`<div class="bit-gen-empty"><div style="font-size:36px;margin-bottom:10px;">📭</div><p>No hay modificaciones que coincidan con los filtros.</p></div>`;
+    return;
+  }
+
+  body.innerHTML=data.map(r=>{
     const entries=[...(r.bitacora||[])].sort((a,b)=>b.date.localeCompare(a.date));
+    const nE=entries.length;
+    const est=getEstado(r.tipo,r.estado);
     const tipoBg=r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE';
-    const tipoCol=r.tipo==='asesoria'?'var(--sky)':'var(--teal)';
-    return `<div class="bit-gen-item">
-      <div class="bit-gen-item-header" onclick="this.parentElement.classList.toggle('open')">
-        <span class="ticket-badge" style="font-size:10px;">${escHtml(r.ticket||'—')}</span>
-        <span style="padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700;background:${tipoBg};color:${tipoCol};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>
-        <span style="font-size:12px;font-weight:600;color:var(--navy);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml((r.objeto||'').slice(0,70))}</span>
-        <span style="font-size:11px;color:var(--muted);">${escHtml(r.abogado||'—')}</span>
-        <span class="status-badge ${est.css}" style="font-size:10px;padding:1px 6px;">${est.label}</span>
-        <span style="font-size:11px;color:var(--muted);">${entries.length} entrada${entries.length!==1?'s':''}</span>
-        <span class="bit-gen-chevron">▸</span>
+    const tipoColor=r.tipo==='asesoria'?'var(--sky)':'var(--teal)';
+    const cardId='bmgc-'+r.id;
+    const entriesHtml=nE>0?entries.map(e=>`
+      <div class="bit-entry-item">
+        <div class="bit-entry-meta">
+          <span class="bit-entry-date">📅 ${fmtDate(e.date)||e.date}</span>
+          <span class="bit-entry-author">${escHtml(e.author||'—')}</span>
+        </div>
+        <div class="bit-entry-text">${escHtml(e.text||'')}</div>
+      </div>`).join('')
+    :`<div class="bit-no-entries">Sin entradas de avance registradas.</div>`;
+
+    return `<div class="bit-proceso-card">
+      <div class="bit-proceso-head" onclick="toggleBitCard('${cardId}')">
+        <span class="bp-ticket">${escHtml(r.ticket||'—')}</span>
+        <span style="padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:${tipoBg};color:${tipoColor};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>
+        <span class="bp-objeto">${escHtml(r.objeto||'Sin objeto')}</span>
+        <span class="bp-abogado">⚖️ ${escHtml(r.abogado||'—')}</span>
+        <span style="padding:2px 8px;border-radius:6px;font-size:10px;background:#F1F5F9;color:var(--navy);font-weight:600;">${est.label}</span>
+        <span class="bp-count ${nE===0?'empty':''}">${nE} entrada${nE!==1?'s':''}</span>
+        <span class="bp-toggle" id="arr-${cardId}">▶</span>
       </div>
-      <div class="bit-gen-item-body">
-        ${entries.length?entries.map(e=>`<div class="entry-item" style="margin-bottom:6px;">
-          <div class="entry-date"><span>📅 ${fmtDate(e.date)||e.date}</span><span class="entry-author">Por: ${escHtml(e.author||'—')}</span></div>
-          <div class="entry-text">${escHtml(e.text)}</div>
-        </div>`).join(''):`<div class="no-entries">📭 Sin entradas de avance.</div>`}
-        <button class="btn btn-primary" style="font-size:11px;padding:5px 12px;margin-top:8px;" onclick="closeBitacoraGeneralMod();openBitacoraMod('${r.id}')">
-          ${estadoIsTerminal(r.tipo,r.estado)?'📖 Ver bitácora':'📝 Registrar avance'}
-        </button>
+      <div class="bit-proceso-entries ${nE>0?'open':''}" id="${cardId}">
+        ${entriesHtml}
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+          <button class="btn btn-primary" style="font-size:11px;padding:5px 14px;" onclick="closeBitacoraGeneralMod();openBitacoraMod('${r.id}')">
+            ${estadoIsTerminal(r.tipo,r.estado)?'📖 Ver bitácora':'📝 Registrar avance'}
+          </button>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -5168,7 +5252,7 @@ function deleteModRecord(id){
   window._deleteModRecord(id).then(()=>showSyncToast('Eliminado')).catch(e=>alert(e.message));
 }
 function renderMod(){
-    const records=window._modRecords||[];
+  const records=window._modRecords||[];
   const q=(document.getElementById('search-mod')?.value||'').toLowerCase();
   const abogadoFiltro=getAbogadoFiltro();
   let data=records.filter(r=>{
@@ -5181,18 +5265,42 @@ function renderMod(){
     if(!isNaN(na)&&!isNaN(nb))return na-nb;
     return (a.ticket||'').localeCompare(b.ticket||'',undefined,{numeric:true});
   });
-  document.getElementById('mod-stat-total').textContent=data.length;
-  document.getElementById('mod-stat-asesoria').textContent=data.filter(r=>r.tipo==='asesoria').length;
-  document.getElementById('mod-stat-contractual').textContent=data.filter(r=>r.tipo==='contractual').length;
+
+  // Actualizar semáforo (sobre todos, sin filtro vencimiento)
+  updateSemaforoMod(data);
+
+  // Aplicar filtro de vencimiento DESPUÉS del semáforo
+  if(vencimientoFilterMod){
+    data=data.filter(r=>{
+      if(estadoIsTerminal(r.tipo,r.estado)) return false;
+      const d=diasHasta(getFechaAlerta(r));
+      if(d===null) return false;
+      if(vencimientoFilterMod==='hoy'   && d>0)         return false;
+      if(vencimientoFilterMod==='3dias' && (d<=0||d>3)) return false;
+      if(vencimientoFilterMod==='7dias' && (d<=3||d>7)) return false;
+      return true;
+    });
+  }
+
+  document.getElementById('mod-stat-total').textContent=records.filter(r=>registroEsDelUsuario(r)).length;
+  document.getElementById('mod-stat-asesoria').textContent=records.filter(r=>registroEsDelUsuario(r)&&r.tipo==='asesoria').length;
+  document.getElementById('mod-stat-contractual').textContent=records.filter(r=>registroEsDelUsuario(r)&&r.tipo==='contractual').length;
+
   const adm=isAdmin();
   const tbody=document.getElementById('mod-table-body');
   if(tbody){
-    if(!data.length){tbody.innerHTML=`<tr><td colspan="13"><div class="empty-state"><div class="big-icon">✏️</div><p>Sin modificaciones registradas.</p></div></td></tr>`;}
+    if(!data.length){tbody.innerHTML=`<tr><td colspan="13"><div class="empty-state"><div class="big-icon">✏️</div><p>${vencimientoFilterMod?'Sin modificaciones con esta alerta.':'Sin modificaciones registradas.'}</p></div></td></tr>`;}
     else{
       tbody.innerHTML=data.map(r=>{
         const est=getEstado(r.tipo,r.estado);
+        const terminal=estadoIsTerminal(r.tipo,r.estado);
+        const nE=(r.bitacora||[]).length;
         const tipoBg=r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE';
         const tipoCol=r.tipo==='asesoria'?'var(--sky)':'var(--teal)';
+        const semBadge=getSemaforoBadge(r);
+        const maxCell=r.fechaMaxGestion
+          ?`<span style="font-family:var(--mono);font-size:11px;">${fmtDate(r.fechaMaxGestion)}</span>${semBadge}`
+          :`<span style="color:#CBD5E1;font-size:11px;">—</span>`;
         return `<tr>
           <td><span class="ticket-badge">${escHtml(r.ticket||'—')}</span></td>
           <td><span style="padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;background:${tipoBg};color:${tipoCol};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span></td>
@@ -5203,11 +5311,11 @@ function renderMod(){
           <td style="font-family:var(--mono);font-size:11px;">${escHtml(r.secop||'—')}</td>
           <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(r.fechaAsignacion)||'—'}</td>
           <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(r.fechaAdjudicacion)||'—'}</td>
-          <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(r.fechaMaxGestion)||'—'}</td>
+          <td style="white-space:nowrap;">${maxCell}</td>
           <td><span class="${est.css}" style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;">${est.label}</span></td>
-          <td><span class="avance-badge"><span class="avance-dot ${(r.bitacora||[]).length?'has':''}"></span>${(r.bitacora||[]).length}</span></td>
+          <td><span class="avance-badge"><span class="avance-dot ${nE?'has':''}"></span>${nE}</span></td>
           <td onclick="event.stopPropagation()"><div class="actions-cell">
-            <button class="icon-btn" onclick="openBitacoraMod('${r.id}')" title="${!estadoIsTerminal(r.tipo,r.estado)?'Avance':'Ver'}">${!estadoIsTerminal(r.tipo,r.estado)?'📝':'📖'}</button>
+            <button class="icon-btn" onclick="openBitacoraMod('${r.id}')" title="${!terminal?'Avance':'Ver'}">${!terminal?'📝':'📖'}</button>
             <button class="icon-btn" onclick="openModalMod('${r.id}')" ${adm?'':'disabled'}>✏️</button>
             <button class="icon-btn del" onclick="deleteModRecord('${r.id}')" ${adm?'':'disabled'}>🗑️</button>
           </div></td>
@@ -5229,6 +5337,7 @@ function renderMod(){
         const terminal=estadoIsTerminal(r.tipo,r.estado);
         const tipoBg=r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE';
         const tipoCol=r.tipo==='asesoria'?'var(--sky)':'var(--teal)';
+        const semBadge=getSemaforoBadge(r);
         return `<div class="mc">
           <div class="mc-head">
             <span class="mc-ticket">${escHtml(r.ticket||'—')}</span>
@@ -5238,6 +5347,7 @@ function renderMod(){
           <div class="mc-body">
             <div class="mc-objeto">${escHtml((r.objeto||'Sin objeto').slice(0,90))}${(r.objeto||'').length>90?'…':''}</div>
             <div class="mc-row"><span class="mc-lbl">Abogado</span><span class="mc-val">${escHtml(r.abogado||'—')}</span></div>
+            ${r.fechaMaxGestion?`<div class="mc-row"><span class="mc-lbl" style="color:var(--red);">⏰ Máx.</span><span class="mc-val">${fmtDate(r.fechaMaxGestion)} ${semBadge}</span></div>`:''}
             ${nE>0?`<div style="margin-top:6px;font-size:11px;color:var(--accent);font-weight:500;">📝 ${nE} avance${nE!==1?'s':''}</div>`:''}
           </div>
           <div class="mc-footer" onclick="event.stopPropagation()">
