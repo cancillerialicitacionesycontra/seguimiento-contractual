@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta http-equiv="X-Frame-Options" content="DENY">
@@ -22,7 +25,8 @@
   --font:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;}
+html,body{width:100%;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
 /* ── SYNC ── */
 #sync-bar{position:fixed;top:0;left:0;right:0;z-index:300;height:3px;background:transparent;}
@@ -52,7 +56,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .login-footer{text-align:center;margin-top:18px;font-size:11px;color:var(--muted);}
 
 /* ── APP ── */
-#app-screen{display:none;}
+#app-screen{display:none;width:100%;min-height:100vh;overflow-x:hidden;}
 #session-bar{background:#1E293B;color:#94A3B8;font-size:11px;text-align:right;padding:4px 32px;font-family:var(--mono);display:flex;justify-content:space-between;align-items:center;}
 #session-timer{color:var(--gold);font-weight:600;}
 #firebase-status{font-size:10px;display:flex;align-items:center;gap:5px;}
@@ -343,7 +347,7 @@ textarea#entry-text:focus{border-color:var(--accent);}
 .avg-table tbody td{padding:10px 14px;}
 .avg-table tbody td:not(:first-child){text-align:center;}
 
-.page{display:none;}.page.active{display:block;}
+.page{display:none;width:100%;}.page.active{display:block;width:100%;}
 #inactivity-overlay{display:none;position:fixed;inset:0;background:rgba(15,31,61,.75);z-index:200;align-items:center;justify-content:center;}
 #inactivity-overlay.open{display:flex;}
 .inactivity-box{background:white;border-radius:14px;padding:32px;max-width:360px;width:90%;text-align:center;}
@@ -993,33 +997,33 @@ textarea#entry-text:focus{border-color:var(--accent);}
           </div>
         </div>
 
-        <!-- KPIs fila 2: Estado del trámite -->
-        <div class="dash-divider"><span class="dash-divider-icon">🔄</span>Estado del Trámite</div>
+        <!-- KPIs fila 2: métricas específicas pedidas -->
+        <div class="dash-divider"><span class="dash-divider-icon">🔒</span>Estado de Liquidaciones y Cierres</div>
         <div class="dash-kpis" style="grid-template-columns:repeat(5,1fr);">
-          <div class="kpi" style="border-top:3px solid #F59E0B;">
-            <span class="kpct" id="dl-pct-pendiente" style="color:#F59E0B;"></span>
-            <span class="kn" id="dl-pendiente" style="color:#F59E0B;">0</span>
-            <span class="kl">Pdte enviar</span>
+          <div class="kpi" style="border-top:3px solid var(--green);">
+            <span class="kpct" id="dl-pct-liq-cerrado" style="color:var(--green);"></span>
+            <span class="kn" id="dl-liq-cerrado" style="color:var(--green);">0</span>
+            <span class="kl">Liquidado y Cerrado</span>
           </div>
-          <div class="kpi" style="border-top:3px solid var(--sky);">
-            <span class="kpct" id="dl-pct-asesoria" style="color:var(--sky);"></span>
-            <span class="kn" id="dl-asesoria-count" style="color:var(--sky);">0</span>
-            <span class="kl">En asesoría</span>
+          <div class="kpi" style="border-top:3px solid #F59E0B;">
+            <span class="kpct" id="dl-pct-liq-pte" style="color:#F59E0B;"></span>
+            <span class="kn" id="dl-liq-pte" style="color:#F59E0B;">0</span>
+            <span class="kl">Liquidado Pte. Cerrar</span>
+          </div>
+          <div class="kpi" style="border-top:3px solid var(--teal);">
+            <span class="kpct" id="dl-pct-cierre-cont" style="color:var(--teal);"></span>
+            <span class="kn" id="dl-cierre-cont" style="color:var(--teal);">0</span>
+            <span class="kl">Cierre Contractual</span>
           </div>
           <div class="kpi" style="border-top:3px solid #EA580C;">
-            <span class="kpct" id="dl-pct-obs" style="color:#EA580C;"></span>
-            <span class="kn" id="dl-obs-count" style="color:#EA580C;">0</span>
-            <span class="kl">Obs. en el área</span>
+            <span class="kpct" id="dl-pct-pte-liquidar" style="color:#EA580C;"></span>
+            <span class="kn" id="dl-pte-liquidar" style="color:#EA580C;">0</span>
+            <span class="kl">Pendiente por Liquidar</span>
           </div>
           <div class="kpi" style="border-top:3px solid #7C3AED;">
-            <span class="kpct" id="dl-pct-revision" style="color:#7C3AED;"></span>
-            <span class="kn" id="dl-revision" style="color:#7C3AED;">0</span>
-            <span class="kl">En revisión</span>
-          </div>
-          <div class="kpi" style="border-top:3px solid var(--green);">
-            <span class="kpct" id="dl-pct-finalizados" style="color:var(--green);"></span>
-            <span class="kn" id="dl-fin-count" style="color:var(--green);">0</span>
-            <span class="kl">Liquidados / Cerrados</span>
+            <span class="kpct" id="dl-pct-pte-cierre" style="color:#7C3AED;"></span>
+            <span class="kn" id="dl-pte-cierre" style="color:#7C3AED;">0</span>
+            <span class="kl">Pendiente por Cierre</span>
           </div>
         </div>
 
@@ -1056,11 +1060,11 @@ textarea#entry-text:focus{border-color:var(--accent);}
                 <th>Total</th>
                 <th>Liquidaciones</th>
                 <th>Cierres</th>
-                <th>Pdte enviar</th>
-                <th>En asesoría</th>
-                <th>Obs. área</th>
-                <th>En revisión</th>
-                <th>Finalizados</th>
+                <th>Liq. y Cerrado</th>
+                <th>Liq. Pte. Cerrar</th>
+                <th>Cierre Contractual</th>
+                <th>Pte. Liquidar</th>
+                <th>Pte. Cierre</th>
               </tr></thead>
               <tbody id="dl-abog-body"></tbody>
             </table>
@@ -1166,18 +1170,6 @@ textarea#entry-text:focus{border-color:var(--accent);}
             <label>Abogado Asignado *</label>
             <select id="mod-f-abogado">
               <option value="">— Seleccionar —</option>
-              <option value="JOHANNA AGUDELO">JOHANNA AGUDELO</option>
-              <option value="YULY LEIVA">YULY LEIVA</option>
-              <option value="OSCAR VICTORIA">OSCAR VICTORIA</option>
-              <option value="NATALIA JIMENEZ">NATALIA JIMENEZ</option>
-              <option value="ALEXANDRA PORTILLO">ALEXANDRA PORTILLO</option>
-              <option value="JESSICA GUTIERREZ">JESSICA GUTIERREZ</option>
-              <option value="BRIAM BRITO">BRIAM BRITO</option>
-              <option value="TANIA HUMANEZ">TANIA HUMANEZ</option>
-              <option value="KATIANA JIMENEZ">KATIANA JIMENEZ</option>
-              <option value="JHOANA MEDINA">JHOANA MEDINA</option>
-              <option value="MARIANA GARCIA MORALES">MARIANA GARCIA MORALES</option>
-              <option value="WILLIAM LEIVA">WILLIAM LEIVA</option>
             </select>
           </div>
           <div class="form-group">
@@ -1335,18 +1327,6 @@ textarea#entry-text:focus{border-color:var(--accent);}
             <label>Abogado Responsable *</label>
             <select id="liq-f-abogado">
               <option value="">— Seleccionar —</option>
-              <option value="JOHANNA AGUDELO">JOHANNA AGUDELO</option>
-              <option value="YULY LEIVA">YULY LEIVA</option>
-              <option value="OSCAR VICTORIA">OSCAR VICTORIA</option>
-              <option value="NATALIA JIMENEZ">NATALIA JIMENEZ</option>
-              <option value="ALEXANDRA PORTILLO">ALEXANDRA PORTILLO</option>
-              <option value="JESSICA GUTIERREZ">JESSICA GUTIERREZ</option>
-              <option value="BRIAM BRITO">BRIAM BRITO</option>
-              <option value="TANIA HUMANEZ">TANIA HUMANEZ</option>
-              <option value="KATIANA JIMENEZ">KATIANA JIMENEZ</option>
-              <option value="JHOANA MEDINA">JHOANA MEDINA</option>
-              <option value="MARIANA GARCIA MORALES">MARIANA GARCIA MORALES</option>
-              <option value="WILLIAM LEIVA">WILLIAM LEIVA</option>
             </select>
           </div>
           <div class="form-group">
@@ -1661,18 +1641,6 @@ textarea#entry-text:focus{border-color:var(--accent);}
           <div class="form-group"><label>Abogado Asignado *</label>
             <select id="f-abogado">
               <option value="">— Seleccionar —</option>
-              <option value="JOHANNA AGUDELO">JOHANNA AGUDELO</option>
-              <option value="YULY LEIVA">YULY LEIVA</option>
-              <option value="OSCAR VICTORIA">OSCAR VICTORIA</option>
-              <option value="NATALIA JIMENEZ">NATALIA JIMENEZ</option>
-              <option value="ALEXANDRA PORTILLO">ALEXANDRA PORTILLO</option>
-              <option value="JESSICA GUTIERREZ">JESSICA GUTIERREZ</option>
-              <option value="BRIAM BRITO">BRIAM BRITO</option>
-              <option value="TANIA HUMANEZ">TANIA HUMANEZ</option>
-              <option value="KATIANA JIMENEZ">KATIANA JIMENEZ</option>
-              <option value="JHOANA MEDINA">JHOANA MEDINA</option>
-              <option value="MARIANA GARCIA MORALES">MARIANA GARCIA MORALES</option>
-              <option value="WILLIAM LEIVA">WILLIAM LEIVA</option>
             </select>
           </div>
           <div class="form-group"><label>GIT (Grupo Interno de Trabajo)</label>
@@ -2093,7 +2061,6 @@ onSnapshot(collection(db,'registros'),snap=>{
   window._records=[];
   snap.forEach(d=>window._records.push({id:d.id,...d.data()}));
   window._dbReady=true;
-  // Renderizar siempre que haya datos nuevos y la app esté activa
   if(window._appReady){
     if(window.renderTable) window.renderTable();
     const dash=document.getElementById('page-dash');
@@ -2114,7 +2081,6 @@ window._saveBitacora=async(id,bitacora)=>{await updateDoc(doc(db,'registros',id)
 window._saveUser=async(u)=>{const{id,...r}=u;await setDoc(doc(db,'usuarios',id),r);};
 window._deleteUser=async(id)=>{await deleteDoc(doc(db,'usuarios',id));};
 
-// Colecciones Modificaciones y Liquidaciones
 window._saveModRecord=async(data)=>{const{id,...r}=data;await setDoc(doc(db,'modificaciones',id),r);};
 window._deleteModRecord=async(id)=>{await deleteDoc(doc(db,'modificaciones',id));};
 window._saveLiqRecord=async(data)=>{const{id,...r}=data;await setDoc(doc(db,'liquidaciones',id),r);};
@@ -2152,6 +2118,29 @@ function fmtDate(d){if(!d)return null;const[y,m,day]=d.split('-');return`${day}/
 function todayISO(){return new Date().toISOString().slice(0,10);}
 
 /* ═══ ESTADOS POR TIPO ═══ */
+
+/* ── Lista de abogados (fuente única) ── */
+const ABOGADOS_LIST=[
+  {v:'JOHANNA AGUDELO',     l:'JOHANNA AGUDELO'},
+  {v:'YULY LEIVA',          l:'YULY LEIVA'},
+  {v:'OSCAR VICTORIA',      l:'OSCAR VICTORIA'},
+  {v:'NATALIA JIMENEZ',     l:'NATALIA JIMENEZ'},
+  {v:'ALEXANDRA PORTILLO',  l:'ALEXANDRA PORTILLO'},
+  {v:'JESSICA GUTIERREZ',   l:'JESSICA GUTIERREZ'},
+  {v:'BRIAM BRITO',         l:'BRIAM BRITO'},
+  {v:'TANIA HUMANEZ',       l:'TANIA HUMANEZ'},
+  {v:'KATIANA JIMENEZ',     l:'KATIANA JIMENEZ'},
+  {v:'JHOANA MEDINA',       l:'JHOANA MEDINA'},
+  {v:'MARIANA GARCIA MORALES',l:'MARIANA GARCIA MORALES'},
+  {v:'WILLIAM LEIVA',       l:'WILLIAM LEIVA'},
+];
+function buildAbogadoOptions(selId,val=''){
+  const sel=document.getElementById(selId);
+  if(!sel)return;
+  sel.innerHTML='<option value="">— Seleccionar —</option>'+
+    ABOGADOS_LIST.map(a=>`<option value="${a.v}"${val===a.v?' selected':''}>${a.l}</option>`).join('');
+}
+
 const ESTADOS={
   asesoria:[
     {value:'asignado',        label:'Asignado',               css:'sb-asignado'},
@@ -2296,28 +2285,20 @@ let sessionExpiry=0,sessionInterval=null,inactivityTimer=null,inactivityWarning=
 function launchApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
-  // Registrar funciones globales
   window.renderTable=renderTable;
-  window.renderDashboard=renderDashboard;
-  window.renderAdminPanel=renderAdminPanel;
-  // Configurar sesión y UI — currentUser ya está seteado en doLogin()
   applyUserUI();
   sessionExpiry=Date.now()+30*60*1000;
   startSessionTimer();
   resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>
     document.addEventListener(e,resetInactivity,{passive:true}));
-  // _appReady = true al final
   window._appReady=true;
-  // Resetear filtros al hacer login para mostrar todos los procesos
   activeTipo='all';
   vencimientoFilter=null;
   document.querySelectorAll('.tipo-chip').forEach(c=>c.className='tipo-chip');
   document.getElementById('chip-all')?.classList.add('active-all');
   const si=document.getElementById('search-input');if(si)si.value='';
-  // Render inmediato
   renderTable();
-  // Re-renders adicionales para conexiones lentas (especialmente móvil)
   setTimeout(()=>{ if(window._appReady) renderTable(); }, 800);
   setTimeout(()=>{ if(window._appReady) renderTable(); }, 2000);
   setTimeout(()=>{ if(window._appReady) renderTable(); }, 5000);
@@ -2383,7 +2364,6 @@ function applyUserUI(){
   if(btnImportLiq) btnImportLiq.style.display=adm?'':'none';
   const fab=document.getElementById('fab-nuevo');
   if(fab) fab.style.display=adm?'flex':'none';
-  // Banner de vista filtrada para abogados
   const banner=document.getElementById('abogado-banner');
   if(banner){
     if(!adm&&u.abogado){
@@ -2393,18 +2373,14 @@ function applyUserUI(){
       banner.style.display='none';
     }
   }
-  // Re-renderizar tabla después de aplicar rol (necesario para el filtro por abogado)
   if(window._appReady&&window.renderTable) window.renderTable();
 }function isAdmin(){return currentUser?.role==='admin';}
 function isViewer(){return currentUser?.role==='viewer';}
-// Normaliza texto para comparación: mayúsculas + sin espacios dobles
 function normStr(s){return(s||'').toUpperCase().replace(/\s+/g,' ').trim();}
-// Retorna el abogado vinculado al usuario actual (solo viewers)
 function getAbogadoFiltro(){
   if(!currentUser||currentUser.role==='admin') return null;
   return currentUser.abogado||null;
 }
-// Verifica si un registro pertenece al abogado del usuario actual
 function registroEsDelUsuario(r){
   const filtro=getAbogadoFiltro();
   if(!filtro) return true; // admin ve todo
@@ -2456,7 +2432,6 @@ function renderTable(){
   const q=(document.getElementById('search-input')?.value||'').toLowerCase();
   const abogadoFiltro=getAbogadoFiltro();
   let data=records.filter(r=>{
-    // Viewers solo ven sus propios procesos
     if(!registroEsDelUsuario(r)) return false;
     if(activeTipo!=='all'&&r.tipo!==activeTipo)return false;
     if(q&&!((r.ticket||'').toLowerCase().includes(q)||(r.objeto||'').toLowerCase().includes(q)||(r.abogado||'').toLowerCase().includes(q)||(r.secop||'').toLowerCase().includes(q)||(r.git||'').toLowerCase().includes(q)))return false;
@@ -2471,11 +2446,9 @@ function renderTable(){
   });
   data.sort((a,b)=>{
     const va=(a[sortField]||''), vb=(b[sortField]||'');
-    // Sort numérico cuando ambos valores son números puros
     const na=parseFloat(va), nb=parseFloat(vb);
     const ambosNum=!isNaN(na)&&!isNaN(nb)&&String(na)===va.trim()&&String(nb)===vb.trim();
     if(ambosNum) return sortDir==='asc'?na-nb:nb-na;
-    // Sort natural (ej. "AC-10" vs "AC-2")
     const cmp=va.localeCompare(vb,undefined,{numeric:true,sensitivity:'base'});
     return sortDir==='asc'?cmp:-cmp;
   });
@@ -2497,7 +2470,6 @@ function renderTable(){
       const gitS=(r.git||'').length>22?(r.git.slice(0,20)+'…'):(r.git||'—');
       const semBadge=getSemaforoBadge(r);
       const rowId='acc-'+r.id;
-      // Badge de fecha máx gestión para la columna
       const dMax=r.fechaMaxGestion&&!terminal?diasHasta(r.fechaMaxGestion):null;
       const maxCell=r.fechaMaxGestion
         ? `<span style="font-family:var(--mono);font-size:11px;">${fmtDate(r.fechaMaxGestion)}</span>${semBadge}`
@@ -2547,7 +2519,6 @@ function renderTable(){
     } // cierre else desktop
   } // cierre if(tbody)
 
-  // Siempre renderizar: stats y tarjetas móvil (independiente de si hay tabla o no)
   updateStats(records);
   renderMobileCards(data);
 }
@@ -2556,7 +2527,6 @@ function renderMobileCards(data){
   const mc=document.getElementById('mobile-cards');
   if(!mc) return;
   const esMobil=window.innerWidth<=768;
-  // Forzar visibilidad via JS (respaldo al CSS media query)
   const tableWrap=document.querySelector('.table-wrap');
   if(esMobil){
     mc.style.display='flex';
@@ -2617,7 +2587,6 @@ function renderMobileCards(data){
     </div>`;
   }).join('');
 
-  // FAB solo para admins
   const fab=document.getElementById('fab-nuevo');
   if(fab) fab.style.display=adm?'flex':'none';
 }
@@ -2643,12 +2612,10 @@ function openMcDetail(id){
   const nE=(r.bitacora||[]).length;
   const entries=[...(r.bitacora||[])].sort((a,b)=>b.date.localeCompare(a.date));
 
-  // Header
   document.getElementById('mc-detail-title').innerHTML=
     `<span class="mc-ticket">${escHtml(r.ticket||'—')}</span>
      <span style="margin-left:8px;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:${tipoBg};color:${tipoCol};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`;
 
-  // Body
   document.getElementById('mc-detail-body').innerHTML=`
     <div class="mc-detail-objeto">${escHtml(r.objeto||'Sin objeto definido')}</div>
 
@@ -2714,7 +2681,6 @@ function openMcDetail(id){
     </div>
   `;
 
-  // Footer con acciones
   document.getElementById('mc-detail-footer').innerHTML=`
     <button class="mc-btn log" style="flex:2;" onclick="closeMcDetail();openBitacora('${r.id}')">${terminal?'📖 Ver bitácora':'📝 Registrar avance'}</button>
     ${adm?`<button class="mc-btn" onclick="closeMcDetail();openModal('${r.id}')">✏️ Editar</button>`:''}
@@ -2728,7 +2694,6 @@ function closeMcDetail(){
   document.getElementById('mc-detail-overlay').classList.remove('open');
 }
 
-// Helpers para colores de estado en el panel
 function getEstadoBg(tipo,valor){
   const map={
     'asignado':'#FEF9C3','en-revision-lyc':'#DBEAFE','en-revision-at':'#EDE9FE','en-revision-jlc':'#E0E7FF','aprobado':'#D1FAE5',
@@ -2752,7 +2717,6 @@ async function changeEstado(id,tipo,sel){
   const est=getEstado(tipo,nuevoEstado);
   sel.className=`status-badge ${est.css}`;
   sel.style.cssText='border:none;cursor:pointer;font-size:11px;font-weight:600;border-radius:20px;padding:3px 8px;outline:none;';
-  // Actualizar local inmediatamente
   const r=(window._records||[]).find(x=>x.id===id);
   const estadoAnterior=r?.estado;
   if(r) r.estado=nuevoEstado;
@@ -2761,7 +2725,6 @@ async function changeEstado(id,tipo,sel){
     await window._updateEstado(id,nuevoEstado);
     showSyncToast('✅ Estado actualizado');
   } catch(err){
-    // Revertir si falla
     if(r&&estadoAnterior) r.estado=estadoAnterior;
     renderTable();
     showSyncToast('❌ Error al actualizar',3000);
@@ -2784,15 +2747,10 @@ function filtrarVencimiento(tipo){
 }
 
 function getFechaAlerta(r){
-  // Usa fechaMaxGestion si existe, si no cae en fechaAdjudicacion como respaldo
   return r.fechaMaxGestion||r.fechaAdjudicacion||null;
 }
 
 function updateSemaforo(records){
-  // Alerta anticipada: cuenta días que FALTAN para la fecha límite
-  // d=0  → vence hoy (🔴)
-  // d=1,2,3 → faltan 3 días o menos (🟠)
-  // d=4,5,6,7 → faltan entre 4 y 7 días (🟡)
   const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r));
   let hoy=0,tres=0,siete=0;
   activos.forEach(r=>{
@@ -2836,7 +2794,6 @@ function updateStats(allRecords){
 /* ═══ MODAL REGISTRO ═══ */
 function getNextTicket(){
   const records=window._records||[];
-  // Tomar solo los tickets que son números puros
   const nums=records
     .map(r=>parseInt(r.ticket||''))
     .filter(n=>!isNaN(n)&&n>0);
@@ -2850,13 +2807,11 @@ function openModal(id=null){
   document.getElementById('modal-title').textContent=r?'Editar Registro':'Nuevo Registro';
   const ticketInput=document.getElementById('f-ticket');
   if(r){
-    // Edición: mostrar ticket existente, editable
     ticketInput.value=r.ticket||'';
     ticketInput.readOnly=false;
     ticketInput.style.background='';
     ticketInput.style.color='';
   } else {
-    // Nuevo: auto-asignar siguiente número, solo lectura
     ticketInput.value=getNextTicket();
     ticketInput.readOnly=true;
     ticketInput.style.background='var(--bg)';
@@ -2867,7 +2822,7 @@ function openModal(id=null){
   document.getElementById('f-estado').value=r?.estado||'asignado';
   document.getElementById('f-objeto').value=r?.objeto||'';
   document.getElementById('f-secop').value=r?.secop||'';
-  document.getElementById('f-abogado').value=r?.abogado||'';
+  buildAbogadoOptions('f-abogado',r?.abogado||'');
   document.getElementById('f-git').value=r?.git||'';
   document.getElementById('f-dependencia').value=r?.dependencia||'';
   document.getElementById('f-asignacion').value=r?.fechaAsignacion||'';
@@ -2922,7 +2877,6 @@ async function saveRecord(){
     await window._saveRecord(data);
     showSyncToast('✅ Guardado en Firebase');
   } catch(err){
-    // Si falla Firebase, revertir el cambio local
     if(editingId){
       const idx=(window._records||[]).findIndex(r=>r.id===data.id);
       if(idx>=0&&existing) window._records[idx]=existing;
@@ -2938,18 +2892,13 @@ function editRecord(id){openModal(id);}
 async function deleteRecord(id){
   if(!isAdmin())return;
   if(!confirm('¿Eliminar este registro y su bitácora?'))return;
-  // Eliminar localmente de inmediato
-  const deleted=(window._records||[]).find(r=>r.id===id);
-  window._records=(window._records||[]).filter(r=>r.id!==id);
-  renderTable();
   showSyncToast('Eliminando...');
   try{
     await window._deleteRecord(id);
+    // onSnapshot actualizará window._records y renderTable automáticamente
     showSyncToast('✅ Eliminado');
   } catch(err){
-    // Revertir si falla
-    if(deleted) window._records=[...(window._records||[]),deleted];
-    renderTable();
+    console.error('Error al eliminar:',err);
     alert('Error al eliminar: '+err.message);
     showSyncToast('❌ Error',3000);
   }
@@ -3027,7 +2976,6 @@ function openBitacoraLiq(id){
   bitacoraLiqId=id;
   const r=(window._liqRecords||[]).find(x=>x.id===id);if(!r)return;
   const est=getEstadoLiq(r.estado);
-  // Header igual que Procesos
   document.getElementById('bit-liq-header').innerHTML=`
     <span class="ticket-badge">${escHtml(r.ticket||'—')}</span>
     <span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:#F1F5F9;color:var(--navy);">${escHtml(r.tramite||'Liquidación')}</span>
@@ -3140,16 +3088,13 @@ async function deleteUser(id){
 
 /* ═══ DASHBOARD ═══ */
 function renderDashboard(){
-  window.renderDashboard=renderDashboard;
-  const allRecords=window._records||[];
-  // Viewers solo ven sus propios procesos en el dashboard
+    const allRecords=window._records||[];
   const records=allRecords.filter(r=>registroEsDelUsuario(r));
   const asesorias=records.filter(r=>r.tipo==='asesoria');
   const contractuales=records.filter(r=>r.tipo==='contractual');
   const finalizados=records.filter(r=>estadoIsTerminal(r.tipo,r.estado));
   const tot=records.length;
 
-  // KPIs con porcentajes
   document.getElementById('d-total').textContent=tot;
   document.getElementById('d-asesoria').textContent=asesorias.length;
   document.getElementById('d-contractual').textContent=contractuales.length;
@@ -3160,20 +3105,16 @@ function renderDashboard(){
   document.getElementById('d-pct-contractual').textContent=pct(contractuales.length);
   document.getElementById('d-pct-finalizados').textContent=pct(finalizados.length);
 
-  // Fecha
   const now=new Date();
   const dl=document.getElementById('dash-date-label');
   if(dl) dl.textContent=now.toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'})+' · ';
 
-  // Barras horizontales por estado — Asesoría
   renderEstadoList('dash-estado-asesoria', asesorias, ESTADOS.asesoria,
     ['#FCD34D','#7DD3FC','#C4B5FD','#6EE7B7']);
 
-  // Barras horizontales por estado — Contractual
   renderEstadoList('dash-estado-contractual', contractuales, ESTADOS.contractual,
     ['#FCD34D','#67E8F9','#93C5FD','#FDBA74','#C4B5FD','#6EE7B7','#FCA5A5']);
 
-  // Tabla por abogado con vencidos
   const byAbog={};
   records.forEach(r=>{
     const k=r.abogado||'Sin asignar';
@@ -3197,7 +3138,6 @@ function renderDashboard(){
     </tr>`;
   }).join(''):`<tr><td colspan="5" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin datos</td></tr>`;
 
-  // Tabla por GIT
   const byGit={};
   records.forEach(r=>{
     const k=r.git?r.git.replace('GIT ',''):'Sin GIT';
@@ -3243,8 +3183,7 @@ function renderEstadoList(containerId, records, estados, colors){
 
 /* ═══ DASHBOARD MODIFICACIONES ═══ */
 function renderDashMod(){
-  window.renderDashMod=renderDashMod;
-  const abogadoFiltro=getAbogadoFiltro();
+    const abogadoFiltro=getAbogadoFiltro();
   const allRecords=window._modRecords||[];
   const records=abogadoFiltro?allRecords.filter(r=>normStr(r.abogado)===normStr(abogadoFiltro)):allRecords;
   const tot=records.length;
@@ -3253,11 +3192,9 @@ function renderDashMod(){
   const finalizados=records.filter(r=>estadoIsTerminal(r.tipo,r.estado));
   const pct=v=>tot?Math.round(v/tot*100)+'%':'—';
 
-  // Fecha
   const dl=document.getElementById('dash-mod-date-label');
   if(dl) dl.textContent=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'})+' · ';
 
-  // KPIs
   document.getElementById('dm-total').textContent=tot;
   document.getElementById('dm-asesoria').textContent=asesorias.length;
   document.getElementById('dm-contractual').textContent=contractuales.length;
@@ -3267,13 +3204,11 @@ function renderDashMod(){
   document.getElementById('dm-pct-contractual').textContent=pct(contractuales.length);
   document.getElementById('dm-pct-finalizados').textContent=pct(finalizados.length);
 
-  // Barras de estado
   renderEstadoList('dm-estado-asesoria', asesorias, ESTADOS.asesoria,
     ['#FCD34D','#7DD3FC','#C4B5FD','#A5B4FC','#6EE7B7']);
   renderEstadoList('dm-estado-contractual', contractuales, ESTADOS.contractual,
     ['#FCD34D','#67E8F9','#93C5FD','#FDBA74','#C4B5FD','#6EE7B7','#FCA5A5']);
 
-  // Tabla por abogado
   const byAbog={};
   records.forEach(r=>{
     const k=r.abogado||'Sin asignar';
@@ -3297,7 +3232,6 @@ function renderDashMod(){
     </tr>`;
   }).join(''):`<tr><td colspan="5" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin datos</td></tr>`;
 
-  // Tabla por GIT
   const byGit={};
   records.forEach(r=>{
     const k=r.git?r.git.replace('GIT ',''):'Sin GIT';
@@ -3321,18 +3255,15 @@ function renderDashMod(){
 
 /* ═══ DASHBOARD LIQUIDACIONES ═══ */
 function renderDashLiq(){
-  window.renderDashLiq=renderDashLiq;
-  const abogadoFiltro=getAbogadoFiltro();
+    const abogadoFiltro=getAbogadoFiltro();
   const allRecords=window._liqRecords||[];
   const records=abogadoFiltro?allRecords.filter(r=>normStr(r.abogado)===normStr(abogadoFiltro)):allRecords;
   const tot=records.length;
   const pct=v=>tot?Math.round(v/tot*100)+'%':'—';
 
-  // Fecha
   const dlEl=document.getElementById('dash-liq-date-label');
   if(dlEl) dlEl.textContent=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
 
-  // KPI fila 1: volumen
   const liqCount=records.filter(r=>r.tramite==='Liquidacion').length;
   const cieCount=records.filter(r=>r.tramite==='Cierre').length;
   const jurCount=records.filter(r=>r.persona==='Juridica').length;
@@ -3348,28 +3279,26 @@ function renderDashLiq(){
   document.getElementById('dl-pct-juridica').textContent=pct(jurCount);
   document.getElementById('dl-pct-natural').textContent=pct(natCount);
 
-  // KPI fila 2: estados
-  const pendiente=records.filter(r=>r.estado==='pendiente-enviar').length;
-  const asesoriaCount=records.filter(r=>r.estado==='en-asesoria').length;
-  const obsCount=records.filter(r=>r.estado==='observaciones-area').length;
-  const revisionCount=records.filter(r=>['revision-coord','aval-radicar','radicado-git','radicado-competente'].includes(r.estado)).length;
-  const finalizados=records.filter(r=>['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(r.estado)).length;
-  document.getElementById('dl-pendiente').textContent=pendiente;
-  document.getElementById('dl-asesoria-count').textContent=asesoriaCount;
-  document.getElementById('dl-obs-count').textContent=obsCount;
-  document.getElementById('dl-revision').textContent=revisionCount;
-  document.getElementById('dl-fin-count').textContent=finalizados;
-  document.getElementById('dl-pct-pendiente').textContent=pct(pendiente);
-  document.getElementById('dl-pct-asesoria').textContent=pct(asesoriaCount);
-  document.getElementById('dl-pct-obs').textContent=pct(obsCount);
-  document.getElementById('dl-pct-revision').textContent=pct(revisionCount);
-  document.getElementById('dl-pct-finalizados').textContent=pct(finalizados);
+  const liqCerrado   = records.filter(r=>r.estado==='liquidado-cerrado').length;
+  const liqPteCerrar = records.filter(r=>r.estado==='liquidado-pte-cerrar').length;
+  const cierreCont   = records.filter(r=>r.estado==='cierre-contractual').length;
+  const pteLiquidar  = records.filter(r=>r.tramite==='Liquidacion'&&!['liquidado-cerrado','liquidado-pte-cerrar'].includes(r.estado)).length;
+  const pteCierre    = records.filter(r=>r.tramite==='Cierre'&&r.estado!=='cierre-contractual').length;
 
-  // Barras por estado
+  document.getElementById('dl-liq-cerrado').textContent   = liqCerrado;
+  document.getElementById('dl-liq-pte').textContent       = liqPteCerrar;
+  document.getElementById('dl-cierre-cont').textContent   = cierreCont;
+  document.getElementById('dl-pte-liquidar').textContent  = pteLiquidar;
+  document.getElementById('dl-pte-cierre').textContent    = pteCierre;
+  document.getElementById('dl-pct-liq-cerrado').textContent  = pct(liqCerrado);
+  document.getElementById('dl-pct-liq-pte').textContent      = pct(liqPteCerrar);
+  document.getElementById('dl-pct-cierre-cont').textContent  = pct(cierreCont);
+  document.getElementById('dl-pct-pte-liquidar').textContent = pct(pteLiquidar);
+  document.getElementById('dl-pct-pte-cierre').textContent   = pct(pteCierre);
+
   renderEstadoList('dl-estado-list', records, ESTADOS_LIQ,
     ['#FCD34D','#7DD3FC','#FDBA74','#C4B5FD','#A5B4FC','#67E8F9','#93C5FD','#6EE7B7','#FCA5A5','#A7F3D0']);
 
-  // Barras por unidad
   const ulEl=document.getElementById('dl-unidad-list');
   if(ulEl){
     const unidades=[{v:'FRMRE',color:'#7DD3FC'},{v:'MRE',color:'#6EE7B7'},{v:'',label:'Sin definir',color:'#E2E8F0'}];
@@ -3390,19 +3319,18 @@ function renderDashLiq(){
     }).join('');
   }
 
-  // Tabla por abogado
   const byAbog={};
   records.forEach(r=>{
     const k=r.abogado||'Sin asignar';
-    if(!byAbog[k]) byAbog[k]={total:0,liq:0,cie:0,pend:0,ases:0,obs:0,rev:0,fin:0};
+    if(!byAbog[k]) byAbog[k]={total:0,liq:0,cie:0,liqCerrado:0,liqPte:0,cierreCont:0,pteLiq:0,pteCie:0};
     byAbog[k].total++;
     if(r.tramite==='Liquidacion') byAbog[k].liq++;
     else if(r.tramite==='Cierre') byAbog[k].cie++;
-    if(r.estado==='pendiente-enviar') byAbog[k].pend++;
-    else if(r.estado==='en-asesoria') byAbog[k].ases++;
-    else if(r.estado==='observaciones-area') byAbog[k].obs++;
-    else if(['revision-coord','aval-radicar','radicado-git','radicado-competente'].includes(r.estado)) byAbog[k].rev++;
-    else if(['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(r.estado)) byAbog[k].fin++;
+    if(r.estado==='liquidado-cerrado')      byAbog[k].liqCerrado++;
+    else if(r.estado==='liquidado-pte-cerrar') byAbog[k].liqPte++;
+    else if(r.estado==='cierre-contractual')   byAbog[k].cierreCont++;
+    if(r.tramite==='Liquidacion'&&!['liquidado-cerrado','liquidado-pte-cerrar'].includes(r.estado)) byAbog[k].pteLiq++;
+    if(r.tramite==='Cierre'&&r.estado!=='cierre-contractual') byAbog[k].pteCie++;
   });
   const abNames=Object.keys(byAbog).sort();
   document.getElementById('dl-dtc-abog').textContent=abNames.length;
@@ -3410,6 +3338,7 @@ function renderDashLiq(){
   if(abogBody) abogBody.innerHTML=abNames.length?abNames.map(n=>{
     const d=byAbog[n];
     const barPct=tot?Math.round(d.total/tot*100):0;
+    const finTotal=d.liqCerrado+d.liqPte+d.cierreCont;
     return `<tr>
       <td style="font-weight:600;color:var(--navy);font-size:12px;">
         ${escHtml(n)}
@@ -3418,15 +3347,14 @@ function renderDashLiq(){
       <td><span class="nc" style="color:var(--navy);font-weight:700;">${d.total}</span></td>
       <td><span class="nc" style="color:#F59E0B;">${d.liq}</span></td>
       <td><span class="nc" style="color:var(--teal);">${d.cie}</span></td>
-      <td><span class="nc" style="color:#F59E0B;">${d.pend||0}</span></td>
-      <td><span class="nc sky">${d.ases||0}</span></td>
-      <td><span class="nc" style="color:#EA580C;">${d.obs||0}</span></td>
-      <td><span class="nc" style="color:#7C3AED;">${d.rev||0}</span></td>
-      <td>${d.fin>0?`<span style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">${d.fin}</span>`:`<span style="color:var(--muted);font-size:12px;">0</span>`}</td>
+      <td>${d.liqCerrado>0?`<span style="background:#D1FAE5;color:#065F46;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;">${d.liqCerrado}</span>`:`<span style="color:var(--muted);font-size:11px;">0</span>`}</td>
+      <td>${d.liqPte>0?`<span style="background:#FFFBEB;color:#92400E;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;">${d.liqPte}</span>`:`<span style="color:var(--muted);font-size:11px;">0</span>`}</td>
+      <td>${d.cierreCont>0?`<span style="background:#CFFAFE;color:#0E7490;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;">${d.cierreCont}</span>`:`<span style="color:var(--muted);font-size:11px;">0</span>`}</td>
+      <td>${d.pteLiq>0?`<span style="background:#FEF2F2;color:#991B1B;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;">${d.pteLiq}</span>`:`<span style="color:var(--muted);font-size:11px;">0</span>`}</td>
+      <td>${d.pteCie>0?`<span style="background:#F5F3FF;color:#5B21B6;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;">${d.pteCie}</span>`:`<span style="color:var(--muted);font-size:11px;">0</span>`}</td>
     </tr>`;
   }).join(''):`<tr><td colspan="9" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin datos</td></tr>`;
 
-  // Ultimos avances
   const avances=[];
   records.forEach(r=>(r.bitacoraLiq||[]).forEach(e=>avances.push({...e,ticket:r.ticket,contratista:r.contratista,abogado:r.abogado})));
   avances.sort((a,b)=>(b.ts||0)-(a.ts||0));
@@ -3445,7 +3373,6 @@ function renderDashLiq(){
 
 function renderPromedioAbogado(records){
   const tbody=document.getElementById('dash-avg-body');if(!tbody)return;
-  // Solo registros finalizados con fecha asignación y entrega real o entrega
   const finalizados=records.filter(r=>{
     if(!estadoIsTerminal(r.tipo,r.estado)) return false;
     if(!r.fechaAsignacion) return false;
@@ -3455,7 +3382,6 @@ function renderPromedioAbogado(records){
     tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin procesos finalizados con fechas registradas</td></tr>`;
     return;
   }
-  // Calcular días por abogado
   const byAbog={};
   finalizados.forEach(r=>{
     const k=r.abogado||'Sin asignar';
@@ -3500,7 +3426,6 @@ function openBitacoraGeneral(){
   const records=window._records||[];
   const abogadoFiltro=getAbogadoFiltro();
   const sel=document.getElementById('bg-abogado');
-  // Para viewers: ocultar el filtro de abogado (solo ven los suyos)
   if(abogadoFiltro){
     sel.parentElement.style.display='none';
   } else {
@@ -3522,7 +3447,6 @@ function closeBitacoraGeneral(){
 
 function renderBitacoraGeneral(){
   const allRecords=window._records||[];
-  // Viewers solo ven sus propios procesos
   const baseRecords=allRecords.filter(r=>registroEsDelUsuario(r));
   const tipo=document.getElementById('bg-tipo').value;
   const abogado=document.getElementById('bg-abogado').value;
@@ -3679,7 +3603,6 @@ function toggleBitCard(id){
 }
 
 /* ═══ PDF INFORMES PROFESIONALES ═══ */
-// Retorna solo los registros que el usuario actual puede ver
 function getRecordsDelUsuario(){
   return (window._records||[]).filter(r=>registroEsDelUsuario(r));
 }
@@ -3688,18 +3611,14 @@ function openPdfModal(){
   const records=getRecordsDelUsuario();
   const abogadoFiltro=getAbogadoFiltro();
 
-  // Para viewers: pre-seleccionar su propio abogado y ocultar opciones globales
   const sel=document.getElementById('pdf-abogado-select');
   if(abogadoFiltro){
-    // Solo puede generar su propio informe individual
     sel.innerHTML=`<option value="${escHtml(abogadoFiltro)}">${escHtml(abogadoFiltro)}</option>`;
-    // Ocultar opciones globales
     ['pdf-opt-general','pdf-opt-todos','pdf-opt-estado','pdf-opt-vencimiento'].forEach(id=>{
       const el=document.getElementById(id);
       if(el) el.style.display='none';
     });
   } else {
-    // Admin: ver todos los abogados
     const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
     sel.innerHTML='<option value="">— Seleccionar abogado —</option>'+
       abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
@@ -3721,7 +3640,6 @@ function generarPDFIndividual(){
     alert('Selecciona un abogado para generar el informe.');
     return;
   }
-  // Viewers solo pueden generar su propio informe
   const abogadoFiltro=getAbogadoFiltro();
   if(abogadoFiltro&&normStr(abogado)!==normStr(abogadoFiltro)){
     alert('Solo puedes generar tu propio informe.');
@@ -3745,7 +3663,6 @@ function pdfAbogadoIndividual(abogado, proc, allRecords){
   const prox7=activos.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=4&&d<=7;});
   const fechaHoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
 
-  // Promedio de días
   const diasList=fin.filter(r=>r.fechaAsignacion&&(r.fechaAdjudicacion||r.fechaAdjudicacion)).map(r=>{
     const d=Math.round((new Date((r.fechaAdjudicacion||r.fechaAdjudicacion)+'T00:00:00')-new Date(r.fechaAsignacion+'T00:00:00'))/(1000*60*60*24));
     return d>=0?d:null;
@@ -3753,7 +3670,6 @@ function pdfAbogadoIndividual(abogado, proc, allRecords){
   const avg=diasList.length?Math.round(diasList.reduce((a,b)=>a+b,0)/diasList.length):null;
   const avgColor=avg===null?PDF_GRAY:avg<=15?PDF_GREEN:avg<=30?'#D97706':PDF_RED;
 
-  // KPIs
   const kpis=pdfKpiGrid([
     {label:'Total Procesos',   value:proc.length,       color:PDF_NAVY,  sub:'Asignados a este abogado'},
     {label:'Asesorías Previas',value:asesorias.length,  color:PDF_SKY,   sub:`${Math.round(asesorias.length/Math.max(proc.length,1)*100)}% del total`},
@@ -3765,10 +3681,8 @@ function pdfAbogadoIndividual(abogado, proc, allRecords){
     {label:'Alertas (hoy+3d)', value:proxHoy.length+prox3.length, color:'#EA580C', sub:'Atención prioritaria'},
   ]);
 
-  // Texto descriptivo
   const intro=pdfIntroBox(`Este informe presenta el detalle completo de los procesos asignados al abogado <strong>${abogado}</strong> a la fecha ${fechaHoy}. Incluye indicadores individuales de gestión, análisis de alertas de vencimiento, bitácora de avances registrados y conclusiones automatizadas basadas en el estado actual de la cartera.`);
 
-  // Conclusiones
   let conclusiones='';
   const puntos=[];
   if(proc.length===0) puntos.push({tipo:'info',txt:'No hay procesos asignados actualmente.'});
@@ -3786,7 +3700,6 @@ function pdfAbogadoIndividual(abogado, proc, allRecords){
   }
   conclusiones=pdfConclusions(puntos);
 
-  // Tabla resumen de procesos
   const tablaRows=proc.slice().sort((a,b)=>(a.ticket||'').localeCompare(b.ticket||'')).map((r,i)=>{
     const est=getEstado(r.tipo,r.estado);
     const fa=getFechaAlerta(r);
@@ -3808,7 +3721,6 @@ function pdfAbogadoIndividual(abogado, proc, allRecords){
   const tablaHeader=['Ticket','Tipo','Objeto','Estado','F. Asignación','F. Límite','Alerta'];
   const tablaWidths=['8%','11%','30%','15%','12%','12%','12%'];
 
-  // Bitácora de avances
   let bitacora='';
   const conAvances=proc.filter(r=>(r.bitacora||[]).length>0);
   if(conAvances.length){
@@ -3855,104 +3767,147 @@ function pdfAbogadoIndividual(abogado, proc, allRecords){
   `);
 }
 
+/* ── Paleta PDF ── */
 const PDF_NAVY='#0F1F3D', PDF_GOLD='#F59E0B', PDF_SKY='#0284C7',
       PDF_TEAL='#0891B2', PDF_GREEN='#059669', PDF_RED='#DC2626',
-      PDF_GRAY='#64748B', PDF_BORDER='#E2E8F0', PDF_BG='#F8FAFC';
+      PDF_GRAY='#64748B', PDF_BORDER='#E2E8F0', PDF_BG='#F8FAFC',
+      PDF_PURPLE='#7C3AED', PDF_ORANGE='#EA580C';
 
+/* ── Header institucional ── */
 function pdfHeader(titulo, subtitulo=''){
   const fecha=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   return `
-  <div class="no-print" style="display:flex;gap:10px;margin-bottom:28px;">
-    <button onclick="window.print()" style="background:${PDF_NAVY};color:white;border:none;padding:10px 22px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:.03em;">\u{1F5A8} Imprimir / Guardar PDF</button>
-    <button onclick="window.close()" style="background:white;color:${PDF_GRAY};border:1px solid ${PDF_BORDER};padding:10px 16px;border-radius:7px;cursor:pointer;font-size:13px;">Cerrar</button>
+  <div class="no-print" style="display:flex;gap:10px;margin-bottom:24px;padding:16px;background:#F8FAFC;border-radius:10px;border:1px solid ${PDF_BORDER};">
+    <button onclick="window.print()" style="background:${PDF_NAVY};color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:.03em;display:flex;align-items:center;gap:8px;">🖨️ Imprimir / Guardar PDF</button>
+    <button onclick="window.close()" style="background:white;color:${PDF_GRAY};border:1.5px solid ${PDF_BORDER};padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;">✕ Cerrar</button>
   </div>
-  <div style="border:1px solid ${PDF_BORDER};border-radius:10px;overflow:hidden;margin-bottom:28px;">
-    <div style="background:${PDF_NAVY};padding:20px 28px;display:flex;align-items:flex-start;gap:18px;">
-      <div style="width:4px;background:${PDF_GOLD};border-radius:2px;align-self:stretch;flex-shrink:0;"></div>
+  <div style="border:1px solid ${PDF_BORDER};border-radius:12px;overflow:hidden;margin-bottom:24px;box-shadow:0 2px 12px rgba(0,0,0,.08);">
+    <div style="background:${PDF_NAVY};padding:22px 28px;display:flex;align-items:center;gap:18px;">
+      <div style="width:5px;background:${PDF_GOLD};border-radius:3px;align-self:stretch;flex-shrink:0;"></div>
       <div style="flex:1;">
-        <div style="color:rgba(255,255,255,.55);font-size:9px;text-transform:uppercase;letter-spacing:.18em;margin-bottom:3px;">República de Colombia</div>
-        <div style="color:white;font-size:15px;font-weight:700;margin-bottom:1px;">Ministerio de Relaciones Exteriores</div>
-        <div style="color:rgba(255,255,255,.55);font-size:10px;">Dirección Administrativa y Financiera · Seguimiento Contractual</div>
+        <div style="color:rgba(255,255,255,.5);font-size:9px;text-transform:uppercase;letter-spacing:.2em;margin-bottom:4px;">República de Colombia</div>
+        <div style="color:white;font-size:16px;font-weight:700;margin-bottom:2px;">Ministerio de Relaciones Exteriores</div>
+        <div style="color:rgba(255,255,255,.5);font-size:10px;">Dirección Administrativa y Financiera · Grupo de Liquidaciones y Contratos</div>
       </div>
-      <div style="text-align:right;flex-shrink:0;">
+      <div style="text-align:right;flex-shrink:0;background:rgba(255,255,255,.05);padding:10px 16px;border-radius:8px;border:1px solid rgba(255,255,255,.1);">
         <div style="color:rgba(255,255,255,.4);font-size:9px;text-transform:uppercase;letter-spacing:.1em;">Fecha de emisión</div>
-        <div style="color:white;font-size:11px;font-weight:600;margin-top:2px;">${fecha}</div>
-        <div style="color:rgba(255,255,255,.4);font-size:10px;">${hora} horas</div>
+        <div style="color:${PDF_GOLD};font-size:11px;font-weight:700;margin-top:3px;">${fecha}</div>
+        <div style="color:rgba(255,255,255,.4);font-size:10px;margin-top:1px;">${hora} horas</div>
       </div>
     </div>
-    <div style="background:${PDF_GOLD};height:3px;"></div>
-    <div style="background:#FEFCE8;padding:16px 28px;">
-      <div style="font-size:17px;font-weight:700;color:${PDF_NAVY};margin-bottom:3px;">${titulo}</div>
-      ${subtitulo?`<div style="font-size:12px;color:${PDF_GRAY};">${subtitulo}</div>`:''}
+    <div style="height:4px;background:linear-gradient(90deg,${PDF_GOLD},#FCD34D,${PDF_GOLD});"></div>
+    <div style="background:white;padding:18px 28px;border-top:1px solid ${PDF_BORDER};">
+      <div style="font-size:19px;font-weight:800;color:${PDF_NAVY};margin-bottom:4px;letter-spacing:-.01em;">${titulo}</div>
+      ${subtitulo?`<div style="font-size:12px;color:${PDF_GRAY};font-style:italic;">${subtitulo}</div>`:''}
     </div>
   </div>`;
 }
 
+/* ── Caja de conclusiones ── */
 function pdfConclusions(puntos){
   const tipos={
-    ok:    {bg:'#F0FDF4',border:'#86EFAC',icon:'✅',color:'#166534'},
-    warn:  {bg:'#FFFBEB',border:'#FDE68A',icon:'⚠️',color:'#92400E'},
-    alert: {bg:'#FEF2F2',border:'#FECACA',icon:'🔴',color:'#991B1B'},
-    info:  {bg:'#EFF6FF',border:'#BFDBFE',icon:'ℹ️',color:'#1E40AF'},
+    ok:    {bg:'#F0FDF4',border:'#86EFAC',left:'#22C55E',icon:'✅',color:'#166534'},
+    warn:  {bg:'#FFFBEB',border:'#FDE68A',left:'#F59E0B',icon:'⚠️',color:'#92400E'},
+    alert: {bg:'#FEF2F2',border:'#FECACA',left:'#EF4444',icon:'🔴',color:'#991B1B'},
+    info:  {bg:'#EFF6FF',border:'#BFDBFE',left:'#3B82F6',icon:'ℹ️',color:'#1E40AF'},
   };
   return `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px;">
-    ${puntos.map(p=>{const t=tipos[p.tipo]||tipos.info;return `<div style="background:${t.bg};border:1px solid ${t.border};border-left:4px solid ${t.border};border-radius:0 8px 8px 0;padding:10px 14px;font-size:12px;color:${t.color};line-height:1.6;">${p.txt}</div>`;}).join('')}
+    ${puntos.map(p=>{const t=tipos[p.tipo]||tipos.info;return `
+    <div style="background:${t.bg};border:1px solid ${t.border};border-left:4px solid ${t.left};border-radius:0 8px 8px 0;padding:11px 14px;font-size:11.5px;color:${t.color};line-height:1.65;display:flex;gap:10px;align-items:flex-start;">
+      <span style="flex-shrink:0;font-size:14px;">${t.icon}</span>
+      <span>${p.txt}</span>
+    </div>`;}).join('')}
   </div>`;
 }
 
+/* ── Caja introductoria ── */
 function pdfIntroBox(texto){
-  return `<div style="background:#EFF6FF;border-left:4px solid ${PDF_SKY};border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:24px;">
-    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:${PDF_SKY};font-weight:700;margin-bottom:6px;">Descripción del informe</div>
-    <div style="font-size:12px;color:#1E293B;line-height:1.7;">${texto}</div>
+  return `<div style="background:linear-gradient(135deg,#EFF6FF,#F0F9FF);border-left:4px solid ${PDF_SKY};border-radius:0 10px 10px 0;padding:15px 20px;margin-bottom:24px;">
+    <div style="font-size:9px;text-transform:uppercase;letter-spacing:.13em;color:${PDF_SKY};font-weight:700;margin-bottom:6px;">📋 Alcance del Informe</div>
+    <div style="font-size:12px;color:#1E293B;line-height:1.75;">${texto}</div>
   </div>`;
 }
 
+/* ── Caja de alerta ── */
 function pdfAlertBox(texto, tipo='info'){
   const cfg={
-    info:  {bg:'#EFF6FF',border:PDF_SKY,    label:'ℹ️ Observación',   color:PDF_SKY},
-    warn:  {bg:'#FFFBEB',border:'#D97706',  label:'⚠️ Atención',      color:'#92400E'},
-    danger:{bg:'#FEF2F2',border:PDF_RED,    label:'🔴 Alerta Crítica', color:'#991B1B'},
-    ok:    {bg:'#F0FDF4',border:PDF_GREEN,  label:'✅ Conclusión',     color:'#065F46'},
-  }[tipo]||{bg:'#F8FAFC',border:PDF_GRAY,label:'Nota',color:PDF_GRAY};
-  return `<div style="background:${cfg.bg};border-left:4px solid ${cfg.border};border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:12px;">
-    <div style="font-size:10px;font-weight:700;color:${cfg.color};text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">${cfg.label}</div>
-    <div style="font-size:12px;color:#1E293B;line-height:1.65;">${texto}</div>
+    info:  {bg:'#EFF6FF',border:'#60A5FA',left:'#3B82F6',label:'ℹ️ Observación',  color:'#1E40AF'},
+    warn:  {bg:'#FFFBEB',border:'#FCD34D',left:'#F59E0B',label:'⚠️ Atención',     color:'#92400E'},
+    danger:{bg:'#FEF2F2',border:'#FCA5A5',left:'#EF4444',label:'🔴 Alerta Crítica',color:'#991B1B'},
+    ok:    {bg:'#F0FDF4',border:'#86EFAC',left:'#22C55E',label:'✅ Resultado',     color:'#065F46'},
+  }[tipo]||{bg:'#F8FAFC',border:PDF_GRAY,left:PDF_GRAY,label:'Nota',color:PDF_GRAY};
+  return `<div style="background:${cfg.bg};border:1px solid ${cfg.border};border-left:4px solid ${cfg.left};border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:10px;">
+    <div style="font-size:9px;font-weight:700;color:${cfg.color};text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">${cfg.label}</div>
+    <div style="font-size:11.5px;color:#1E293B;line-height:1.65;">${texto}</div>
   </div>`;
 }
 
+/* ── Grid de KPIs ── */
 function pdfKpiGrid(kpis){
   const cols=Math.min(kpis.length,4);
   return `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:10px;margin-bottom:24px;">
-    ${kpis.map(k=>`<div style="background:white;border:1px solid ${PDF_BORDER};border-radius:8px;padding:14px 16px;border-top:3px solid ${k.color};">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:${PDF_GRAY};margin-bottom:6px;">${k.label}</div>
-      <div style="font-size:26px;font-weight:700;color:${k.color};font-family:monospace;line-height:1;margin-bottom:4px;">${k.value}</div>
-      ${k.sub?`<div style="font-size:10px;color:${PDF_GRAY};">${k.sub}</div>`:''}
+    ${kpis.map(k=>`
+    <div style="background:white;border:1px solid ${PDF_BORDER};border-radius:10px;padding:16px 18px;border-top:4px solid ${k.color};box-shadow:0 1px 4px rgba(0,0,0,.05);">
+      <div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:${PDF_GRAY};margin-bottom:8px;font-weight:600;">${k.label}</div>
+      <div style="font-size:30px;font-weight:800;color:${k.color};font-family:monospace;line-height:1;margin-bottom:5px;">${k.value}</div>
+      ${k.sub?`<div style="font-size:10px;color:${PDF_GRAY};margin-top:3px;">${k.sub}</div>`:''}
     </div>`).join('')}
   </div>`;
 }
 
+/* ── Título de sección ── */
 function pdfSectionTitle(icon, title){
-  return `<div style="display:flex;align-items:center;gap:10px;margin:28px 0 14px;padding-bottom:8px;border-bottom:2px solid ${PDF_NAVY};">
-    <span style="font-size:15px;">${icon}</span>
-    <span style="font-size:12px;font-weight:700;color:${PDF_NAVY};text-transform:uppercase;letter-spacing:.09em;">${title}</span>
+  return `<div style="display:flex;align-items:center;gap:10px;margin:30px 0 14px;padding:10px 16px;background:${PDF_NAVY};border-radius:8px;">
+    <span style="font-size:16px;">${icon}</span>
+    <span style="font-size:11px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.1em;">${title}</span>
   </div>`;
 }
 
+/* ── Tabla estilizada ── */
 function pdfTable(headers, rows, colWidths=[]){
-  const ths=headers.map((h,i)=>`<th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:white;background:${PDF_NAVY};width:${colWidths[i]||'auto'};">${h}</th>`).join('');
-  const trs=rows.map((r,ri)=>`<tr style="background:${ri%2===0?'white':'#F8FAFC'};">${r.map(c=>`<td style="padding:8px 12px;font-size:11px;color:#1E293B;border-bottom:1px solid ${PDF_BORDER};">${c??'—'}</td>`).join('')}</tr>`).join('');
-  return `<table style="width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid ${PDF_BORDER};margin-bottom:20px;">
-    <thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
-}
-
-function pdfFooter(){
-  return `<div style="margin-top:40px;padding-top:12px;border-top:1px solid ${PDF_BORDER};display:flex;justify-content:space-between;align-items:center;">
-    <div style="font-size:9px;color:${PDF_GRAY};">Ministerio de Relaciones Exteriores de Colombia · Sistema de Seguimiento Contractual</div>
-    <div style="font-size:9px;color:${PDF_GRAY};">Documento de uso interno · ${new Date().toLocaleString('es-CO')}</div>
+  const ths=headers.map((h,i)=>`<th style="padding:10px 12px;text-align:left;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:white;background:${PDF_NAVY};width:${colWidths[i]||'auto'};">${h}</th>`).join('');
+  const trs=rows.map((r,ri)=>`<tr style="background:${ri%2===0?'white':'#F8FAFC'};">${r.map(c=>`<td style="padding:9px 12px;font-size:11px;color:#1E293B;border-bottom:1px solid ${PDF_BORDER};">${c??'—'}</td>`).join('')}</tr>`).join('');
+  return `<div style="border-radius:10px;overflow:hidden;border:1px solid ${PDF_BORDER};margin-bottom:22px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr>${ths}</tr></thead><tbody>${trs}</tbody>
+    </table>
   </div>`;
 }
 
+/* ── Footer ── */
+function pdfFooter(){
+  return `<div style="margin-top:48px;padding-top:14px;border-top:2px solid ${PDF_BORDER};display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-size:9px;color:${PDF_GRAY};">Ministerio de Relaciones Exteriores de Colombia · Sistema de Seguimiento Contractual · Uso interno</div>
+    <div style="font-size:9px;color:${PDF_GRAY};font-family:monospace;">${new Date().toLocaleString('es-CO',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
+  </div>`;
+}
+
+/* ── Barra de progreso horizontal ── */
+function pdfProgressBar(pct, color, height='8px'){
+  return `<div style="background:#F1F5F9;border-radius:4px;height:${height};overflow:hidden;margin-top:4px;">
+    <div style="width:${Math.min(pct,100)}%;height:100%;background:${color};border-radius:4px;"></div>
+  </div>`;
+}
+
+/* ── Tarjeta métrica compacta ── */
+function pdfMetricCard(label, value, sub, color, icon=''){
+  return `<div style="background:${color}12;border:1px solid ${color}33;border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:12px;">
+    ${icon?`<span style="font-size:22px;">${icon}</span>`:''}
+    <div>
+      <div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:${color};font-weight:700;">${label}</div>
+      <div style="font-size:22px;font-weight:800;color:${PDF_NAVY};font-family:monospace;">${value}</div>
+      ${sub?`<div style="font-size:10px;color:${PDF_GRAY};">${sub}</div>`:''}
+    </div>
+  </div>`;
+}
+
+/* ── Separador visual ── */
+function pdfDivider(){
+  return `<div style="height:1px;background:${PDF_BORDER};margin:20px 0;"></div>`;
+}
+
+/* ── Abrir ventana PDF ── */
 function abrirPdf(html, titulo='Informe'){
   const win=window.open('','_blank');
   win.document.write(`<!DOCTYPE html><html lang="es"><head>
@@ -3968,6 +3923,8 @@ function abrirPdf(html, titulo='Informe'){
 }
 
 function pdfGeneral(records){
+  const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const asesorias=records.filter(r=>r.tipo==='asesoria');
   const contractuales=records.filter(r=>r.tipo==='contractual');
   const finalizados=records.filter(r=>estadoIsTerminal(r.tipo,r.estado));
@@ -3975,37 +3932,127 @@ function pdfGeneral(records){
   const vencidos=activos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
   const hoy=activos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))===0);
   const prox3=activos.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;});
+  const prox7=activos.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=4&&d<=7;});
   const pctFin=records.length?Math.round(finalizados.length/records.length*100):0;
   const pctVenc=activos.length?Math.round(vencidos.length/activos.length*100):0;
-  const rows=records.slice().sort((a,b)=>(a.tipo||'').localeCompare(b.tipo||'')||(a.ticket||'').localeCompare(b.ticket||'')).map(r=>{
-    const est=getEstado(r.tipo,r.estado);
-    const fa=getFechaAlerta(r);
-    const d=fa&&!estadoIsTerminal(r.tipo,r.estado)?diasHasta(fa):null;
-    const alerta=estadoIsTerminal(r.tipo,r.estado)?'Finalizado':d===null?'Sin fecha':d<0?`<span style="color:${PDF_RED};font-weight:700;">Vencido (${Math.abs(d)}d)</span>`:d===0?`<span style="color:${PDF_RED};font-weight:700;">Hoy</span>`:d<=3?`<span style="color:#C2410C;">Urgente (${d}d)</span>`:d<=7?`<span style="color:#D97706;">Próximo (${d}d)</span>`:'Al día';
+  const totalRiesgo=vencidos.length+hoy.length+prox3.length;
+  const nivelRiesgo=totalRiesgo>10?'CRÍTICO':totalRiesgo>5?'ALTO':totalRiesgo>2?'MODERADO':'BAJO';
+  const colorRiesgo={'CRÍTICO':PDF_RED,'ALTO':PDF_ORANGE,'MODERADO':'#D97706','BAJO':PDF_GREEN}[nivelRiesgo];
+
+  // Distribución por estado
+  const estadosA=ESTADOS.asesoria.map(e=>({...e,cnt:asesorias.filter(r=>r.estado===e.value).length}));
+  const estadosC=ESTADOS.contractual.map(e=>({...e,cnt:contractuales.filter(r=>r.estado===e.value).length}));
+  const maxA=Math.max(...estadosA.map(e=>e.cnt),1);
+  const maxC=Math.max(...estadosC.map(e=>e.cnt),1);
+
+  const barraEstados=(lista,max,color)=>lista.map(e=>{
+    const pct=Math.round(e.cnt/max*100);
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <span style="font-size:11px;color:#1E293B;min-width:180px;">${e.label}</span>
+      <div style="flex:1;background:#F1F5F9;border-radius:4px;height:10px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:4px;"></div>
+      </div>
+      <span style="font-family:monospace;font-size:12px;font-weight:700;color:${color};min-width:24px;text-align:right;">${e.cnt}</span>
+    </div>`;
+  }).join('');
+
+  // Tabla por abogado resumen
+  const byAbog={};
+  records.forEach(r=>{
+    const k=r.abogado||'Sin asignar';
+    if(!byAbog[k]) byAbog[k]={total:0,fin:0,activos:0,venc:0};
+    byAbog[k].total++;
+    if(estadoIsTerminal(r.tipo,r.estado)) byAbog[k].fin++;
+    else{
+      byAbog[k].activos++;
+      if(getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0) byAbog[k].venc++;
+    }
+  });
+  const abogRows=Object.keys(byAbog).sort((a,b)=>byAbog[b].total-byAbog[a].total).map((n,i)=>{
+    const d=byAbog[n];
+    const pct=records.length?Math.round(d.total/records.length*100):0;
+    const pctFinA=d.total?Math.round(d.fin/d.total*100):0;
     return [
-      `<b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
-      `<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE'};color:${r.tipo==='asesoria'?PDF_SKY:PDF_TEAL};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,
-      `<span style="font-size:10px;">${escHtml((r.objeto||'').slice(0,50))}${(r.objeto||'').length>50?'…':''}</span>`,
-      escHtml(r.abogado||'—'),
-      `<span style="padding:2px 6px;border-radius:8px;font-size:10px;background:#EFF6FF;color:${PDF_NAVY};font-weight:600;">${est.label}</span>`,
-      fmtDate(fa)||'—', alerta,
+      `<b style="color:${PDF_NAVY};">${escHtml(n)}</b>`,
+      `<span style="font-family:monospace;font-weight:700;">${d.total}</span>`,
+      `<span style="color:${PDF_GREEN};font-weight:600;">${d.fin}</span>`,
+      `<span style="color:${PDF_PURPLE};">${d.activos}</span>`,
+      d.venc>0?`<span style="background:#FEF2F2;color:#991B1B;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;">⚠️ ${d.venc}</span>`:`<span style="color:${PDF_GREEN};">✅ 0</span>`,
+      `<div style="display:flex;align-items:center;gap:6px;">
+        <div style="flex:1;background:#F1F5F9;border-radius:3px;height:6px;overflow:hidden;">
+          <div style="width:${pctFinA}%;height:100%;background:${PDF_GREEN};border-radius:3px;"></div>
+        </div>
+        <span style="font-size:10px;color:${PDF_GRAY};">${pctFinA}%</span>
+      </div>`,
     ];
   });
-  let conclusiones='';
-  if(vencidos.length>0) conclusiones+=pdfAlertBox(`Existen <strong>${vencidos.length} proceso${vencidos.length!==1?'s':''} vencido${vencidos.length!==1?'s':''}</strong> que han superado su fecha de entrega programada, representando el <strong>${pctVenc}%</strong> de los procesos activos. Requieren atención inmediata.`,'danger');
-  if(hoy.length>0) conclusiones+=pdfAlertBox(`<strong>${hoy.length} proceso${hoy.length!==1?'s':''}</strong> tienen fecha de entrega para el día de hoy. Se recomienda verificar su estado antes del cierre de la jornada.`,'warn');
-  if(prox3.length>0) conclusiones+=pdfAlertBox(`<strong>${prox3.length} proceso${prox3.length!==1?'s':''}</strong> vencen en los próximos 3 días. El equipo debe priorizar su atención.`,'warn');
-  if(pctFin>=70) conclusiones+=pdfAlertBox(`El nivel de cumplimiento general es satisfactorio: <strong>${pctFin}%</strong> de los procesos han sido finalizados exitosamente.`,'ok');
-  else if(pctFin<40&&records.length>0) conclusiones+=pdfAlertBox(`El porcentaje de procesos finalizados es del <strong>${pctFin}%</strong>. Se recomienda revisar la capacidad operativa del equipo y la distribución de la carga.`,'warn');
-  if(!conclusiones) conclusiones=pdfAlertBox('El estado general de los procesos es normal. No se identifican alertas críticas en la fecha de emisión de este informe.','ok');
+
+  // Conclusiones
+  const puntos=[];
+  if(vencidos.length>0) puntos.push({tipo:'alert',txt:`<strong>${vencidos.length} proceso${vencidos.length!==1?'s':''}</strong> han superado su fecha de entrega — representan el <strong>${pctVenc}%</strong> de los activos. Requieren gestión inmediata del equipo responsable.`});
+  if(hoy.length>0) puntos.push({tipo:'alert',txt:`<strong>${hoy.length} proceso${hoy.length!==1?'s':''}</strong> vence${hoy.length===1?'':'n'} hoy. Verificar estado antes del cierre de la jornada.`});
+  if(prox3.length>0) puntos.push({tipo:'warn',txt:`<strong>${prox3.length} proceso${prox3.length!==1?'s':''}</strong> vencen en los próximos 3 días. Priorizar en la agenda del equipo.`});
+  if(prox7.length>0) puntos.push({tipo:'warn',txt:`<strong>${prox7.length} proceso${prox7.length!==1?'s':''}</strong> vencen entre 4 y 7 días. Incluir en seguimiento semanal.`});
+  if(pctFin>=70) puntos.push({tipo:'ok',txt:`Nivel de cumplimiento <strong>satisfactorio</strong>: el <strong>${pctFin}%</strong> de los procesos han sido finalizados exitosamente.`});
+  else if(pctFin<40&&records.length>0) puntos.push({tipo:'warn',txt:`El porcentaje de procesos finalizados es del <strong>${pctFin}%</strong>. Se recomienda revisar la capacidad operativa y la distribución de la carga de trabajo.`});
+  if(!puntos.length) puntos.push({tipo:'ok',txt:'El estado general de los procesos es normal. No se identifican alertas críticas en la fecha de emisión de este informe.'});
+
   abrirPdf(`
-    ${pdfHeader('Informe General de Seguimiento Contractual','Consolidado de asesorías previas y procesos contractuales · '+new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long'}))}
-    ${pdfIntroBox('Este informe presenta un consolidado del estado actual de todos los procesos de asesoría previa y contratación registrados en el sistema. Incluye indicadores globales de gestión, tabla consolidada de registros y análisis de alertas con conclusiones automatizadas basadas en los datos actuales.')}
-    ${pdfKpiGrid([{label:'Total Procesos',value:records.length,color:PDF_NAVY,sub:'Registros en el sistema'},{label:'Asesorías Previas',value:asesorias.length,color:PDF_SKY,sub:Math.round(asesorias.length/Math.max(records.length,1)*100)+'% del total'},{label:'Proc. Contractuales',value:contractuales.length,color:PDF_TEAL,sub:Math.round(contractuales.length/Math.max(records.length,1)*100)+'% del total'},{label:'Finalizados',value:finalizados.length,color:PDF_GREEN,sub:pctFin+'% cumplimiento'},{label:'Activos',value:activos.length,color:'#7C3AED',sub:'En trámite'},{label:'Vencidos',value:vencidos.length,color:PDF_RED,sub:'Requieren acción'},{label:'Vencen Hoy',value:hoy.length,color:'#DC2626',sub:'Urgente'},{label:'Vencen 3 Días',value:prox3.length,color:'#EA580C',sub:'Alta prioridad'}])}
-    ${pdfSectionTitle('📋','Análisis y Conclusiones')}${conclusiones}
-    ${pdfSectionTitle('📋','Listado Consolidado de Procesos')}
-    ${pdfTable(['Ticket','Tipo','Objeto del proceso','Abogado','Estado','F. Adjudicación','Alerta'],rows,['7%','9%','28%','15%','13%','10%','14%'])}
-    ${pdfFooter()}`,'Informe General');
+    ${pdfHeader('Informe General de Seguimiento Contractual',`Consolidado de asesorías previas y procesos contractuales · ${fechaHoy}`)}
+    ${pdfIntroBox(`Informe ejecutivo del estado actual de los procesos de asesoría previa y contratación del Ministerio de Relaciones Exteriores. Consolida <strong>${records.length} registros</strong> con indicadores de gestión, distribución por estado, carga por abogado y análisis de riesgo. Generado el ${fechaHoy} a las ${hora} horas.`)}
+
+    <!-- KPIs -->
+    ${pdfSectionTitle('📊','Indicadores Generales')}
+    ${pdfKpiGrid([
+      {label:'Total Procesos',      value:records.length,   color:PDF_NAVY,   sub:'Registrados en el sistema'},
+      {label:'Asesorías Previas',   value:asesorias.length, color:PDF_SKY,    sub:`${Math.round(asesorias.length/Math.max(records.length,1)*100)}% del total`},
+      {label:'Proc. Contractuales', value:contractuales.length,color:PDF_TEAL,sub:`${Math.round(contractuales.length/Math.max(records.length,1)*100)}% del total`},
+      {label:'Finalizados',         value:finalizados.length,color:PDF_GREEN,  sub:`${pctFin}% de cumplimiento`},
+    ])}
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px;">
+      ${pdfMetricCard('Activos en trámite', activos.length, 'Requieren gestión', PDF_PURPLE,'🔄')}
+      ${pdfMetricCard('Vencidos', vencidos.length, 'Acción inmediata', PDF_RED, '🔴')}
+      ${pdfMetricCard('Vencen Hoy', hoy.length, 'Urgente', '#DC2626', '⚠️')}
+      ${pdfMetricCard('Próx. 3 días', prox3.length, 'Alta prioridad', PDF_ORANGE, '🟠')}
+    </div>
+
+    <!-- Nivel de riesgo -->
+    <div style="background:${colorRiesgo}12;border:2px solid ${colorRiesgo};border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:16px;">
+      <div style="width:52px;height:52px;border-radius:50%;background:${colorRiesgo};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${nivelRiesgo==='BAJO'?'✅':nivelRiesgo==='MODERADO'?'⚠️':'🔴'}</div>
+      <div>
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:${colorRiesgo};font-weight:700;">Nivel de Riesgo Contractual</div>
+        <div style="font-size:22px;font-weight:800;color:${colorRiesgo};margin:2px 0;">${nivelRiesgo}</div>
+        <div style="font-size:11px;color:${PDF_GRAY};">${totalRiesgo} expediente${totalRiesgo!==1?'s':''} en riesgo inmediato (vencidos, hoy o en 3 días)</div>
+      </div>
+    </div>
+
+    <!-- Análisis y recomendaciones -->
+    ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
+    ${pdfConclusions(puntos)}
+
+    <!-- Distribución por estado -->
+    ${pdfSectionTitle('📋','Distribución por Estado de Trámite')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+      <div style="background:white;border:1px solid ${PDF_BORDER};border-radius:10px;padding:16px;">
+        <div style="font-size:10px;font-weight:700;color:${PDF_SKY};text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #E0F2FE;">🔵 Asesoría Previa — ${asesorias.length} procesos</div>
+        ${barraEstados(estadosA,maxA,PDF_SKY)}
+      </div>
+      <div style="background:white;border:1px solid ${PDF_BORDER};border-radius:10px;padding:16px;">
+        <div style="font-size:10px;font-weight:700;color:${PDF_TEAL};text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #CFFAFE;">🔷 Proceso Contractual — ${contractuales.length} procesos</div>
+        ${barraEstados(estadosC,maxC,PDF_TEAL)}
+      </div>
+    </div>
+
+    <!-- Carga por abogado -->
+    ${pdfSectionTitle('⚖️','Carga de Trabajo por Abogado')}
+    ${pdfTable(
+      ['Abogado','Total','Finalizados','Activos','Vencidos','% Cumplimiento'],
+      abogRows,
+      ['26%','10%','12%','10%','12%','24%']
+    )}
+
+    ${pdfFooter()}
+  `,'Informe General Procesos');
 }
 
 function pdfPorAbogado(records){
@@ -4077,7 +4124,6 @@ function pdfPorEstado(records){
 }
 
 function pdfVencimiento(records){
-  // Usar getFechaAlerta (igual que el semáforo de la app: prioriza fechaMaxGestion)
   const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
   const conFecha=activos.filter(r=>getFechaAlerta(r));
   const sinFecha=activos.filter(r=>!getFechaAlerta(r));
@@ -4094,7 +4140,6 @@ function pdfVencimiento(records){
   const nivelRiesgo=totalRiesgo>10?'CRÍTICO':totalRiesgo>5?'ALTO':totalRiesgo>2?'MODERADO':'BAJO';
   const colorRiesgo={'CRÍTICO':PDF_RED,'ALTO':'#C2410C','MODERADO':'#D97706','BAJO':PDF_GREEN}[nivelRiesgo];
 
-  // Filas para tablas — usa getFechaAlerta
   function alertRows(proc){
     return proc.map(r=>{
       const fechaA=getFechaAlerta(r);
@@ -4121,7 +4166,6 @@ function pdfVencimiento(records){
     });
   }
 
-  // Conclusiones
   const concls=[];
   concls.push(pdfAlertBox(
     `Nivel de riesgo contractual: <strong style="color:${colorRiesgo};">${nivelRiesgo}</strong> — Se identifican <strong>${totalRiesgo} proceso${totalRiesgo!==1?'s':''}</strong> en situación de riesgo inmediato (vencidos, que vencen hoy o en los próximos 3 días).`,
@@ -4140,7 +4184,6 @@ function pdfVencimiento(records){
   const cols=['7%','10%','26%','15%','13%','13%','12%'];
   const hdrs=['Ticket','Tipo','Objeto','Abogado','Estado','Fecha Límite','Situación'];
 
-  // Sección sin fecha
   const sinFechaRows=sinFecha.map(r=>[
     `<b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
     `<span style="padding:1px 6px;border-radius:8px;font-size:10px;background:${r.tipo==='contractual'?'#CFFAFE':'#E0F2FE'};color:${r.tipo==='contractual'?PDF_TEAL:PDF_SKY};font-weight:700;">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,
@@ -4178,7 +4221,6 @@ function pdfVencimiento(records){
 }
 
 function generarPDF(tipo){
-  // Viewers no pueden generar reportes globales
   if(!isAdmin()){alert('Solo los administradores pueden generar este tipo de informe.');return;}
   closePdfModal();
   const records=getRecordsDelUsuario();
@@ -4192,18 +4234,21 @@ function generarPDF(tipo){
 /* ═══ EXPORT CSV/XLSX ═══ */
 function exportCSV(){
   const records=getRecordsDelUsuario();
+  if(!records.length){alert('No hay registros para exportar.');return;}
   const hdrs=['Ticket','Tipo','Objeto','Abogado','GIT','Dependencia','SECOP','Estado','F.Asignación','Docs.Def.','F. Adjudicación','F. Máx. Gestión','Observaciones','Entradas Avance'];
   const rows=records.map(r=>[r.ticket,r.tipo==='contractual'?'Proceso Contractual':'Asesoría Previa',r.objeto||'',r.abogado||'',r.git||'',r.dependencia||'',r.secop||'',getEstado(r.tipo,r.estado).label,fmtDate(r.fechaAsignacion)||'',fmtDate(r.fechaDocumentos)||'',fmtDate(r.fechaAdjudicacion)||'',fmtDate(r.fechaMaxGestion)||'',r.obs||'',(r.bitacora||[]).length+''].map(v=>`"${(v||'').replace(/"/g,'""')}"`));
   dl('seguimiento_contractual.csv',[hdrs.join(','),...rows.map(r=>r.join(','))].join('\n'),'text/csv');
+  console.log(`[Export CSV] ${records.length} registros exportados`);
 }
 function exportXLSX(){
   if(typeof XLSX==='undefined'){alert('La librería aún carga. Intenta en unos segundos.');return;}
+  // Siempre usar window._records sincronizado por onSnapshot (fuente de verdad Firebase)
   const records=getRecordsDelUsuario();
+  if(!records.length){alert('No hay registros para exportar.');return;}
   const hdrs=['Ticket','Tipo','Objeto','Abogado','GIT','Dependencia','SECOP','Estado','F.Asignación','Docs.Def.','F. Adjudicación','F. Máx. Gestión','Observaciones','Entradas Avance'];
   const rows=records.map(r=>[r.ticket,r.tipo==='contractual'?'Proceso Contractual':'Asesoría Previa',r.objeto||'',r.abogado||'',r.git||'',r.dependencia||'',r.secop||'',getEstado(r.tipo,r.estado).label,fmtDate(r.fechaAsignacion)||'',fmtDate(r.fechaDocumentos)||'',fmtDate(r.fechaAdjudicacion)||'',fmtDate(r.fechaMaxGestion)||'',r.obs||'',(r.bitacora||[]).length]);
   const ws=XLSX.utils.aoa_to_sheet([hdrs,...rows]);
   ws['!cols']=[{wch:12},{wch:20},{wch:40},{wch:22},{wch:30},{wch:36},{wch:16},{wch:22},{wch:13},{wch:13},{wch:13},{wch:13},{wch:28},{wch:8}];
-  // Hoja bitácora
   const bitHdrs=['Ticket','Tipo','Objeto','Abogado','Estado','Fecha Avance','Registrado por','Descripción'];
   const bitData=[bitHdrs];
   records.forEach(r=>{
@@ -4216,13 +4261,13 @@ function exportXLSX(){
   XLSX.utils.book_append_sheet(wb,ws,'Registros');
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(bitData),'Bitácora');
   XLSX.writeFile(wb,'seguimiento_contractual.xlsx');
+  console.log(`[Export XLSX] ${records.length} registros exportados`);
 }
 function dl(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();}
 
 /* ═══ IMPORTAR EXCEL ═══ */
 let _importData=[];
 
-// Mapa de columnas del Excel a campos internos
 const IMPORT_COL_MAP={
   'ticket':'ticket','tipo':'tipo','objeto':'objeto','abogado':'abogado',
   'git':'git','dependencia':'dependencia','secop':'secop','estado':'estado',
@@ -4235,13 +4280,11 @@ const IMPORT_COL_MAP={
   'observaciones':'obs','obs':'obs',
 };
 
-// Mapa de valores de tipo legibles → internos
 const IMPORT_TIPO_MAP={
   'asesoría previa':'asesoria','asesoria previa':'asesoria','asesoria':'asesoria','asesoría':'asesoria',
   'proceso contractual':'contractual','contractual':'contractual',
 };
 
-// Mapa de estados legibles → internos
 const IMPORT_ESTADO_MAP={
   'asignado':'asignado',
   'en revisión l y c':'en-revision-lyc','en revision l y c':'en-revision-lyc','en revisión lyc':'en-revision-lyc',
@@ -4256,17 +4299,13 @@ const IMPORT_ESTADO_MAP={
   'cancelado':'cancelado','cancelado ❌':'cancelado',
 };
 
-// Convierte fecha dd/mm/yyyy o yyyy-mm-dd a yyyy-mm-dd
 function parseFechaImport(v){
   if(!v)return '';
   const s=String(v).trim();
-  // formato dd/mm/yyyy
   const m1=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if(m1) return `${m1[3]}-${m1[2]}-${m1[1]}`;
-  // formato yyyy-mm-dd
   const m2=s.match(/^\d{4}-\d{2}-\d{2}$/);
   if(m2) return s;
-  // número serial de Excel
   if(/^\d+$/.test(s)){
     const d=new Date(Math.round((parseInt(s)-25569)*86400*1000));
     if(!isNaN(d)) return d.toISOString().slice(0,10);
@@ -4287,7 +4326,6 @@ function importarExcel(input){
       const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
       if(!rows.length){alert('El archivo está vacío.');return;}
 
-      // Detectar cabeceras
       const headers=rows[0].map(h=>String(h).toLowerCase().trim());
       const colIdx={};
       headers.forEach((h,i)=>{
@@ -4316,7 +4354,6 @@ function importarExcel(input){
 
         const abogado=String(row[colIdx['abogado']]||'').trim().toUpperCase();
 
-        // Validar abogado si se especificó
         const abogadosValidos=BUILTIN_USERS.filter(u=>u.abogado).map(u=>u.abogado);
         if(abogado&&!abogadosValidos.includes(abogado)){
           errores.push(`Fila ${ri+2}: Abogado "${abogado}" no reconocido (se importará igual).`);
@@ -4338,7 +4375,6 @@ function importarExcel(input){
           obs: String(row[colIdx['obs']]||'').trim(),
         };
 
-        // Buscar si ya existe (por ticket)
         const existing=existingRecords.find(r=>normStr(r.ticket)===normStr(rawTicket));
         rec._id=existing?existing.id:('imp_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
         rec._esNuevo=!existing;
@@ -4349,7 +4385,6 @@ function importarExcel(input){
 
       _importData=parsed;
 
-      // Mostrar resumen
       const nuevos=parsed.filter(r=>r._esNuevo).length;
       const actualizados=parsed.length-nuevos;
       const resEl=document.getElementById('import-resumen');
@@ -4364,7 +4399,6 @@ function importarExcel(input){
         errEl.style.display='none';
       }
 
-      // Tabla de vista previa
       const tbody=document.getElementById('import-preview-body');
       tbody.innerHTML=parsed.map(r=>{
         const est=getEstado(r.tipo,r.estado);
@@ -4417,7 +4451,6 @@ async function confirmarImport(){
       const {_id,_esNuevo,...data}=rec;
       const existing=_esNuevo?null:(window._records||[]).find(r=>normStr(r.ticket)===normStr(data.ticket));
       const id=existing?existing.id:_id;
-      // Preservar bitácora si es actualización
       if(!_esNuevo&&existing&&existing.bitacora) data.bitacora=existing.bitacora;
       await window._saveRecord({id,...data});
       ok++;
@@ -4445,21 +4478,14 @@ async function confirmarImport(){
   });
 });
 window.addEventListener('resize',()=>{if(document.getElementById('page-dash')?.classList.contains('active'))renderDashboard();});
-// Inicializar opciones de estado
 updateEstadoOptions();
-// Registrar funciones globales INMEDIATAMENTE al cargar
-// para que onSnapshot pueda llamarlas en cualquier momento
 window.renderTable=renderTable;
 window.renderDashboard=renderDashboard;
 window.renderAdminPanel=renderAdminPanel;
-window.renderMod=renderMod;
-window.renderLiq=renderLiq;
 window.renderDashMod=renderDashMod;
 window.renderDashLiq=renderDashLiq;
 window.renderMod=renderMod;
 window.renderLiq=renderLiq;
-window.renderDashMod=renderDashMod;
-window.renderDashLiq=renderDashLiq;
 
 /* ═══ INFORMES — SELECTOR ABOGADO ═══ */
 let _infModulo='procesos';
@@ -4467,7 +4493,6 @@ function abrirSelectorAbogado(modulo){
   if(!isAdmin()){alert('Solo los administradores pueden generar informes individuales.');return;}
   _infModulo=modulo;
   const sel=document.getElementById('inf-abogado-sel');
-  // Poblar con abogados del módulo correspondiente
   const recs=modulo==='modificaciones'?(window._modRecords||[]):
               modulo==='liquidaciones'?(window._liqRecords||[]):
               (window._records||[]);
@@ -4628,7 +4653,6 @@ function pdfConsolidadoGeneral(){
   if(!total){alert('No hay datos para generar el informe.');return;}
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
-
   const procActivos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
   const procFin=proc.filter(r=>estadoIsTerminal(r.tipo,r.estado));
   const procVenc=procActivos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
@@ -4636,188 +4660,88 @@ function pdfConsolidadoGeneral(){
   const modActivos=mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
   const modFin=mod.filter(r=>estadoIsTerminal(r.tipo,r.estado));
   const modVenc=modActivos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
-  const liqFin=liq.filter(r=>['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(r.estado));
-  const liqTram=liq.filter(r=>['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','aval-radicar','radicado-git','radicado-competente'].includes(r.estado));
+  const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
+  const tramStates=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','aval-radicar','radicado-git','radicado-competente'];
+  const liqFin=liq.filter(r=>finStates.includes(r.estado));
+  const liqTram=liq.filter(r=>tramStates.includes(r.estado));
   const totalRiesgo=procVenc.length+procHoy.length+modVenc.length;
-
-  // Función minibarra
-  const miniBar=(v,tot,color)=>{
-    const p=tot?Math.round(v/tot*100):0;
-    return `<div style="display:flex;align-items:center;gap:6px;">
-      <div style="flex:1;background:#F1F5F9;border-radius:3px;height:6px;">
-        <div style="width:${p}%;height:100%;background:${color};border-radius:3px;"></div>
-      </div>
-      <span style="font-size:10px;color:${PDF_GRAY};min-width:28px;">${p}%</span>
-    </div>`;
-  };
-
-  // Conclusiones automáticas
-  const conclusions=[];
   const pctFinLiq=liq.length?Math.round(liqFin.length/liq.length*100):0;
-  if(pctFinLiq>=50) conclusions.push({tipo:'ok',txt:`<strong>${pctFinLiq}%</strong> de las liquidaciones y cierres han completado su proceso. La gestión de cartera muestra avance significativo.`});
-  if(totalRiesgo>0) conclusions.push({tipo:'alert',txt:`Se identifican <strong>${totalRiesgo} procesos/modificaciones</strong> vencidos o que vencen hoy. Requieren atención inmediata de los abogados responsables.`});
+  const pctFinProc=proc.length?Math.round(procFin.length/proc.length*100):0;
+  const pctFinMod=mod.length?Math.round(modFin.length/mod.length*100):0;
+
+  // Tabla comparativa
+  const compRows=[
+    [`<b style="color:${PDF_NAVY};">📋 Procesos</b>`, proc.length,
+     `<span style="color:${PDF_PURPLE};">${procActivos.length}</span>`,
+     `<span style="color:${PDF_GREEN};font-weight:700;">${procFin.length}</span>`,
+     procVenc.length>0?`<span style="background:#FEF2F2;color:#991B1B;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;">⚠️ ${procVenc.length}</span>`:`<span style="color:${PDF_GREEN};">✅ 0</span>`,
+     `<div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;background:#F1F5F9;border-radius:3px;height:6px;overflow:hidden;"><div style="width:${pctFinProc}%;height:100%;background:${PDF_GREEN};border-radius:3px;"></div></div><span style="font-size:10px;color:${PDF_GRAY};">${pctFinProc}%</span></div>`,
+    ],
+    [`<b style="color:${PDF_NAVY};">✏️ Modificaciones</b>`, mod.length,
+     `<span style="color:${PDF_PURPLE};">${modActivos.length}</span>`,
+     `<span style="color:${PDF_GREEN};font-weight:700;">${modFin.length}</span>`,
+     modVenc.length>0?`<span style="background:#FEF2F2;color:#991B1B;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;">⚠️ ${modVenc.length}</span>`:`<span style="color:${PDF_GREEN};">✅ 0</span>`,
+     `<div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;background:#F1F5F9;border-radius:3px;height:6px;overflow:hidden;"><div style="width:${pctFinMod}%;height:100%;background:${PDF_GREEN};border-radius:3px;"></div></div><span style="font-size:10px;color:${PDF_GRAY};">${pctFinMod}%</span></div>`,
+    ],
+    [`<b style="color:${PDF_NAVY};">🔒 Liquidaciones</b>`, liq.length,
+     `<span style="color:${PDF_SKY};">${liqTram.length}</span>`,
+     `<span style="color:${PDF_GREEN};font-weight:700;">${liqFin.length}</span>`,
+     `<span style="color:${PDF_GRAY};">N/A</span>`,
+     `<div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;background:#F1F5F9;border-radius:3px;height:6px;overflow:hidden;"><div style="width:${pctFinLiq}%;height:100%;background:${PDF_GREEN};border-radius:3px;"></div></div><span style="font-size:10px;color:${PDF_GRAY};">${pctFinLiq}%</span></div>`,
+    ],
+  ];
+
+  // Distribución liquidaciones
+  const liqEstadoRows=ESTADOS_LIQ.map(e=>{
+    const cnt=liq.filter(r=>r.estado===e.value).length;
+    const pct=liq.length?Math.round(cnt/liq.length*100):0;
+    const isFin=finStates.includes(e.value);
+    return [`<b style="color:${PDF_NAVY};">${e.label}</b>`,cnt,pct+'%',
+      `<div style="background:#F1F5F9;border-radius:3px;height:8px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${isFin?PDF_GREEN:PDF_SKY};border-radius:3px;"></div></div>`];
+  });
+
+  // Conclusiones
+  const puntos=[];
+  if(pctFinLiq>=50) puntos.push({tipo:'ok',txt:`<strong>${pctFinLiq}%</strong> de las liquidaciones y cierres han completado su proceso. La gestión de cartera muestra avance significativo.`});
+  if(totalRiesgo>0) puntos.push({tipo:'alert',txt:`Se identifican <strong>${totalRiesgo} procesos/modificaciones</strong> vencidos o que vencen hoy. Requieren atención inmediata.`});
   if(procVenc.length>0){
     const abVenc=[...new Set(procVenc.map(r=>r.abogado).filter(Boolean))];
-    conclusions.push({tipo:'warn',txt:`<strong>${procVenc.length} procesos</strong> han superado su fecha límite. Abogados afectados: ${abVenc.slice(0,4).join(', ')}${abVenc.length>4?' y otros':''}.`});
+    puntos.push({tipo:'warn',txt:`<strong>${procVenc.length} procesos</strong> superaron su fecha límite. Abogados afectados: ${abVenc.slice(0,4).join(', ')}${abVenc.length>4?' y otros':''}.`});
   }
-  if(liqTram.length>0) conclusions.push({tipo:'warn',txt:`<strong>${liqTram.length} liquidaciones/cierres</strong> se encuentran en trámite activo (${liq.length?Math.round(liqTram.length/liq.length*100):0}% de la cartera). Verificar avance de cada etapa.`});
+  if(liqTram.length>0) puntos.push({tipo:'warn',txt:`<strong>${liqTram.length} liquidaciones</strong> en trámite activo (${liq.length?Math.round(liqTram.length/liq.length*100):0}% de la cartera). Verificar avance por etapa.`});
+  if(!puntos.length) puntos.push({tipo:'ok',txt:'El estado general de la actividad contractual es normal. No se identifican alertas críticas.'});
 
   abrirPdf(`
-    ${pdfHeader('Resumen Ejecutivo Global — Gestión Contractual','Consolidado de toda la actividad · '+fechaHoy)}
+    ${pdfHeader('Resumen Ejecutivo Global — Gestión Contractual','Consolidado de toda la actividad contractual · '+fechaHoy)}
+    ${pdfIntroBox(`Informe ejecutivo de la actividad contractual integral del Ministerio de Relaciones Exteriores. Consolida <strong>${total} registros</strong> en tres módulos: Procesos (${proc.length}), Modificaciones (${mod.length}) y Liquidaciones/Cierres (${liq.length}). Preparado el ${fechaHoy} a las ${hora} horas para presentación en comité.`)}
 
-    ${pdfIntroBox(`Informe ejecutivo de la actividad contractual integral del Ministerio de Relaciones Exteriores. Consolida <strong>${total} registros</strong> distribuidos en tres módulos: Procesos (${proc.length}), Modificaciones (${mod.length}) y Liquidaciones/Cierres (${liq.length}). Preparado el ${fechaHoy} a las ${hora} horas para presentación en comité.`)}
-
-    <!-- KPIs principales -->
     ${pdfSectionTitle('📊','Indicadores Generales por Módulo')}
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:28px;">
-
-      <!-- Procesos -->
-      <div style="border:1px solid ${PDF_BORDER};border-radius:12px;overflow:hidden;">
-        <div style="background:#0F1F3D;padding:12px 16px;display:flex;align-items:center;gap:8px;">
-          <span style="font-size:18px;">📋</span>
-          <div>
-            <div style="color:white;font-weight:700;font-size:13px;">Procesos</div>
-            <div style="color:rgba(255,255,255,.55);font-size:10px;">Asesorías y contractuales</div>
-          </div>
-          <div style="margin-left:auto;font-size:28px;font-weight:800;color:${PDF_GOLD};font-family:monospace;">${proc.length}</div>
-        </div>
-        <div style="padding:12px 16px;background:white;">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-            <div style="text-align:center;padding:8px;background:#F8FAFC;border-radius:6px;">
-              <div style="font-size:16px;font-weight:700;color:${PDF_SKY};">${procActivos.length}</div>
-              <div style="font-size:9px;color:${PDF_GRAY};text-transform:uppercase;">Activos</div>
-            </div>
-            <div style="text-align:center;padding:8px;background:#F0FDF4;border-radius:6px;">
-              <div style="font-size:16px;font-weight:700;color:${PDF_GREEN};">${procFin.length}</div>
-              <div style="font-size:9px;color:${PDF_GRAY};text-transform:uppercase;">Finalizados</div>
-            </div>
-          </div>
-          ${procVenc.length>0?`<div style="background:#FEF2F2;border-radius:6px;padding:6px 10px;font-size:10px;color:#991B1B;font-weight:600;">⚠️ ${procVenc.length} vencido${procVenc.length!==1?'s':''}</div>`:`<div style="background:#F0FDF4;border-radius:6px;padding:6px 10px;font-size:10px;color:#065F46;font-weight:600;">✅ Sin vencidos</div>`}
-        </div>
-      </div>
-
-      <!-- Modificaciones -->
-      <div style="border:1px solid ${PDF_BORDER};border-radius:12px;overflow:hidden;">
-        <div style="background:#4C1D95;padding:12px 16px;display:flex;align-items:center;gap:8px;">
-          <span style="font-size:18px;">✏️</span>
-          <div>
-            <div style="color:white;font-weight:700;font-size:13px;">Modificaciones</div>
-            <div style="color:rgba(255,255,255,.55);font-size:10px;">Adiciones contractuales</div>
-          </div>
-          <div style="margin-left:auto;font-size:28px;font-weight:800;color:#C4B5FD;font-family:monospace;">${mod.length}</div>
-        </div>
-        <div style="padding:12px 16px;background:white;">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-            <div style="text-align:center;padding:8px;background:#F8FAFC;border-radius:6px;">
-              <div style="font-size:16px;font-weight:700;color:#7C3AED;">${modActivos.length}</div>
-              <div style="font-size:9px;color:${PDF_GRAY};text-transform:uppercase;">Activas</div>
-            </div>
-            <div style="text-align:center;padding:8px;background:#F0FDF4;border-radius:6px;">
-              <div style="font-size:16px;font-weight:700;color:${PDF_GREEN};">${modFin.length}</div>
-              <div style="font-size:9px;color:${PDF_GRAY};text-transform:uppercase;">Finalizadas</div>
-            </div>
-          </div>
-          ${modVenc.length>0?`<div style="background:#FEF2F2;border-radius:6px;padding:6px 10px;font-size:10px;color:#991B1B;font-weight:600;">⚠️ ${modVenc.length} vencida${modVenc.length!==1?'s':''}</div>`:`<div style="background:#F0FDF4;border-radius:6px;padding:6px 10px;font-size:10px;color:#065F46;font-weight:600;">✅ Sin vencidas</div>`}
-        </div>
-      </div>
-
-      <!-- Liquidaciones -->
-      <div style="border:1px solid ${PDF_BORDER};border-radius:12px;overflow:hidden;">
-        <div style="background:#064E3B;padding:12px 16px;display:flex;align-items:center;gap:8px;">
-          <span style="font-size:18px;">🔒</span>
-          <div>
-            <div style="color:white;font-weight:700;font-size:13px;">Liquidaciones</div>
-            <div style="color:rgba(255,255,255,.55);font-size:10px;">Cierres y liquidaciones</div>
-          </div>
-          <div style="margin-left:auto;font-size:28px;font-weight:800;color:#6EE7B7;font-family:monospace;">${liq.length}</div>
-        </div>
-        <div style="padding:12px 16px;background:white;">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-            <div style="text-align:center;padding:8px;background:#F8FAFC;border-radius:6px;">
-              <div style="font-size:16px;font-weight:700;color:${PDF_SKY};">${liqTram.length}</div>
-              <div style="font-size:9px;color:${PDF_GRAY};text-transform:uppercase;">En trámite</div>
-            </div>
-            <div style="text-align:center;padding:8px;background:#F0FDF4;border-radius:6px;">
-              <div style="font-size:16px;font-weight:700;color:${PDF_GREEN};">${liqFin.length}</div>
-              <div style="font-size:9px;color:${PDF_GRAY};text-transform:uppercase;">Finalizadas</div>
-            </div>
-          </div>
-          <div style="background:#F0FDF4;border-radius:6px;padding:6px 10px;font-size:10px;color:#065F46;font-weight:600;">${pctFinLiq}% de cartera liquidada</div>
-        </div>
-      </div>
+    ${pdfKpiGrid([
+      {label:'Total General',    value:total,           color:PDF_NAVY,   sub:'Todos los módulos'},
+      {label:'Procesos',         value:proc.length,     color:PDF_SKY,    sub:'Asesorías y contractuales'},
+      {label:'Modificaciones',   value:mod.length,      color:PDF_PURPLE, sub:'Adiciones contractuales'},
+      {label:'Liquidaciones',    value:liq.length,      color:PDF_GREEN,  sub:'Cierres y liquidaciones'},
+    ])}
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px;">
+      ${pdfMetricCard('Activos Proc.+Mod.',procActivos.length+modActivos.length,'En trámite',PDF_PURPLE,'🔄')}
+      ${pdfMetricCard('Fin. Proc.+Mod.',procFin.length+modFin.length,'Completados',PDF_GREEN,'✅')}
+      ${pdfMetricCard('Alertas Proc.+Mod.',totalRiesgo,'Vencidos o hoy',totalRiesgo>0?PDF_RED:PDF_GREEN,totalRiesgo>0?'⚠️':'✅')}
+      ${pdfMetricCard('Liqu. Finalizadas',liqFin.length,pctFinLiq+'% de la cartera',PDF_GREEN,'🔒')}
     </div>
 
-    <!-- Resumen en tabla -->
     ${pdfSectionTitle('📋','Tabla Comparativa por Módulo')}
-    <table style="width:100%;border-collapse:collapse;border:1px solid ${PDF_BORDER};border-radius:8px;overflow:hidden;margin-bottom:28px;">
-      <thead><tr style="background:${PDF_NAVY};">
-        <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.07em;">Módulo</th>
-        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:white;">Total</th>
-        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:white;">Activos / En trámite</th>
-        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:white;">Finalizados</th>
-        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:white;">Alertas</th>
-        <th style="padding:10px 14px;font-size:10px;font-weight:700;color:white;">Avance</th>
-      </tr></thead>
-      <tbody>
-        <tr style="background:white;">
-          <td style="padding:11px 14px;font-weight:700;color:${PDF_NAVY};font-size:12px;">📋 Procesos</td>
-          <td style="padding:11px 14px;text-align:center;font-size:13px;font-weight:700;color:${PDF_NAVY};">${proc.length}</td>
-          <td style="padding:11px 14px;text-align:center;font-size:12px;color:${PDF_SKY};font-weight:600;">${procActivos.length}</td>
-          <td style="padding:11px 14px;text-align:center;font-size:12px;color:${PDF_GREEN};font-weight:600;">${procFin.length}</td>
-          <td style="padding:11px 14px;text-align:center;">${procVenc.length>0?`<span style="background:#FEF2F2;color:#991B1B;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:700;">⚠️ ${procVenc.length}</span>`:`<span style="color:${PDF_GREEN};font-size:12px;">✅</span>`}</td>
-          <td style="padding:11px 14px;width:120px;">${miniBar(procFin.length,proc.length,PDF_GREEN)}</td>
-        </tr>
-        <tr style="background:#F8FAFC;">
-          <td style="padding:11px 14px;font-weight:700;color:${PDF_NAVY};font-size:12px;">✏️ Modificaciones</td>
-          <td style="padding:11px 14px;text-align:center;font-size:13px;font-weight:700;color:${PDF_NAVY};">${mod.length}</td>
-          <td style="padding:11px 14px;text-align:center;font-size:12px;color:#7C3AED;font-weight:600;">${modActivos.length}</td>
-          <td style="padding:11px 14px;text-align:center;font-size:12px;color:${PDF_GREEN};font-weight:600;">${modFin.length}</td>
-          <td style="padding:11px 14px;text-align:center;">${modVenc.length>0?`<span style="background:#FEF2F2;color:#991B1B;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:700;">⚠️ ${modVenc.length}</span>`:`<span style="color:${PDF_GREEN};font-size:12px;">✅</span>`}</td>
-          <td style="padding:11px 14px;width:120px;">${miniBar(modFin.length,mod.length,PDF_GREEN)}</td>
-        </tr>
-        <tr style="background:white;">
-          <td style="padding:11px 14px;font-weight:700;color:${PDF_NAVY};font-size:12px;">🔒 Liquidaciones</td>
-          <td style="padding:11px 14px;text-align:center;font-size:13px;font-weight:700;color:${PDF_NAVY};">${liq.length}</td>
-          <td style="padding:11px 14px;text-align:center;font-size:12px;color:${PDF_SKY};font-weight:600;">${liqTram.length}</td>
-          <td style="padding:11px 14px;text-align:center;font-size:12px;color:${PDF_GREEN};font-weight:600;">${liqFin.length}</td>
-          <td style="padding:11px 14px;text-align:center;"><span style="color:${PDF_GRAY};font-size:11px;">N/A</span></td>
-          <td style="padding:11px 14px;width:120px;">${miniBar(liqFin.length,liq.length,PDF_GREEN)}</td>
-        </tr>
-        <tr style="background:#0F1F3D;">
-          <td style="padding:11px 14px;font-weight:700;color:${PDF_GOLD};font-size:12px;">TOTAL GENERAL</td>
-          <td style="padding:11px 14px;text-align:center;font-size:14px;font-weight:800;color:white;">${total}</td>
-          <td style="padding:11px 14px;text-align:center;font-size:12px;color:#93C5FD;font-weight:700;">${procActivos.length+modActivos.length+liqTram.length}</td>
-          <td style="padding:11px 14px;text-align:center;font-size:12px;color:#6EE7B7;font-weight:700;">${procFin.length+modFin.length+liqFin.length}</td>
-          <td style="padding:11px 14px;text-align:center;font-size:12px;color:#FCA5A5;font-weight:700;">${totalRiesgo>0?'⚠️ '+totalRiesgo:'✅ 0'}</td>
-          <td style="padding:11px 14px;width:120px;">${miniBar(procFin.length+modFin.length+liqFin.length,total,'#6EE7B7')}</td>
-        </tr>
-      </tbody>
-    </table>
+    ${pdfTable(['Módulo','Total','Activos / En trámite','Finalizados','Alertas','Avance'],compRows,['22%','8%','16%','12%','12%','22%'])}
 
-    <!-- Distribución liquidaciones por estado -->
     ${pdfSectionTitle('🔒','Estado de Liquidaciones y Cierres')}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px;">
-      ${ESTADOS_LIQ.map(e=>{
-        const cnt=liq.filter(r=>r.estado===e.value).length;
-        const pct=liq.length?Math.round(cnt/liq.length*100):0;
-        const isFin=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(e.value);
-        const color=isFin?PDF_GREEN:PDF_SKY;
-        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:${isFin?'#F0FDF4':'#F8FAFC'};border-radius:8px;border-left:3px solid ${color};">
-          <div style="flex:1;font-size:11px;font-weight:600;color:${PDF_NAVY};">${e.label}</div>
-          <div style="width:80px;background:#E2E8F0;border-radius:3px;height:6px;"><div style="width:${pct}%;height:100%;background:${color};border-radius:3px;"></div></div>
-          <div style="font-size:12px;font-weight:700;color:${color};min-width:24px;text-align:right;">${cnt}</div>
-          <div style="font-size:10px;color:${PDF_GRAY};min-width:28px;text-align:right;">${pct}%</div>
-        </div>`;
-      }).join('')}
-    </div>
+    ${pdfTable(['Estado','Cantidad','%','Distribución Visual'],liqEstadoRows,['36%','12%','10%','40%'])}
 
-    <!-- Análisis -->
-    ${pdfSectionTitle('💡','Análisis y Conclusiones')}
-    ${pdfConclusions(conclusions)}
+    ${pdfSectionTitle('💡','Análisis y Conclusiones para el Comité')}
+    ${pdfConclusions(puntos)}
 
     ${pdfFooter()}
   `,'Resumen Ejecutivo Global');
 }
+
 
 function pdfConsolidadoAbogado(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
@@ -4828,11 +4752,10 @@ function pdfConsolidadoAbogado(){
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const abogados=[...new Set([...proc,...mod,...liq].map(r=>r.abogado).filter(Boolean))].sort();
   if(!abogados.length){alert('No hay datos para generar el informe.');return;}
+  const granTotal=proc.length+mod.length+liq.length;
+  const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
 
-  const totProc=proc.length, totMod=mod.length, totLiq=liq.length;
-  const granTotal=totProc+totMod+totLiq;
-
-  const rows=abogados.map((ab,i)=>{
+  const rows=abogados.map(ab=>{
     const p=proc.filter(r=>r.abogado===ab);
     const m=mod.filter(r=>r.abogado===ab);
     const l=liq.filter(r=>r.abogado===ab);
@@ -4840,85 +4763,64 @@ function pdfConsolidadoAbogado(){
     const vp=p.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
     const vm=m.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
     const vencidos=vp+vm;
-    const liqFin=l.filter(r=>['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(r.estado)).length;
-    const pctTot=granTotal?Math.round(tot/granTotal*100):0;
-    return `<tr style="background:${i%2===0?'white':'#F8FAFC'};">
-      <td style="padding:10px 12px;font-weight:700;color:${PDF_NAVY};font-size:11px;">
-        ${escHtml(ab)}
-        <div style="margin-top:3px;height:3px;background:#E2E8F0;border-radius:2px;">
-          <div style="width:${pctTot}%;height:100%;background:#0284C7;border-radius:2px;"></div>
-        </div>
-      </td>
-      <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:${PDF_NAVY};">${tot}</td>
-      <td style="padding:10px 12px;text-align:center;font-size:12px;color:${PDF_SKY};font-weight:600;">${p.length}</td>
-      <td style="padding:10px 12px;text-align:center;font-size:12px;color:#7C3AED;font-weight:600;">${m.length}</td>
-      <td style="padding:10px 12px;text-align:center;font-size:12px;color:#059669;font-weight:600;">${l.length}</td>
-      <td style="padding:10px 12px;text-align:center;">
-        ${liqFin>0?`<span style="background:#D1FAE5;color:#065F46;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;">${liqFin}</span>`:`<span style="color:#CBD5E1;font-size:11px;">0</span>`}
-      </td>
-      <td style="padding:10px 12px;text-align:center;">
-        ${vencidos>0?`<span style="background:#FEF2F2;color:#991B1B;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;">⚠️ ${vencidos}</span>`:`<span style="color:${PDF_GREEN};font-size:11px;">✅</span>`}
-      </td>
-      <td style="padding:10px 12px;font-size:10px;color:${PDF_GRAY};text-align:center;">${pctTot}%</td>
-    </tr>`;
-  }).join('');
+    const liqFin=l.filter(r=>finStates.includes(r.estado)).length;
+    const pctCarga=granTotal?Math.round(tot/granTotal*100):0;
+    return [
+      `<b style="color:${PDF_NAVY};">${escHtml(ab)}</b>
+       <div style="margin-top:3px;background:#F1F5F9;border-radius:2px;height:4px;overflow:hidden;"><div style="width:${pctCarga}%;height:100%;background:${PDF_SKY};border-radius:2px;"></div></div>`,
+      `<span style="font-family:monospace;font-weight:700;">${tot}</span>`,
+      `<span style="color:${PDF_SKY};">${p.length}</span>`,
+      `<span style="color:${PDF_PURPLE};">${m.length}</span>`,
+      `<span style="color:${PDF_GREEN};">${l.length}</span>`,
+      liqFin>0?`<span style="background:#D1FAE5;color:#065F46;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;">${liqFin}</span>`:`<span style="color:#CBD5E1;">0</span>`,
+      vencidos>0?`<span style="background:#FEF2F2;color:#991B1B;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;">⚠️ ${vencidos}</span>`:`<span style="color:${PDF_GREEN};">✅ 0</span>`,
+      `<span style="font-size:10px;color:${PDF_GRAY};">${pctCarga}%</span>`,
+    ];
+  });
 
-  // Totales fila
   const totalVenc=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length
     + mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
-  const totalLiqFin=liq.filter(r=>['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(r.estado)).length;
+  const totalLiqFin=liq.filter(r=>finStates.includes(r.estado)).length;
+
+  // Fila totales
+  rows.push([
+    `<b style="color:${PDF_GOLD};">TOTALES</b>`,
+    `<span style="font-family:monospace;font-weight:800;font-size:13px;">${granTotal}</span>`,
+    `<span style="color:${PDF_SKY};font-weight:700;">${proc.length}</span>`,
+    `<span style="color:${PDF_PURPLE};font-weight:700;">${mod.length}</span>`,
+    `<span style="color:${PDF_GREEN};font-weight:700;">${liq.length}</span>`,
+    `<span style="font-weight:700;">${totalLiqFin}</span>`,
+    totalVenc>0?`<span style="color:#991B1B;font-weight:700;">⚠️ ${totalVenc}</span>`:`<span style="color:${PDF_GREEN};font-weight:700;">✅ 0</span>`,
+    '100%',
+  ]);
+
+  const puntos=[];
+  puntos.push({tipo:'info',txt:`La cartera contractual está distribuida entre <strong>${abogados.length} abogados responsables</strong> con un promedio de <strong>${Math.round(granTotal/abogados.length)} expedientes</strong> por abogado.`});
+  if(totalVenc>0) puntos.push({tipo:'alert',txt:`Se registran <strong>${totalVenc} procesos/modificaciones vencidos</strong>. Revisar distribución de carga y establecer plan de acción.`});
+  if(totalLiqFin>0) puntos.push({tipo:'ok',txt:`<strong>${totalLiqFin} liquidaciones</strong> han completado su proceso (${liq.length?Math.round(totalLiqFin/liq.length*100):0}% de la cartera).`});
 
   abrirPdf(`
-    ${pdfHeader('Carga Global por Abogado Responsable','Consolidado de procesos, modificaciones y liquidaciones · '+fechaHoy)}
-
-    ${pdfIntroBox(`Informe de distribución de carga de trabajo por abogado responsable en los tres módulos del sistema. Permite identificar desequilibrios en la asignación, abogados con mayor exposición a riesgo de vencimiento y rendimiento en liquidaciones. Total: <strong>${granTotal} expedientes</strong> asignados a <strong>${abogados.length} abogados</strong>. Generado el ${fechaHoy} a las ${hora} horas.`)}
+    ${pdfHeader('Carga Global por Abogado Responsable','Procesos, modificaciones y liquidaciones por responsable · '+fechaHoy)}
+    ${pdfIntroBox(`Informe de distribución de carga de trabajo por abogado en los tres módulos del sistema. Permite identificar desequilibrios en la asignación, exposición al riesgo de vencimiento y avance en liquidaciones. Total: <strong>${granTotal} expedientes</strong> asignados a <strong>${abogados.length} abogados</strong>. Generado el ${fechaHoy} a las ${hora} horas.`)}
 
     ${pdfSectionTitle('📊','Resumen Ejecutivo')}
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;">
-      ${[
-        {label:'Abogados activos',value:abogados.length,color:PDF_NAVY,icon:'👥'},
-        {label:'Prom. expedientes',value:Math.round(granTotal/abogados.length),color:PDF_SKY,icon:'📊'},
-        {label:'Liqu. finalizadas',value:totalLiqFin,color:PDF_GREEN,icon:'✅'},
-        {label:'Total con alertas',value:totalVenc,color:totalVenc>0?PDF_RED:PDF_GREEN,icon:totalVenc>0?'⚠️':'✅'},
-      ].map(k=>`<div style="background:white;border:1px solid ${PDF_BORDER};border-radius:10px;padding:14px 16px;text-align:center;border-top:4px solid ${k.color};">
-        <div style="font-size:22px;margin-bottom:6px;">${k.icon}</div>
-        <div style="font-size:26px;font-weight:800;color:${k.color};font-family:monospace;">${k.value}</div>
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:${PDF_GRAY};margin-top:4px;">${k.label}</div>
-      </div>`).join('')}
-    </div>
+    ${pdfKpiGrid([
+      {label:'Abogados activos',    value:abogados.length,                         color:PDF_NAVY,   sub:'Con expedientes asignados'},
+      {label:'Prom. expedientes',   value:Math.round(granTotal/abogados.length),    color:PDF_SKY,    sub:'Por abogado'},
+      {label:'Liqu. finalizadas',   value:totalLiqFin,                             color:PDF_GREEN,  sub:'Proceso completado'},
+      {label:'Con alertas',         value:totalVenc,                               color:totalVenc>0?PDF_RED:PDF_GREEN, sub:'Vencidos Proc.+Mod.'},
+    ])}
 
-    ${pdfSectionTitle('⚖️','Carga por Abogado — Detalle Completo')}
-    <table style="width:100%;border-collapse:collapse;border:1px solid ${PDF_BORDER};border-radius:8px;overflow:hidden;margin-bottom:20px;">
-      <thead>
-        <tr style="background:${PDF_NAVY};">
-          <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.07em;">Abogado Responsable</th>
-          <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:white;">Total</th>
-          <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:#93C5FD;">Procesos</th>
-          <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:#C4B5FD;">Modif.</th>
-          <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:#6EE7B7;">Liquidaciones</th>
-          <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:#6EE7B7;">Liqu. Final.</th>
-          <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:#FCA5A5;">Alertas</th>
-          <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:${PDF_GOLD};">% Carga</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-      <tfoot>
-        <tr style="background:#1E293B;">
-          <td style="padding:10px 12px;font-weight:700;color:${PDF_GOLD};font-size:11px;">TOTALES</td>
-          <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:800;color:white;">${granTotal}</td>
-          <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:#93C5FD;">${totProc}</td>
-          <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:#C4B5FD;">${totMod}</td>
-          <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:#6EE7B7;">${totLiq}</td>
-          <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:#6EE7B7;">${totalLiqFin}</td>
-          <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:#FCA5A5;">${totalVenc>0?'⚠️ '+totalVenc:'✅ 0'}</td>
-          <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:white;">100%</td>
-        </tr>
-      </tfoot>
-    </table>
+    ${pdfSectionTitle('⚖️','Distribución de Carga por Abogado')}
+    ${pdfTable(['Abogado Responsable','Total','Procesos','Modif.','Liquidaciones','Liqu. Final.','Alertas','% Carga'],rows,['22%','7%','9%','8%','11%','10%','10%','8%'])}
+
+    ${pdfSectionTitle('💡','Análisis para el Comité')}
+    ${pdfConclusions(puntos)}
 
     ${pdfFooter()}
   `,'Carga Global por Abogado');
 }
+
 
 function pdfConsolidadoVencimiento(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
@@ -4926,7 +4828,6 @@ function pdfConsolidadoVencimiento(){
   const mod=window._modRecords||[];
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
-
   const activos=[
     ...proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)).map(r=>({...r,_modulo:'Procesos',_obj:r.objeto})),
     ...mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)).map(r=>({...r,_modulo:'Modificaciones',_obj:r.objeto})),
@@ -4937,96 +4838,80 @@ function pdfConsolidadoVencimiento(){
   const prox7=activos.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=4&&d<=7;}).sort((a,b)=>getFechaAlerta(a).localeCompare(getFechaAlerta(b)));
   const totalRiesgo=vencidos.length+hoy.length+prox3.length;
   const nivelRiesgo=totalRiesgo>10?'CRÍTICO':totalRiesgo>5?'ALTO':totalRiesgo>2?'MODERADO':'BAJO';
-  const colorRiesgo={'CRÍTICO':PDF_RED,'ALTO':'#C2410C','MODERADO':'#D97706','BAJO':PDF_GREEN}[nivelRiesgo];
+  const colorRiesgo={'CRÍTICO':PDF_RED,'ALTO':PDF_ORANGE,'MODERADO':'#D97706','BAJO':PDF_GREEN}[nivelRiesgo];
+  const iconRiesgo=nivelRiesgo==='BAJO'?'✅':nivelRiesgo==='MODERADO'?'⚠️':'🔴';
 
-  const mkRows=arr=>arr.map((r,i)=>{
+  const mkRows=arr=>arr.map(r=>{
     const d=diasHasta(getFechaAlerta(r));
     const esProc=r._modulo==='Procesos';
-    return `<tr style="background:${i%2===0?'white':'#F8FAFC'};">
-      <td style="padding:9px 12px;"><b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b></td>
-      <td style="padding:9px 12px;"><span style="padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;background:${esProc?'#EFF6FF':'#F5F3FF'};color:${esProc?PDF_SKY:'#7C3AED'};">${r._modulo}</span></td>
-      <td style="padding:9px 12px;font-size:10px;max-width:180px;">${escHtml((r._obj||'').slice(0,45))}${(r._obj||'').length>45?'…':''}</td>
-      <td style="padding:9px 12px;font-size:11px;font-weight:600;color:${PDF_NAVY};">${escHtml(r.abogado||'—')}</td>
-      <td style="padding:9px 12px;font-family:monospace;font-size:11px;">${fmtDate(getFechaAlerta(r))}</td>
-      <td style="padding:9px 12px;text-align:center;">
-        ${d<0?`<span style="background:#FEF2F2;color:#991B1B;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;">⚠ ${Math.abs(d)}d vencido</span>`
-        :d===0?`<span style="background:#FEF2F2;color:#991B1B;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;">🔴 Vence hoy</span>`
-        :`<span style="background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;">${d}d restantes</span>`}
-      </td>
-    </tr>`;
-  }).join('');
+    return[
+      `<b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
+      `<span style="padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;background:${esProc?'#EFF6FF':'#F5F3FF'};color:${esProc?PDF_SKY:PDF_PURPLE};">${r._modulo}</span>`,
+      `<span style="font-size:10px;">${escHtml((r._obj||'').slice(0,40))}${(r._obj||'').length>40?'…':''}</span>`,
+      `<span style="font-weight:600;color:${PDF_NAVY};font-size:11px;">${escHtml(r.abogado||'—')}</span>`,
+      `<span style="font-family:monospace;font-size:11px;">${fmtDate(getFechaAlerta(r))}</span>`,
+      d<0?`<span style="background:#FEF2F2;color:#991B1B;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;">⚠ ${Math.abs(d)}d vencido</span>`
+        :d===0?`<span style="background:#FEF2F2;color:#991B1B;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;">🔴 Hoy</span>`
+        :`<span style="background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;">${d}d restantes</span>`,
+    ];
+  });
 
-  const seccionAlerta=(emoji,titulo,arr,colorBg)=>arr.length?`
-    <div style="margin-bottom:24px;">
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:${colorBg};border-radius:8px 8px 0 0;border-bottom:2px solid ${PDF_NAVY};">
-        <span style="font-size:16px;">${emoji}</span>
-        <span style="font-size:12px;font-weight:700;color:${PDF_NAVY};text-transform:uppercase;letter-spacing:.07em;">${titulo}</span>
-        <span style="margin-left:auto;background:${PDF_NAVY};color:white;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700;">${arr.length}</span>
-      </div>
-      <table style="width:100%;border-collapse:collapse;border:1px solid ${PDF_BORDER};border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">
-        <thead><tr style="background:#F8FAFC;">
-          <th style="padding:8px 12px;text-align:left;font-size:9px;font-weight:700;color:${PDF_GRAY};text-transform:uppercase;width:8%;">Ticket</th>
-          <th style="padding:8px 12px;font-size:9px;font-weight:700;color:${PDF_GRAY};text-transform:uppercase;width:13%;">Módulo</th>
-          <th style="padding:8px 12px;text-align:left;font-size:9px;font-weight:700;color:${PDF_GRAY};text-transform:uppercase;">Objeto</th>
-          <th style="padding:8px 12px;text-align:left;font-size:9px;font-weight:700;color:${PDF_GRAY};text-transform:uppercase;width:14%;">Abogado</th>
-          <th style="padding:8px 12px;text-align:left;font-size:9px;font-weight:700;color:${PDF_GRAY};text-transform:uppercase;width:11%;">Fecha Límite</th>
-          <th style="padding:8px 12px;text-align:center;font-size:9px;font-weight:700;color:${PDF_GRAY};text-transform:uppercase;width:13%;">Situación</th>
-        </tr></thead>
-        <tbody>${mkRows(arr)}</tbody>
-      </table>
-    </div>`:'';
+  const cols=['8%','13%','25%','15%','11%','14%'];
+  const hdrs=['Ticket','Módulo','Objeto','Abogado','Fecha Límite','Situación'];
+
+  const mkSeccion=(emoji,titulo,arr,colorBg)=>arr.length?`
+    ${pdfSectionTitle(emoji, titulo)}
+    <div style="background:${colorBg};border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:11px;color:#1E293B;">
+      ${arr.length} expediente${arr.length!==1?'s':''} en esta categoría.
+    </div>
+    ${pdfTable(hdrs,mkRows(arr),cols)}`:'';
+
+  const puntos=[];
+  puntos.push({tipo:nivelRiesgo==='BAJO'?'ok':nivelRiesgo==='MODERADO'?'warn':'alert',
+    txt:`Nivel de riesgo contractual: <strong style="color:${colorRiesgo};">${nivelRiesgo}</strong> — <strong>${totalRiesgo} expediente${totalRiesgo!==1?'s':''}</strong> en situación de riesgo inmediato.`});
+  if(vencidos.length>0){
+    const abVenc=[...new Set(vencidos.map(r=>r.abogado).filter(Boolean))];
+    puntos.push({tipo:'alert',txt:`<strong>${vencidos.length} expediente${vencidos.length!==1?'s':''}</strong> han superado su fecha límite. Responsables: ${abVenc.join(', ')||'sin asignar'}. Acción requerida: prórroga, cierre o reasignación urgente.`});
+  }
+  if(hoy.length>0) puntos.push({tipo:'alert',txt:`<strong>${hoy.length} expediente${hoy.length!==1?'s':''}</strong> vence${hoy.length===1?'':'n'} hoy. Verificar estado antes del cierre de jornada.`});
+  if(prox3.length>0) puntos.push({tipo:'warn',txt:`<strong>${prox3.length} expediente${prox3.length!==1?'s':''}</strong> vencen en los próximos 3 días. Priorizar en la agenda del equipo.`});
+  if(prox7.length>0) puntos.push({tipo:'warn',txt:`<strong>${prox7.length} expediente${prox7.length!==1?'s':''}</strong> vencen entre 4 y 7 días. Incluir en seguimiento semanal.`});
+  if(totalRiesgo===0) puntos.push({tipo:'ok',txt:'✅ No se identifican expedientes en situación de riesgo inmediato. Todos los activos se encuentran dentro de sus plazos.'});
 
   abrirPdf(`
-    ${pdfHeader('Informe de Alertas Globales de Vencimiento','Procesos y modificaciones en riesgo · '+fechaHoy)}
-
-    ${pdfIntroBox(`Informe crítico de alertas de vencimiento para los módulos Procesos y Modificaciones. Usa la misma lógica del semáforo de la aplicación (prioriza Fecha Máxima de Gestión sobre Fecha de Adjudicación). <strong>Total en riesgo inmediato: ${totalRiesgo} expedientes.</strong> Generado el ${fechaHoy} a las ${hora} horas.`)}
+    ${pdfHeader('Alertas Globales de Vencimiento','Procesos y modificaciones en riesgo · '+fechaHoy)}
+    ${pdfIntroBox(`Informe crítico de alertas de vencimiento de los módulos Procesos y Modificaciones. Usa la lógica del semáforo de la aplicación (prioriza Fecha Máxima de Gestión). <strong>Total en riesgo inmediato: ${totalRiesgo} expedientes.</strong> Generado el ${fechaHoy} a las ${hora} horas.`)}
 
     <!-- Nivel de riesgo -->
-    <div style="background:${colorRiesgo}15;border:2px solid ${colorRiesgo};border-radius:12px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:20px;">
-      <div style="width:64px;height:64px;border-radius:50%;background:${colorRiesgo};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <span style="font-size:28px;">${nivelRiesgo==='BAJO'?'✅':nivelRiesgo==='MODERADO'?'⚠️':'🔴'}</span>
-      </div>
+    <div style="background:${colorRiesgo}15;border:2px solid ${colorRiesgo};border-radius:12px;padding:18px 22px;margin-bottom:24px;display:flex;align-items:center;gap:18px;">
+      <div style="width:56px;height:56px;border-radius:50%;background:${colorRiesgo};display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">${iconRiesgo}</div>
       <div>
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:${colorRiesgo};font-weight:700;margin-bottom:4px;">Nivel de Riesgo Contractual</div>
-        <div style="font-size:24px;font-weight:800;color:${colorRiesgo};">${nivelRiesgo}</div>
-        <div style="font-size:11px;color:${PDF_GRAY};margin-top:2px;">${totalRiesgo} expediente${totalRiesgo!==1?'s':''} en situación de riesgo inmediato (vencidos, vencen hoy o en 3 días)</div>
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:${colorRiesgo};font-weight:700;margin-bottom:3px;">Nivel de Riesgo Contractual</div>
+        <div style="font-size:24px;font-weight:800;color:${colorRiesgo};margin-bottom:4px;">${nivelRiesgo}</div>
+        <div style="font-size:11px;color:${PDF_GRAY};">${totalRiesgo} expediente${totalRiesgo!==1?'s':''} en riesgo inmediato (vencidos, hoy o en 3 días)</div>
       </div>
     </div>
 
-    <!-- KPIs semáforo -->
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:28px;">
-      ${[
-        {label:'Vencidos',value:vencidos.length,color:PDF_RED,icon:'🔴',sub:'Acción inmediata'},
-        {label:'Vencen Hoy',value:hoy.length,color:'#DC2626',icon:'🔴',sub:'Urgente'},
-        {label:'Próx. 3 días',value:prox3.length,color:'#EA580C',icon:'🟠',sub:'Alta prioridad'},
-        {label:'Próx. 7 días',value:prox7.length,color:'#D97706',icon:'🟡',sub:'En seguimiento'},
-        {label:'Total en riesgo',value:totalRiesgo,color:colorRiesgo,icon:'📊',sub:'Vencidos+Hoy+3d'},
-      ].map(k=>`<div style="background:white;border:1px solid ${PDF_BORDER};border-radius:10px;padding:14px;text-align:center;border-top:4px solid ${k.color};">
-        <div style="font-size:20px;margin-bottom:4px;">${k.icon}</div>
-        <div style="font-size:28px;font-weight:800;color:${k.color};font-family:monospace;line-height:1;">${k.value}</div>
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:${PDF_GRAY};margin:5px 0 3px;">${k.label}</div>
-        <div style="font-size:9px;color:${PDF_GRAY};">${k.sub}</div>
-      </div>`).join('')}
-    </div>
+    ${pdfSectionTitle('📊','Indicadores de Alerta')}
+    ${pdfKpiGrid([
+      {label:'Vencidos',          value:vencidos.length, color:PDF_RED,    sub:'Acción inmediata'},
+      {label:'Vencen Hoy',        value:hoy.length,      color:'#DC2626',  sub:'Urgente'},
+      {label:'Próximos 3 días',   value:prox3.length,    color:PDF_ORANGE, sub:'Alta prioridad'},
+      {label:'Próximos 7 días',   value:prox7.length,    color:'#D97706',  sub:'En seguimiento'},
+    ])}
 
-    ${seccionAlerta('🔴','Procesos Vencidos — Acción Inmediata Requerida',vencidos,'#FEF2F2')}
-    ${seccionAlerta('🔴','Vencen Hoy',hoy,'#FEF2F2')}
-    ${seccionAlerta('🟠','Vencen en los Próximos 3 Días',prox3,'#FFFBEB')}
-    ${seccionAlerta('🟡','Vencen entre 4 y 7 Días',prox7,'#FEFCE8')}
-    ${totalRiesgo===0?pdfAlertBox('✅ No se identifican procesos o modificaciones en situación de riesgo inmediato. Todos los expedientes activos se encuentran dentro de sus plazos.','ok'):''}
+    ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
+    ${pdfConclusions(puntos)}
+
+    ${mkSeccion('🔴','Vencidos — Acción Inmediata Requerida',vencidos,'#FEF2F2')}
+    ${mkSeccion('🔴','Vencen Hoy',hoy,'#FEF2F2')}
+    ${mkSeccion('🟠','Próximos 3 Días',prox3,'#FFFBEB')}
+    ${mkSeccion('🟡','Entre 4 y 7 Días',prox7,'#FEFCE8')}
 
     ${pdfFooter()}
   `,'Alertas Globales de Vencimiento');
 }
 
-/* ═══ MÓDULO MODIFICACIONES ═══ */
-window._modRecords=[];
-let modEditingId=null;
-
-const ESTADOS_MOD={
-  asesoria:ESTADOS.asesoria,
-  contractual:ESTADOS.contractual,
-};
 
 function getNextModTicket(){
   const nums=(window._modRecords||[]).map(r=>parseInt(r.ticket||'')).filter(n=>!isNaN(n)&&n>0);
@@ -5050,8 +4935,7 @@ function openModalMod(id=null){
   document.getElementById('mod-f-estado').value=r?.estado||'asignado';
   document.getElementById('mod-f-objeto').value=r?.objeto||'';
   document.getElementById('mod-f-secop').value=r?.secop||'';
-  document.getElementById('mod-f-abogado').value=r?.abogado||'';
-  // Llenar GIT y Dependencia (copiar opciones del formulario principal)
+  buildAbogadoOptions('mod-f-abogado',r?.abogado||'');
   const gitSrc=document.getElementById('f-git');
   const gitDst=document.getElementById('mod-f-git');
   if(gitSrc&&gitDst) gitDst.innerHTML=gitSrc.innerHTML;
@@ -5097,8 +4981,7 @@ function deleteModRecord(id){
   window._deleteModRecord(id).then(()=>showSyncToast('Eliminado')).catch(e=>alert(e.message));
 }
 function renderMod(){
-  window.renderMod=renderMod;
-  const records=window._modRecords||[];
+    const records=window._modRecords||[];
   const q=(document.getElementById('search-mod')?.value||'').toLowerCase();
   const abogadoFiltro=getAbogadoFiltro();
   let data=records.filter(r=>{
@@ -5111,7 +4994,6 @@ function renderMod(){
     if(!isNaN(na)&&!isNaN(nb))return na-nb;
     return (a.ticket||'').localeCompare(b.ticket||'',undefined,{numeric:true});
   });
-  // Stats
   document.getElementById('mod-stat-total').textContent=data.length;
   document.getElementById('mod-stat-asesoria').textContent=data.filter(r=>r.tipo==='asesoria').length;
   document.getElementById('mod-stat-contractual').textContent=data.filter(r=>r.tipo==='contractual').length;
@@ -5145,7 +5027,6 @@ function renderMod(){
       }).join('');
     }
   }
-  // Móvil
   const esMobil=window.innerWidth<=768;
   const mc=document.getElementById('mod-mobile-cards');
   const tw=document.querySelector('#page-modificaciones .table-wrap');
@@ -5214,7 +5095,7 @@ function openModalLiq(id=null){
   document.getElementById('liq-f-persona').value=r?.persona||'';
   document.getElementById('liq-f-contratista').value=r?.contratista||'';
   document.getElementById('liq-f-estado').value=r?.estado||'pendiente-enviar';
-  document.getElementById('liq-f-abogado').value=r?.abogado||'';
+  buildAbogadoOptions('liq-f-abogado',r?.abogado||'');
   const gitSrc=document.getElementById('f-git');
   const gitDst=document.getElementById('liq-f-git');
   if(gitSrc&&gitDst)gitDst.innerHTML=gitSrc.innerHTML;
@@ -5263,8 +5144,7 @@ function deleteLiqRecord(id){
   window._deleteLiqRecord(id).then(()=>showSyncToast('Eliminado')).catch(e=>alert(e.message));
 }
 function renderLiq(){
-  window.renderLiq=renderLiq;
-  const records=window._liqRecords||[];
+    const records=window._liqRecords||[];
   const q=(document.getElementById('search-liq')?.value||'').toLowerCase();
   const abogadoFiltro=getAbogadoFiltro();
   let data=records.filter(r=>{
@@ -5277,12 +5157,12 @@ function renderLiq(){
     if(!isNaN(na)&&!isNaN(nb))return na-nb;
     return (a.ticket||'').localeCompare(b.ticket||'',undefined,{numeric:true});
   });
-  // Stats
-  document.getElementById('liq-stat-total').textContent=data.length;
-  document.getElementById('liq-stat-pendiente').textContent=data.filter(r=>
+  const allForStats=records;
+  document.getElementById('liq-stat-total').textContent=allForStats.length;
+  document.getElementById('liq-stat-pendiente').textContent=allForStats.filter(r=>
     ['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','aval-radicar','radicado-git','radicado-competente'].includes(r.estado)
   ).length;
-  document.getElementById('liq-stat-liquidado').textContent=data.filter(r=>
+  document.getElementById('liq-stat-liquidado').textContent=allForStats.filter(r=>
     ['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(r.estado)
   ).length;
   const adm=isAdmin();
@@ -5320,7 +5200,6 @@ function renderLiq(){
       }).join('');
     }
   }
-  // Móvil
   const esMobil=window.innerWidth<=768;
   const mc=document.getElementById('liq-mobile-cards');
   const tw=document.querySelector('#page-liquidaciones .table-wrap');
@@ -5478,7 +5357,6 @@ function exportLiqXLSX(){
   const rows=data.map(r=>[r.ticket,r.numeroProceso||'',r.unidadAdmin||'',r.tramite||'',r.persona||'',r.contratista||'',r.abogado||'',r.git||'',r.dependencia||'',fmtDate(r.fechaInicio)||'',fmtDate(r.fechaTerminacion)||'',fmtDate(r.fechaCierre)||'',fmtDate(r.fechaLiquidacion)||'',getEstadoLiq(r.estado).label,r.obs||'']);
   const ws=XLSX.utils.aoa_to_sheet([hdrs,...rows]);
   ws['!cols']=[{wch:14},{wch:14},{wch:16},{wch:12},{wch:12},{wch:32},{wch:22},{wch:28},{wch:28},{wch:13},{wch:13},{wch:13},{wch:13},{wch:26},{wch:28}];
-  // Hoja Bitácora
   const bitHdrs=['N° Contrato','Trámite','Contratista / Proveedor','Abogado','Estado','Fecha Avance','Registrado por','Descripción del avance'];
   const bitData=[bitHdrs];
   data.forEach(r=>{
@@ -5512,7 +5390,6 @@ function importarLiq(input){
   if(!isAdmin()){alert('Solo los administradores pueden importar datos.');input.value='';return;}
   if(typeof XLSX==='undefined'){alert('La librería Excel aún carga. Intenta en unos segundos.');input.value='';return;}
   const file=input.files[0];if(!file)return;
-  // Mapa de columnas para liquidaciones
   const LIQ_COL_MAP={
     'n° contrato':'ticket','n contrato':'ticket','ticket':'ticket',
     'n° proceso':'numeroProceso','n proceso':'numeroProceso','numero proceso':'numeroProceso',
@@ -5596,43 +5473,40 @@ function pdfLiq(){
   if(!records.length){alert('No hay liquidaciones para generar el informe.');return;}
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
-
-  // Métricas
   const tot=records.length;
+  const tramiteStates=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','aval-radicar','radicado-git','radicado-competente'];
+  const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
   const liqCount=records.filter(r=>r.tramite==='Liquidacion').length;
   const cieCount=records.filter(r=>r.tramite==='Cierre').length;
   const jurCount=records.filter(r=>r.persona==='Juridica').length;
   const natCount=records.filter(r=>r.persona==='Natural').length;
   const frmreCount=records.filter(r=>r.unidadAdmin==='FRMRE').length;
   const mreCount=records.filter(r=>r.unidadAdmin==='MRE').length;
-  const tramiteStates=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','aval-radicar','radicado-git','radicado-competente'];
-  const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
   const enTramite=records.filter(r=>tramiteStates.includes(r.estado)).length;
   const finalizados=records.filter(r=>finStates.includes(r.estado)).length;
   const pctFin=tot?Math.round(finalizados/tot*100):0;
   const pctTram=tot?Math.round(enTramite/tot*100):0;
+  const pendCount=records.filter(r=>r.estado==='pendiente-enviar').length;
+  const obsCount=records.filter(r=>r.estado==='observaciones-area').length;
+  const liqCerrado=records.filter(r=>r.estado==='liquidado-cerrado').length;
+  const liqPte=records.filter(r=>r.estado==='liquidado-pte-cerrar').length;
+  const cierreCont=records.filter(r=>r.estado==='cierre-contractual').length;
 
-  // Por estado con barras visuales
-  const maxEstado=Math.max(...ESTADOS_LIQ.map(e=>records.filter(r=>r.estado===e.value).length),1);
+  // Tabla estados
+  const maxE=Math.max(...ESTADOS_LIQ.map(e=>records.filter(r=>r.estado===e.value).length),1);
   const estadoRows=ESTADOS_LIQ.map(e=>{
     const cnt=records.filter(r=>r.estado===e.value).length;
     const pct=tot?Math.round(cnt/tot*100):0;
-    const barW=maxEstado?Math.round(cnt/maxEstado*100):0;
+    const barW=Math.round(cnt/maxE*100);
     const isFin=finStates.includes(e.value);
-    const barColor=isFin?PDF_GREEN:tramiteStates.includes(e.value)?PDF_SKY:'#94A3B8';
-    return `<tr style="background:white;">
-      <td style="padding:8px 12px;font-size:11px;font-weight:600;color:${PDF_NAVY};width:32%;">${e.label}</td>
-      <td style="padding:8px 12px;width:48%;">
-        <div style="background:#F1F5F9;border-radius:4px;height:10px;overflow:hidden;">
-          <div style="width:${barW}%;height:100%;background:${barColor};border-radius:4px;transition:width .3s;"></div>
-        </div>
-      </td>
-      <td style="padding:8px 12px;font-size:12px;font-weight:700;color:${barColor};text-align:center;width:10%;">${cnt}</td>
-      <td style="padding:8px 12px;font-size:11px;color:#64748B;text-align:center;width:10%;">${pct}%</td>
-    </tr>`;
-  }).join('');
+    const color=isFin?PDF_GREEN:tramiteStates.includes(e.value)?PDF_SKY:'#94A3B8';
+    return [`<b style="color:${PDF_NAVY};">${e.label}</b>`,
+      `<div style="background:#F1F5F9;border-radius:4px;height:10px;overflow:hidden;"><div style="width:${barW}%;height:100%;background:${color};border-radius:4px;"></div></div>`,
+      `<span style="font-family:monospace;font-weight:700;color:${color};">${cnt}</span>`,
+      `<span style="color:#64748B;">${pct}%</span>`];
+  });
 
-  // Por abogado
+  // Tabla abogados
   const byAbog={};
   records.forEach(r=>{
     const k=r.abogado||'Sin asignar';
@@ -5643,108 +5517,60 @@ function pdfLiq(){
     if(tramiteStates.includes(r.estado)) byAbog[k].tram++;
     if(finStates.includes(r.estado)) byAbog[k].fin++;
   });
-  const abogRows=Object.keys(byAbog).sort((a,b)=>byAbog[b].total-byAbog[a].total).map((n,i)=>{
+  const abogRows=Object.keys(byAbog).sort((a,b)=>byAbog[b].total-byAbog[a].total).map(n=>{
     const d=byAbog[n];
-    const pctA=tot?Math.round(d.total/tot*100):0;
     const pctFinA=d.total?Math.round(d.fin/d.total*100):0;
-    return `<tr style="background:${i%2===0?'white':'#F8FAFC'};">
-      <td style="padding:9px 12px;font-size:11px;font-weight:600;color:${PDF_NAVY};">${escHtml(n)}</td>
-      <td style="padding:9px 12px;font-size:12px;font-weight:700;color:${PDF_NAVY};text-align:center;">${d.total}</td>
-      <td style="padding:9px 12px;font-size:11px;color:#F59E0B;text-align:center;">${d.liq}</td>
-      <td style="padding:9px 12px;font-size:11px;color:${PDF_TEAL};text-align:center;">${d.cie}</td>
-      <td style="padding:9px 12px;font-size:11px;color:${PDF_SKY};text-align:center;">${d.tram}</td>
-      <td style="padding:9px 12px;text-align:center;">
-        ${d.fin>0?`<span style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">${d.fin}</span>`:'<span style="color:#CBD5E1;font-size:11px;">0</span>'}
-      </td>
-      <td style="padding:9px 12px;width:100px;">
-        <div style="background:#F1F5F9;border-radius:3px;height:6px;"><div style="width:${pctA}%;height:100%;background:${PDF_SKY};border-radius:3px;"></div></div>
-        <div style="font-size:9px;color:#94A3B8;margin-top:2px;text-align:right;">${pctFinA}% fin.</div>
-      </td>
-    </tr>`;
-  }).join('');
+    return [
+      `<b style="color:${PDF_NAVY};">${escHtml(n)}</b>`,
+      `<span style="font-family:monospace;font-weight:700;">${d.total}</span>`,
+      `<span style="color:#F59E0B;">${d.liq}</span>`,
+      `<span style="color:${PDF_TEAL};">${d.cie}</span>`,
+      `<span style="color:${PDF_SKY};">${d.tram}</span>`,
+      d.fin>0?`<span style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;">${d.fin}</span>`:`<span style="color:#CBD5E1;">0</span>`,
+      `<div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;background:#F1F5F9;border-radius:3px;height:6px;overflow:hidden;"><div style="width:${pctFinA}%;height:100%;background:${PDF_GREEN};border-radius:3px;"></div></div><span style="font-size:10px;color:${PDF_GRAY};">${pctFinA}%</span></div>`,
+    ];
+  });
 
-  // Conclusiones automáticas
-  const conclusions=[];
-  if(finalizados>0) conclusions.push({tipo:'ok',txt:`<strong>${finalizados} liquidaciones/cierres</strong> han completado su proceso (${pctFin}% del total). Refleja una gestión eficiente de la cartera contractual.`});
-  if(enTramite>0) conclusions.push({tipo:'warn',txt:`<strong>${enTramite} expedientes</strong> se encuentran actualmente en trámite (${pctTram}%). Se recomienda verificar los tiempos de respuesta de cada etapa para evitar represamiento.`});
-  const pendCount=records.filter(r=>r.estado==='pendiente-enviar').length;
-  if(pendCount>0) conclusions.push({tipo:'warn',txt:`<strong>${pendCount} proyectos de acta</strong> están pendientes de enviar al área correspondiente. Priorizar su despacho.`});
-  const obsCount=records.filter(r=>r.estado==='observaciones-area').length;
-  if(obsCount>0) conclusions.push({tipo:'alert',txt:`<strong>${obsCount} expedientes</strong> tienen observaciones del área técnica sin resolver. Requieren atención prioritaria de los abogados responsables.`});
+  // Conclusiones
+  const puntos=[];
+  if(finalizados>0) puntos.push({tipo:'ok',txt:`<strong>${finalizados} expedientes</strong> han completado su proceso (${pctFin}% del total): ${liqCerrado} liquidados y cerrados, ${liqPte} liquidados pendientes de cierre, ${cierreCont} con cierre contractual.`});
+  if(enTramite>0) puntos.push({tipo:'warn',txt:`<strong>${enTramite} expedientes</strong> se encuentran en trámite activo (${pctTram}%). Verificar los tiempos de respuesta en cada etapa para evitar represamiento.`});
+  if(pendCount>0) puntos.push({tipo:'warn',txt:`<strong>${pendCount} proyectos de acta</strong> están pendientes de envío. Priorizar su despacho al área correspondiente.`});
+  if(obsCount>0) puntos.push({tipo:'alert',txt:`<strong>${obsCount} expedientes</strong> tienen observaciones del área técnica sin resolver. Requieren atención prioritaria.`});
+  if(!puntos.length) puntos.push({tipo:'ok',txt:'El estado general de las liquidaciones es normal. No se identifican alertas críticas.'});
 
   abrirPdf(`
-    ${pdfHeader('Informe General — Liquidaciones y Cierres','Gestión contractual · '+fechaHoy)}
+    ${pdfHeader('Informe General — Liquidaciones y Cierres','Gestión de liquidaciones contractuales · '+fechaHoy)}
+    ${pdfIntroBox(`Informe ejecutivo sobre el estado de liquidaciones y cierres contractuales del Ministerio de Relaciones Exteriores. Consolida <strong>${tot} expedientes</strong> con análisis por estado, trámite, tipo de persona, unidad administrativa y responsable. Generado el ${fechaHoy} a las ${hora} horas.`)}
 
-    ${pdfIntroBox(`Informe ejecutivo sobre el estado de liquidaciones y cierres contractuales del Ministerio de Relaciones Exteriores. Consolida <strong>${tot} expedientes</strong> registrados en el sistema de seguimiento, incluyendo distribución por estado, trámite, tipo de persona y responsable. Generado el ${fechaHoy} a las ${hora} horas.`)}
-
-    <!-- KPIs Principales -->
     ${pdfSectionTitle('📊','Indicadores Generales')}
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px;">
-      ${[
-        {label:'Total Expedientes',value:tot,color:PDF_NAVY,sub:'Registros activos',icon:'📁'},
-        {label:'En Trámite',value:enTramite,color:PDF_SKY,sub:`${pctTram}% del total`,icon:'🔄'},
-        {label:'Liquidados / Cerrados',value:finalizados,color:PDF_GREEN,sub:`${pctFin}% completado`,icon:'✅'},
-        {label:'Liquidaciones',value:liqCount,color:'#F59E0B',sub:`${tot?Math.round(liqCount/tot*100):0}% del total`,icon:'📄'},
-        {label:'Cierres',value:cieCount,color:PDF_TEAL,sub:`${tot?Math.round(cieCount/tot*100):0}% del total`,icon:'🔒'},
-      ].map(k=>`<div style="background:white;border:1px solid ${PDF_BORDER};border-radius:10px;padding:16px;border-top:4px solid ${k.color};text-align:center;">
-        <div style="font-size:20px;margin-bottom:6px;">${k.icon}</div>
-        <div style="font-size:28px;font-weight:800;color:${k.color};font-family:monospace;line-height:1;">${k.value}</div>
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:${PDF_GRAY};margin:6px 0 4px;">${k.label}</div>
-        <div style="font-size:10px;color:${PDF_GRAY};">${k.sub}</div>
-      </div>`).join('')}
+    ${pdfKpiGrid([
+      {label:'Total Expedientes',        value:tot,        color:PDF_NAVY,   sub:'Registrados en el sistema'},
+      {label:'En Trámite',               value:enTramite,  color:PDF_SKY,    sub:pctTram+'% del total'},
+      {label:'Liquidados y Cerrados',    value:finalizados, color:PDF_GREEN,  sub:pctFin+'% completado'},
+      {label:'Liquidaciones',            value:liqCount,   color:'#F59E0B',  sub:tot?Math.round(liqCount/tot*100)+'% del total':'—'},
+    ])}
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px;">
+      ${pdfMetricCard('Cierres Contractuales',cieCount,tot?Math.round(cieCount/tot*100)+'% del total':'—',PDF_TEAL,'🔒')}
+      ${pdfMetricCard('Persona Jurídica',jurCount,tot?Math.round(jurCount/tot*100)+'%':'—',PDF_PURPLE,'🏢')}
+      ${pdfMetricCard('Persona Natural',natCount,tot?Math.round(natCount/tot*100)+'%':'—',PDF_SKY,'👤')}
+      ${pdfMetricCard('FRMRE / MRE',frmreCount+' / '+mreCount,'Unidades administrativas',PDF_TEAL,'🏛️')}
     </div>
 
-    <!-- KPIs Secundarios -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:28px;">
-      ${[
-        {label:'Persona Jurídica',value:jurCount,pct:tot?Math.round(jurCount/tot*100):0,color:'#7C3AED'},
-        {label:'Persona Natural',value:natCount,pct:tot?Math.round(natCount/tot*100):0,color:PDF_SKY},
-        {label:'FRMRE',value:frmreCount,pct:tot?Math.round(frmreCount/tot*100):0,color:'#0369A1'},
-        {label:'MRE',value:mreCount,pct:tot?Math.round(mreCount/tot*100):0,color:PDF_TEAL},
-      ].map(k=>`<div style="background:${k.color}12;border:1px solid ${k.color}33;border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div style="font-size:10px;font-weight:700;color:${k.color};text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">${k.label}</div>
-          <div style="font-size:22px;font-weight:800;color:${PDF_NAVY};font-family:monospace;">${k.value}</div>
-        </div>
-        <div style="font-size:18px;font-weight:800;color:${k.color};opacity:.5;">${k.pct}%</div>
-      </div>`).join('')}
-    </div>
-
-    <!-- Distribución por estado -->
     ${pdfSectionTitle('📋','Distribución por Estado de Trámite')}
-    <table style="width:100%;border-collapse:collapse;border:1px solid ${PDF_BORDER};border-radius:8px;overflow:hidden;margin-bottom:28px;">
-      <thead><tr style="background:${PDF_NAVY};">
-        <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.07em;">Estado</th>
-        <th style="padding:10px 12px;font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.07em;">Distribución</th>
-        <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.07em;">Cantidad</th>
-        <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.07em;">%</th>
-      </tr></thead>
-      <tbody>${estadoRows}</tbody>
-    </table>
+    ${pdfTable(['Estado','Distribución Visual','Cantidad','%'],estadoRows,['30%','40%','15%','10%'])}
 
-    <!-- Análisis y recomendaciones -->
-    ${pdfSectionTitle('💡','Análisis y Recomendaciones')}
-    ${pdfConclusions(conclusions)}
+    ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
+    ${pdfConclusions(puntos)}
 
-    <!-- Carga por abogado -->
-    ${pdfSectionTitle('⚖️','Carga de Trabajo por Abogado Responsable')}
-    <table style="width:100%;border-collapse:collapse;border:1px solid ${PDF_BORDER};border-radius:8px;overflow:hidden;margin-bottom:20px;">
-      <thead><tr style="background:${PDF_NAVY};">
-        <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.07em;">Abogado</th>
-        <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:700;color:white;">Total</th>
-        <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:700;color:white;">Liqu.</th>
-        <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:700;color:white;">Cierres</th>
-        <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:700;color:white;">En trámite</th>
-        <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:700;color:white;">Finalizados</th>
-        <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:700;color:white;">Participación</th>
-      </tr></thead>
-      <tbody>${abogRows}</tbody>
-    </table>
+    ${pdfSectionTitle('⚖️','Carga por Abogado Responsable')}
+    ${pdfTable(['Abogado','Total','Liqu.','Cierres','En trámite','Finalizados','% Cumplimiento'],abogRows,['24%','8%','8%','9%','10%','11%','18%'])}
 
     ${pdfFooter()}
   `,'Informe Liquidaciones');
 }
+
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 </body>
 </html>
