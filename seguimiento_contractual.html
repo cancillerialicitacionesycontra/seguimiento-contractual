@@ -4953,8 +4953,9 @@ function cerrarSelectorAbogado(){
 /* ─── Selector Dependencia Liquidaciones ─── */
 function abrirSelectorLiqDep(){
   if(!isAdmin()){alert('Solo los administradores pueden generar informes.');return;}
-  const records=window._liqRecords||[];
-  if(!records.length){alert('No hay liquidaciones registradas.');return;}
+  // Solo registros sin GIT
+  const records=(window._liqRecords||[]).filter(r=>!(r.git||'').trim());
+  if(!records.length){alert('No hay liquidaciones de dependencia registradas.');return;}
   const deps=[...new Set(records.map(r=>(r.dependencia||'').trim()).filter(Boolean))].sort();
   const sel=document.getElementById('inf-liq-dep-sel');
   sel.innerHTML='<option value="">📊 Todas las dependencias (informe general)</option>'+
@@ -4974,8 +4975,9 @@ function generarInformeLiqDep(){
 /* ─── Selector GIT Liquidaciones ─── */
 function abrirSelectorLiqGIT(){
   if(!isAdmin()){alert('Solo los administradores pueden generar informes.');return;}
-  const records=window._liqRecords||[];
-  if(!records.length){alert('No hay liquidaciones registradas.');return;}
+  // Solo registros con GIT
+  const records=(window._liqRecords||[]).filter(r=>(r.git||'').trim());
+  if(!records.length){alert('No hay liquidaciones de GIT registradas.');return;}
   const gits=[...new Set(records.map(r=>(r.git||'').trim()).filter(Boolean))].sort();
   const sel=document.getElementById('inf-liq-git-sel');
   sel.innerHTML='<option value="">📊 Todos los GITs (informe general)</option>'+
@@ -5301,8 +5303,9 @@ function pdfLiqIndividual(abogado){
 /* ═══ INFORME LIQUIDACIONES POR DEPENDENCIA ═══ */
 function pdfLiqPorDependencia(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
-  const allRecords=window._liqRecords||[];
-  if(!allRecords.length){alert('No hay liquidaciones para generar el informe.');return;}
+  // Sin GIT = pertenece a la dependencia directamente
+  const allRecords=(window._liqRecords||[]).filter(r=>!(r.git||'').trim());
+  if(!allRecords.length){alert('No hay liquidaciones de dependencia para generar el informe.');return;}
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
@@ -5394,8 +5397,9 @@ function pdfLiqPorDependencia(){
 /* ═══ INFORME LIQUIDACIONES POR GIT ═══ */
 function pdfLiqPorGIT(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
-  const allRecords=window._liqRecords||[];
-  if(!allRecords.length){alert('No hay liquidaciones para generar el informe.');return;}
+  // Con GIT = pertenece al grupo interno de trabajo
+  const allRecords=(window._liqRecords||[]).filter(r=>(r.git||'').trim());
+  if(!allRecords.length){alert('No hay liquidaciones de GIT para generar el informe.');return;}
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
@@ -5489,8 +5493,9 @@ function pdfLiqPorGIT(){
 
 /* ═══ INFORME INDIVIDUAL POR DEPENDENCIA ═══ */
 function pdfLiqDependenciaIndividual(dep){
-  const allRecords=(window._liqRecords||[]).filter(r=>(r.dependencia||'').trim()===dep);
-  if(!allRecords.length){alert(`No hay liquidaciones para la dependencia: ${dep}`);return;}
+  // Sin GIT = pertenece a la dependencia directamente
+  const allRecords=(window._liqRecords||[]).filter(r=>(r.dependencia||'').trim()===dep && !(r.git||'').trim());
+  if(!allRecords.length){alert(`No hay liquidaciones de dependencia para: ${dep}`);return;}
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
@@ -5563,6 +5568,7 @@ function pdfLiqDependenciaIndividual(dep){
 
 /* ═══ INFORME INDIVIDUAL POR GIT ═══ */
 function pdfLiqGITIndividual(git){
+  // Con GIT = pertenece al grupo interno de trabajo
   const allRecords=(window._liqRecords||[]).filter(r=>(r.git||'').trim()===git);
   if(!allRecords.length){alert(`No hay liquidaciones para el GIT: ${git}`);return;}
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
