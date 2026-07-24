@@ -1101,6 +1101,7 @@ textarea#entry-text:focus{border-color:var(--accent);}
       <button class="btn btn-ghost" onclick="document.getElementById('import-mod-input').click()" style="color:#059669;border-color:#6EE7B7;" id="btn-import-mod">⬆ Importar Excel</button>
       <input type="file" id="import-mod-input" accept=".xlsx,.xls" style="display:none;" onchange="importarMod(this)">
       <button class="btn btn-ghost" onclick="pdfMod()" style="color:#DC2626;border-color:#FECACA;">📄 Informe PDF</button>
+      <button class="btn btn-ghost" onclick="openBitacoraGeneralMod()" style="color:#7C3AED;border-color:#C4B5FD;">📓 Bitácora</button>
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
         <input type="text" id="search-mod" placeholder="Buscar ticket, objeto, abogado…" oninput="renderMod()">
@@ -1900,6 +1901,63 @@ textarea#entry-text:focus{border-color:var(--accent);}
   </div>
 </div>
 
+<!-- BITÁCORA MODIFICACIONES -->
+<div class="overlay" id="bitacora-mod-overlay">
+  <div class="modal modal-lg">
+    <div class="modal-header"><h2>📓 Bitácora de Avance — Modificación</h2><button class="modal-close" onclick="closeBitacoraMod()">✕</button></div>
+    <div class="modal-body">
+      <div class="bit-header" id="bit-mod-header"></div>
+      <div class="new-entry-box" id="new-mod-entry-box">
+        <div id="new-mod-entry-form">
+          <div class="new-entry-top">
+            <label style="font-size:12px;font-weight:500;color:var(--navy);text-transform:uppercase;">Fecha</label>
+            <input type="date" id="mod-entry-date">
+            <span id="mod-entry-author-name" style="font-size:12px;color:var(--muted);margin-left:8px;"></span>
+          </div>
+          <textarea id="mod-entry-text" placeholder="Describe el avance…"></textarea>
+          <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+            <button class="btn btn-primary" style="padding:5px 14px;font-size:12px;" onclick="addModEntry()">＋ Agregar</button>
+          </div>
+        </div>
+        <div id="new-mod-entry-locked" class="locked-note" style="display:none;">🔒 Estado <strong id="mod-locked-estado-name"></strong> — no se pueden agregar entradas.</div>
+      </div>
+      <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px;">Historial (<span id="mod-entries-count">0</span> entradas)</p>
+      <div class="entries-list" id="mod-entries-list"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeBitacoraMod()">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- BITÁCORA GENERAL MODIFICACIONES -->
+<div class="bit-gen-overlay" id="bit-gen-mod-overlay">
+  <div class="bit-gen-modal">
+    <div class="bit-gen-header" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);">
+      <h2>📓 Bitácora General — Modificaciones</h2>
+      <button class="modal-close" onclick="closeBitacoraGeneralMod()">✕</button>
+    </div>
+    <div class="bit-gen-toolbar">
+      <select class="bit-gen-filter" id="bmg-tipo" onchange="renderBitacoraGeneralMod()">
+        <option value="">Todos los tipos</option>
+        <option value="asesoria">🔵 Asesoría Previa</option>
+        <option value="contractual">🔷 Proceso Contractual</option>
+      </select>
+      <select class="bit-gen-filter" id="bmg-abogado" onchange="renderBitacoraGeneralMod()">
+        <option value="">Todos los abogados</option>
+      </select>
+      <select class="bit-gen-filter" id="bmg-solo-avances" onchange="renderBitacoraGeneralMod()">
+        <option value="">Todas las modificaciones</option>
+        <option value="1">Solo con avances</option>
+        <option value="0">Solo sin avances</option>
+      </select>
+      <input type="text" class="bit-gen-search" id="bmg-search" placeholder="🔍 Buscar ticket u objeto…" oninput="renderBitacoraGeneralMod()">
+      <span class="bit-gen-count" id="bmg-count">0 modificaciones</span>
+    </div>
+    <div class="bit-gen-body" id="bit-gen-mod-body">
+      <div class="bit-gen-empty">Cargando avances...</div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL PDF -->
 <div class="overlay" id="pdf-overlay">
   <div class="modal" style="max-width:520px;">
@@ -2086,6 +2144,7 @@ window._deleteModRecord=async(id)=>{await deleteDoc(doc(db,'modificaciones',id))
 window._saveLiqRecord=async(data)=>{const{id,...r}=data;await setDoc(doc(db,'liquidaciones',id),r);};
 window._deleteLiqRecord=async(id)=>{await deleteDoc(doc(db,'liquidaciones',id));};
 window._saveBitacoraLiq=async(id,bitacoraLiq)=>{await updateDoc(doc(db,'liquidaciones',id),{bitacoraLiq});};
+window._saveBitacoraMod=async(id,bitacora)=>{await updateDoc(doc(db,'modificaciones',id),{bitacora});};
 
 onSnapshot(collection(db,'modificaciones'),snap=>{
   window._modRecords=[];
@@ -2969,6 +3028,130 @@ async function deleteEntry(recordId,entryId){
   if(updated)renderEntries(updated);
 }
 function closeBitacora(){document.getElementById('bitacora-overlay').classList.remove('open');bitacoraRecordId=null;}
+
+/* ═══ BITÁCORA MODIFICACIONES ═══ */
+let bitacoraModId=null;
+function openBitacoraMod(id){
+  bitacoraModId=id;
+  const r=(window._modRecords||[]).find(x=>x.id===id);if(!r)return;
+  const terminal=estadoIsTerminal(r.tipo,r.estado);
+  const canEdit=!terminal&&isAdmin();
+  const est=getEstado(r.tipo,r.estado);
+  const tipoBg=r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE';
+  const tipoCol=r.tipo==='asesoria'?'var(--sky)':'var(--teal)';
+  document.getElementById('bit-mod-header').innerHTML=`
+    <span class="ticket-badge">${escHtml(r.ticket||'—')}</span>
+    <span style="padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;background:${tipoBg};color:${tipoCol};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>
+    <span class="status-badge ${est.css}" style="font-size:11px;padding:2px 8px;">${est.label}</span>
+    <span style="font-size:11px;color:var(--muted);margin-left:auto;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(r.objeto||'')}</span>`;
+  const fEl=document.getElementById('new-mod-entry-form');
+  const lEl=document.getElementById('new-mod-entry-locked');
+  const bEl=document.getElementById('new-mod-entry-box');
+  if(canEdit){
+    bEl.classList.remove('locked');fEl.style.display='block';lEl.style.display='none';
+    document.getElementById('mod-entry-date').value=todayISO();
+    document.getElementById('mod-entry-text').value='';
+    document.getElementById('mod-entry-author-name').textContent='Por: '+currentUser.name;
+  } else {
+    bEl.classList.add('locked');fEl.style.display='none';lEl.style.display='flex';
+    document.getElementById('mod-locked-estado-name').textContent=est.label;
+  }
+  renderModEntries(r);
+  document.getElementById('bitacora-mod-overlay').classList.add('open');
+}
+function renderModEntries(r){
+  const entries=[...(r.bitacora||[])].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('mod-entries-count').textContent=entries.length;
+  const list=document.getElementById('mod-entries-list');
+  if(!entries.length){list.innerHTML=`<div class="no-entries">📭 Sin entradas aún.</div>`;return;}
+  const canDel=isAdmin()&&!estadoIsTerminal(r.tipo,r.estado);
+  list.innerHTML=entries.map(e=>`<div class="entry-item">
+    <div class="entry-date"><span>📅 ${fmtDate(e.date)||e.date}</span><span class="entry-author">Por: ${escHtml(e.author||'—')}</span></div>
+    <div class="entry-text">${escHtml(e.text)}</div>
+    ${canDel?`<button class="entry-del" onclick="deleteModEntry('${r.id}','${e.id}')">✕</button>`:''}
+  </div>`).join('');
+}
+async function addModEntry(){
+  const r=(window._modRecords||[]).find(x=>x.id===bitacoraModId);if(!r)return;
+  if(estadoIsTerminal(r.tipo,r.estado)){alert('No se pueden agregar entradas en este estado.');return;}
+  if(!isAdmin())return;
+  const date=document.getElementById('mod-entry-date').value;
+  const text=document.getElementById('mod-entry-text').value.trim();
+  if(!date||!text){alert('Selecciona fecha y escribe el avance.');return;}
+  const bitacora=[...(r.bitacora||[]),{id:'e'+Date.now(),date,text,author:currentUser.name,ts:Date.now()}];
+  showSyncToast('Guardando avance...',3000);
+  await window._saveBitacoraMod(r.id,bitacora);
+  showSyncToast('✅ Avance guardado');
+  document.getElementById('mod-entry-text').value='';
+  document.getElementById('mod-entry-date').value=todayISO();
+  const updated=(window._modRecords||[]).find(x=>x.id===r.id);
+  if(updated)renderModEntries(updated);
+}
+async function deleteModEntry(recordId,entryId){
+  const r=(window._modRecords||[]).find(x=>x.id===recordId);if(!r)return;
+  if(!confirm('¿Eliminar esta entrada?'))return;
+  const bitacora=(r.bitacora||[]).filter(e=>e.id!==entryId);
+  await window._saveBitacoraMod(r.id,bitacora);
+  const updated=(window._modRecords||[]).find(x=>x.id===r.id);
+  if(updated)renderModEntries(updated);
+}
+function closeBitacoraMod(){document.getElementById('bitacora-mod-overlay').classList.remove('open');bitacoraModId=null;}
+
+/* ═══ BITÁCORA GENERAL MODIFICACIONES ═══ */
+function openBitacoraGeneralMod(){
+  const records=(window._modRecords||[]).filter(r=>registroEsDelUsuario(r));
+  const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+  const sel=document.getElementById('bmg-abogado');
+  sel.innerHTML='<option value="">Todos los abogados</option>'+abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
+  document.getElementById('bmg-tipo').value='';
+  document.getElementById('bmg-solo-avances').value='';
+  document.getElementById('bmg-search').value='';
+  document.getElementById('bit-gen-mod-overlay').style.display='flex';
+  renderBitacoraGeneralMod();
+}
+function closeBitacoraGeneralMod(){document.getElementById('bit-gen-mod-overlay').style.display='none';}
+function renderBitacoraGeneralMod(){
+  const tipo=document.getElementById('bmg-tipo').value;
+  const abogado=document.getElementById('bmg-abogado').value;
+  const soloAvances=document.getElementById('bmg-solo-avances').value;
+  const q=(document.getElementById('bmg-search').value||'').toLowerCase();
+  let records=(window._modRecords||[]).filter(r=>registroEsDelUsuario(r));
+  if(tipo) records=records.filter(r=>r.tipo===tipo);
+  if(abogado) records=records.filter(r=>normStr(r.abogado)===normStr(abogado));
+  if(soloAvances==='1') records=records.filter(r=>(r.bitacora||[]).length>0);
+  if(soloAvances==='0') records=records.filter(r=>(r.bitacora||[]).length===0);
+  if(q) records=records.filter(r=>(r.ticket||'').toLowerCase().includes(q)||(r.objeto||'').toLowerCase().includes(q));
+  records=records.slice().sort((a,b)=>(a.ticket||'').localeCompare(b.ticket||'',undefined,{numeric:true}));
+  document.getElementById('bmg-count').textContent=records.length+' modificaciones';
+  const body=document.getElementById('bit-gen-mod-body');
+  if(!records.length){body.innerHTML=`<div class="bit-gen-empty">Sin modificaciones para los filtros seleccionados.</div>`;return;}
+  body.innerHTML=records.map(r=>{
+    const est=getEstado(r.tipo,r.estado);
+    const entries=[...(r.bitacora||[])].sort((a,b)=>b.date.localeCompare(a.date));
+    const tipoBg=r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE';
+    const tipoCol=r.tipo==='asesoria'?'var(--sky)':'var(--teal)';
+    return `<div class="bit-gen-item">
+      <div class="bit-gen-item-header" onclick="this.parentElement.classList.toggle('open')">
+        <span class="ticket-badge" style="font-size:10px;">${escHtml(r.ticket||'—')}</span>
+        <span style="padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700;background:${tipoBg};color:${tipoCol};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>
+        <span style="font-size:12px;font-weight:600;color:var(--navy);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml((r.objeto||'').slice(0,70))}</span>
+        <span style="font-size:11px;color:var(--muted);">${escHtml(r.abogado||'—')}</span>
+        <span class="status-badge ${est.css}" style="font-size:10px;padding:1px 6px;">${est.label}</span>
+        <span style="font-size:11px;color:var(--muted);">${entries.length} entrada${entries.length!==1?'s':''}</span>
+        <span class="bit-gen-chevron">▸</span>
+      </div>
+      <div class="bit-gen-item-body">
+        ${entries.length?entries.map(e=>`<div class="entry-item" style="margin-bottom:6px;">
+          <div class="entry-date"><span>📅 ${fmtDate(e.date)||e.date}</span><span class="entry-author">Por: ${escHtml(e.author||'—')}</span></div>
+          <div class="entry-text">${escHtml(e.text)}</div>
+        </div>`).join(''):`<div class="no-entries">📭 Sin entradas de avance.</div>`}
+        <button class="btn btn-primary" style="font-size:11px;padding:5px 12px;margin-top:8px;" onclick="closeBitacoraGeneralMod();openBitacoraMod('${r.id}')">
+          ${estadoIsTerminal(r.tipo,r.estado)?'📖 Ver bitácora':'📝 Registrar avance'}
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
 
 /* ═══ BITÁCORA LIQUIDACIONES ═══ */
 let bitacoraLiqId=null;
@@ -4461,7 +4644,7 @@ async function confirmarImport(){
 }
 
 /* ═══ EVENTOS ═══ */
-['modal-overlay','user-overlay','bitacora-overlay','pdf-overlay','bit-gen-overlay','import-overlay','mod-modal-overlay','liq-modal-overlay','bitacora-liq-overlay','bit-gen-liq-overlay'].forEach(id=>{
+['modal-overlay','user-overlay','bitacora-overlay','pdf-overlay','bit-gen-overlay','import-overlay','mod-modal-overlay','liq-modal-overlay','bitacora-liq-overlay','bit-gen-liq-overlay','bitacora-mod-overlay','bit-gen-mod-overlay'].forEach(id=>{
   document.getElementById(id)?.addEventListener('click',function(e){
     if(e.target===this){
       if(id==='modal-overlay') closeModal();
@@ -4471,6 +4654,8 @@ async function confirmarImport(){
       else if(id==='liq-modal-overlay') closeModalLiq();
       else if(id==='bitacora-liq-overlay') closeBitacoraLiq();
       else if(id==='bit-gen-liq-overlay') closeBitacoraGeneralLiq();
+      else if(id==='bitacora-mod-overlay') closeBitacoraMod();
+      else if(id==='bit-gen-mod-overlay') closeBitacoraGeneralMod();
       else if(id==='pdf-overlay') closePdfModal();
       else if(id==='bit-gen-overlay') closeBitacoraGeneral();
       else closeBitacora();
@@ -5018,11 +5203,12 @@ function renderMod(){
           <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(r.fechaAdjudicacion)||'—'}</td>
           <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(r.fechaMaxGestion)||'—'}</td>
           <td><span class="${est.css}" style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;">${est.label}</span></td>
-          <td style="text-align:center;color:var(--muted);font-size:12px;">—</td>
-          <td style="white-space:nowrap;">
-            ${adm?`<button class="action-btn edit" onclick="openModalMod('${r.id}')" title="Editar">✏️</button>`:''}
-            ${adm?`<button class="action-btn del" onclick="deleteModRecord('${r.id}')" title="Eliminar">🗑️</button>`:''}
-          </td>
+          <td><span class="avance-badge"><span class="avance-dot ${(r.bitacora||[]).length?'has':''}"></span>${(r.bitacora||[]).length}</span></td>
+          <td onclick="event.stopPropagation()"><div class="actions-cell">
+            <button class="icon-btn" onclick="openBitacoraMod('${r.id}')" title="${!estadoIsTerminal(r.tipo,r.estado)?'Avance':'Ver'}">${!estadoIsTerminal(r.tipo,r.estado)?'📝':'📖'}</button>
+            <button class="icon-btn" onclick="openModalMod('${r.id}')" ${adm?'':'disabled'}>✏️</button>
+            <button class="icon-btn del" onclick="deleteModRecord('${r.id}')" ${adm?'':'disabled'}>🗑️</button>
+          </div></td>
         </tr>`;
       }).join('');
     }
@@ -5037,18 +5223,24 @@ function renderMod(){
       if(!data.length){mc.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:36px;">✏️</div><p style="font-size:13px;margin-top:10px;">Sin modificaciones.</p></div>`;}
       else mc.innerHTML=data.map(r=>{
         const est=getEstado(r.tipo,r.estado);
+        const nE=(r.bitacora||[]).length;
+        const terminal=estadoIsTerminal(r.tipo,r.estado);
         const tipoBg=r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE';
         const tipoCol=r.tipo==='asesoria'?'var(--sky)':'var(--teal)';
         return `<div class="mc">
-          <div class="mc-head"><span class="mc-ticket">${escHtml(r.ticket||'—')}</span>
+          <div class="mc-head">
+            <span class="mc-ticket">${escHtml(r.ticket||'—')}</span>
             <span style="padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:${tipoBg};color:${tipoCol};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>
-            <span style="margin-left:auto;padding:2px 8px;border-radius:8px;font-size:10px;background:#F1F5F9;color:var(--navy);font-weight:600;">${est.label}</span></div>
+            <span style="margin-left:auto;padding:2px 8px;border-radius:8px;font-size:10px;background:#F1F5F9;color:var(--navy);font-weight:600;">${est.label}</span>
+          </div>
           <div class="mc-body">
-            <div class="mc-objeto">${escHtml((r.objeto||'Sin objeto').slice(0,90))}</div>
+            <div class="mc-objeto">${escHtml((r.objeto||'Sin objeto').slice(0,90))}${(r.objeto||'').length>90?'…':''}</div>
             <div class="mc-row"><span class="mc-lbl">Abogado</span><span class="mc-val">${escHtml(r.abogado||'—')}</span></div>
+            ${nE>0?`<div style="margin-top:6px;font-size:11px;color:var(--accent);font-weight:500;">📝 ${nE} avance${nE!==1?'s':''}</div>`:''}
           </div>
           <div class="mc-footer" onclick="event.stopPropagation()">
-            ${adm?`<button class="mc-btn" onclick="openModalMod('${r.id}')">✏️ Editar</button>`:''}
+            <button class="mc-btn log" onclick="openBitacoraMod('${r.id}')">${terminal?'📖 Bitácora':'📝 Avance'}</button>
+            ${adm?`<button class="mc-btn" onclick="openModalMod('${r.id}')">✏️</button>`:''}
             ${adm?`<button class="mc-btn del" onclick="deleteModRecord('${r.id}')">🗑️</button>`:''}
           </div>
         </div>`;
@@ -5249,13 +5441,23 @@ function exportModXLSX(){
   if(typeof XLSX==='undefined'){alert('La librería aún carga. Intenta en unos segundos.');return;}
   const data=window._modRecords||[];
   if(!data.length){alert('No hay modificaciones para exportar.');return;}
-  const hdrs=['Ticket','Tipo','Objeto','Abogado','GIT','Dependencia','SECOP','Estado','F.Asignación','F.Adjudicación','F.Máx.Gestión','Observaciones'];
-  const rows=data.map(r=>[r.ticket,r.tipo==='contractual'?'Proceso Contractual':'Asesoría Previa',r.objeto||'',r.abogado||'',r.git||'',r.dependencia||'',r.secop||'',getEstado(r.tipo,r.estado).label,fmtDate(r.fechaAsignacion)||'',fmtDate(r.fechaAdjudicacion)||'',fmtDate(r.fechaMaxGestion)||'',r.obs||'']);
+  const hdrs=['Ticket','Tipo','Objeto','Abogado','GIT','Dependencia','SECOP','Estado','F.Asignación','F.Adjudicación','F.Máx.Gestión','Observaciones','Entradas Avance'];
+  const rows=data.map(r=>[r.ticket,r.tipo==='contractual'?'Proceso Contractual':'Asesoría Previa',r.objeto||'',r.abogado||'',r.git||'',r.dependencia||'',r.secop||'',getEstado(r.tipo,r.estado).label,fmtDate(r.fechaAsignacion)||'',fmtDate(r.fechaAdjudicacion)||'',fmtDate(r.fechaMaxGestion)||'',r.obs||'',(r.bitacora||[]).length]);
   const ws=XLSX.utils.aoa_to_sheet([hdrs,...rows]);
-  ws['!cols']=[{wch:10},{wch:20},{wch:40},{wch:22},{wch:30},{wch:30},{wch:14},{wch:22},{wch:13},{wch:13},{wch:13},{wch:28}];
+  ws['!cols']=[{wch:10},{wch:20},{wch:40},{wch:22},{wch:30},{wch:30},{wch:14},{wch:22},{wch:13},{wch:13},{wch:13},{wch:28},{wch:8}];
+  const bitHdrs=['Ticket','Tipo','Objeto','Abogado','Estado','Fecha Avance','Registrado por','Descripción'];
+  const bitData=[bitHdrs];
+  data.forEach(r=>{
+    const ent=(r.bitacora||[]).slice().sort((a,b)=>a.date.localeCompare(b.date));
+    if(!ent.length){bitData.push([r.ticket,r.tipo==='contractual'?'Contractual':'Asesoría',r.objeto||'',r.abogado||'',getEstado(r.tipo,r.estado).label,'','','Sin entradas']);}
+    else ent.forEach((e,i)=>{bitData.push([i===0?(r.ticket||''):'',i===0?(r.tipo==='contractual'?'Contractual':'Asesoría'):'',i===0?(r.objeto||''):'',i===0?(r.abogado||''):'',i===0?getEstado(r.tipo,r.estado).label:'',fmtDate(e.date)||e.date||'',e.author||'',e.text||'']);});
+    bitData.push(Array(8).fill(''));
+  });
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Modificaciones');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(bitData),'Bitácora');
   XLSX.writeFile(wb,'modificaciones.xlsx');
+  console.log(`[Export XLSX] ${data.length} modificaciones exportadas`);
 }
 function importarMod(input){
   if(!isAdmin()){alert('Solo los administradores pueden importar datos.');input.value='';return;}
