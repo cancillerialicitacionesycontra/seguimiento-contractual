@@ -9,6 +9,7 @@
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta http-equiv="X-Frame-Options" content="DENY">
 <title>Seguimiento Contractual — MRE</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 :root{
@@ -1254,7 +1255,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       <button class="btn btn-ghost" onclick="openBitacoraGeneralLiq()" style="color:#7C3AED;border-color:#C4B5FD;">📓 Bitácora</button>
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
-        <input type="text" id="search-liq" placeholder="Buscar N° contrato, contratista, abogado…" oninput="renderLiq()">
+        <input type="text" id="search-liq" placeholder="Buscar N° contrato, contratista, abogado…" oninput="_liqPage=0;renderLiq()">
       </div>
     </div>
     <div class="stats-bar">
@@ -5230,6 +5231,8 @@ async function saveModRecord(){
   const objeto=sanitize(document.getElementById('mod-f-objeto').value.trim(),1000);
   if(!ticket||!abogado||!objeto){alert('Completa los campos obligatorios: Abogado y Objeto.');return;}
   const id=modEditingId||('mod_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
+  // ── CRÍTICO: recuperar el registro existente para preservar bitacora ──
+  const existing=modEditingId?(window._modRecords||[]).find(r=>r.id===modEditingId):null;
   const data={
     id,ticket,tipo:document.getElementById('mod-f-tipo').value,objeto,abogado,
     git:document.getElementById('mod-f-git').value,
@@ -5241,10 +5244,38 @@ async function saveModRecord(){
     fechaAdjudicacion:document.getElementById('mod-f-entrega').value||null,
     fechaMaxGestion:document.getElementById('mod-f-maxgestion').value||null,
     obs:sanitize(document.getElementById('mod-f-obs').value.trim(),2000),
+    bitacora:existing?.bitacora||[],
+    createdBy:existing?.createdBy||currentUser?.name||'',
+    createdAt:existing?.createdAt||new Date().toISOString(),
+    updatedBy:currentUser?.name||'',
     updatedAt:new Date().toISOString(),
   };
-  try{await window._saveModRecord(data);closeModalMod();showSyncToast('✅ Modificación guardada');}
-  catch(e){console.error(e);alert('Error al guardar: '+e.message);}
+  // Actualizar array local inmediatamente
+  if(modEditingId){
+    const idx=(window._modRecords||[]).findIndex(r=>r.id===modEditingId);
+    if(idx>=0) window._modRecords[idx]=data;
+    else window._modRecords=[...(window._modRecords||[]),data];
+  } else {
+    window._modRecords=[...(window._modRecords||[]),data];
+  }
+  closeModalMod();
+  showSyncToast('Guardando…',3000);
+  try{
+    await window._saveModRecord(data);
+    showSyncToast('✅ Modificación guardada');
+  } catch(e){
+    // Revertir cambio local si falla Firebase
+    if(modEditingId){
+      const idx=(window._modRecords||[]).findIndex(r=>r.id===data.id);
+      if(idx>=0&&existing) window._modRecords[idx]=existing;
+    } else {
+      window._modRecords=(window._modRecords||[]).filter(r=>r.id!==data.id);
+    }
+    renderMod();
+    console.error(e);
+    alert('Error al guardar: '+e.message);
+    showSyncToast('❌ Error',3000);
+  }
 }
 function deleteModRecord(id){
   if(!isAdmin())return;
@@ -5423,6 +5454,8 @@ async function saveLiqRecord(){
   const contratista=sanitize(document.getElementById('liq-f-contratista').value.trim(),500);
   if(!ticket||!abogado||!contratista){alert('Completa los campos obligatorios: N° Contrato, Abogado y Contratista.');return;}
   const id=liqEditingId||('liq_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
+  // ── CRÍTICO: recuperar el registro existente para preservar bitacoraLiq ──
+  const existing=liqEditingId?(window._liqRecords||[]).find(r=>r.id===liqEditingId):null;
   const data={
     id,ticket,contratista,abogado,
     numeroProceso:sanitize(document.getElementById('liq-f-proceso').value.trim(),100),
@@ -5437,18 +5470,48 @@ async function saveLiqRecord(){
     fechaCierre:document.getElementById('liq-f-cierre').value||null,
     fechaLiquidacion:document.getElementById('liq-f-liquidacion').value||null,
     obs:sanitize(document.getElementById('liq-f-obs').value.trim(),2000),
+    bitacoraLiq:existing?.bitacoraLiq||[],
+    createdBy:existing?.createdBy||currentUser?.name||'',
+    createdAt:existing?.createdAt||new Date().toISOString(),
+    updatedBy:currentUser?.name||'',
     updatedAt:new Date().toISOString(),
   };
-  try{await window._saveLiqRecord(data);closeModalLiq();showSyncToast('✅ Liquidación guardada');}
-  catch(e){console.error(e);alert('Error al guardar: '+e.message);}
+  // Actualizar array local inmediatamente
+  if(liqEditingId){
+    const idx=(window._liqRecords||[]).findIndex(r=>r.id===liqEditingId);
+    if(idx>=0) window._liqRecords[idx]=data;
+    else window._liqRecords=[...(window._liqRecords||[]),data];
+  } else {
+    window._liqRecords=[...(window._liqRecords||[]),data];
+  }
+  closeModalLiq();
+  showSyncToast('Guardando…',3000);
+  try{
+    await window._saveLiqRecord(data);
+    showSyncToast('✅ Liquidación guardada');
+  } catch(e){
+    if(liqEditingId){
+      const idx=(window._liqRecords||[]).findIndex(r=>r.id===data.id);
+      if(idx>=0&&existing) window._liqRecords[idx]=existing;
+    } else {
+      window._liqRecords=(window._liqRecords||[]).filter(r=>r.id!==data.id);
+    }
+    renderLiq();
+    console.error(e);
+    alert('Error al guardar: '+e.message);
+    showSyncToast('❌ Error',3000);
+  }
 }
 function deleteLiqRecord(id){
   if(!isAdmin())return;
   if(!confirm('¿Eliminar esta liquidación?'))return;
   window._deleteLiqRecord(id).then(()=>showSyncToast('Eliminado')).catch(e=>alert(e.message));
 }
+let _liqPage=0;
+const LIQ_PAGE_SIZE=100;
+
 function renderLiq(){
-    const records=window._liqRecords||[];
+  const records=window._liqRecords||[];
   const q=(document.getElementById('search-liq')?.value||'').toLowerCase();
   const abogadoFiltro=getAbogadoFiltro();
   let data=records.filter(r=>{
@@ -5461,6 +5524,8 @@ function renderLiq(){
     if(!isNaN(na)&&!isNaN(nb))return na-nb;
     return (a.ticket||'').localeCompare(b.ticket||'',undefined,{numeric:true});
   });
+
+  // Stats siempre sobre el total
   const allForStats=records;
   document.getElementById('liq-stat-total').textContent=allForStats.length;
   document.getElementById('liq-stat-pendiente').textContent=allForStats.filter(r=>
@@ -5469,12 +5534,19 @@ function renderLiq(){
   document.getElementById('liq-stat-liquidado').textContent=allForStats.filter(r=>
     ['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(r.estado)
   ).length;
+
+  // Paginación: reset a página 0 si la búsqueda cambia
+  const totalPages=Math.max(1,Math.ceil(data.length/LIQ_PAGE_SIZE));
+  if(_liqPage>=totalPages) _liqPage=0;
+  const pageData=data.slice(_liqPage*LIQ_PAGE_SIZE,(_liqPage+1)*LIQ_PAGE_SIZE);
+
   const adm=isAdmin();
   const tbody=document.getElementById('liq-table-body');
   if(tbody){
-    if(!data.length){tbody.innerHTML=`<tr><td colspan="10"><div class="empty-state"><div class="big-icon">🔒</div><p>Sin liquidaciones registradas.</p></div></td></tr>`;}
-    else{
-      tbody.innerHTML=data.map(r=>{
+    if(!data.length){
+      tbody.innerHTML=`<tr><td colspan="16"><div class="empty-state"><div class="big-icon">🔒</div><p>Sin liquidaciones registradas.</p></div></td></tr>`;
+    } else {
+      tbody.innerHTML=pageData.map(r=>{
         const est=getEstadoLiq(r.estado);
         return `<tr>
           <td><span class="ticket-badge">${escHtml(r.ticket||'—')}</span></td>
@@ -5497,13 +5569,15 @@ function renderLiq(){
             </button>
           </td>
           <td style="white-space:nowrap;">
-            ${adm?`<button class="action-btn edit" onclick="openModalLiq('${r.id}')" title="Editar">✏️</button>`:''}
-            ${adm?`<button class="action-btn del" onclick="deleteLiqRecord('${r.id}')" title="Eliminar">🗑️</button>`:''}
+            ${adm?`<button class="icon-btn" onclick="openModalLiq('${r.id}')" title="Editar">✏️</button>`:''}
+            ${adm?`<button class="icon-btn del" onclick="deleteLiqRecord('${r.id}')" title="Eliminar">🗑️</button>`:''}
           </td>
         </tr>`;
       }).join('');
     }
+    renderLiqPager(data.length, totalPages);
   }
+
   const esMobil=window.innerWidth<=768;
   const mc=document.getElementById('liq-mobile-cards');
   const tw=document.querySelector('#page-liquidaciones .table-wrap');
@@ -5512,7 +5586,7 @@ function renderLiq(){
     else{mc.style.display='none';if(tw)tw.style.display='';}
     if(esMobil){
       if(!data.length){mc.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:36px;">🔒</div><p style="font-size:13px;margin-top:10px;">Sin liquidaciones.</p></div>`;}
-      else mc.innerHTML=data.map(r=>{
+      else mc.innerHTML=pageData.map(r=>{
         const est=getEstadoLiq(r.estado);
         return `<div class="mc">
           <div class="mc-head"><span class="mc-ticket">${escHtml(r.ticket||'—')}</span>
@@ -5522,12 +5596,8 @@ function renderLiq(){
             <div class="mc-row"><span class="mc-lbl">Abogado</span><span class="mc-val">${escHtml(r.abogado||'—')}</span></div>
             ${r.unidadAdmin?`<div class="mc-row"><span class="mc-lbl">Unid. Admin</span><span class="mc-val" style="font-weight:600;">${escHtml(r.unidadAdmin)}</span></div>`:''}
             ${r.tramite?`<div class="mc-row"><span class="mc-lbl">Trámite</span><span class="mc-val">${escHtml(r.tramite)}</span></div>`:''}
-            ${r.persona?`<div class="mc-row"><span class="mc-lbl">Persona</span><span class="mc-val">${escHtml(r.persona)}</span></div>`:''}
-            ${r.numeroProceso?`<div class="mc-row"><span class="mc-lbl">N° Proceso</span><span class="mc-val" style="font-family:var(--mono)">${escHtml(r.numeroProceso)}</span></div>`:''}
-            ${r.fechaInicio?`<div class="mc-row"><span class="mc-lbl">F. Finalización</span><span class="mc-val">${fmtDate(r.fechaInicio)}</span></div>`:''}
+            ${r.numeroProceso?`<div class="mc-row"><span class="mc-liq-val" style="font-family:var(--mono)">${escHtml(r.numeroProceso)}</span></div>`:''}
             ${r.fechaTerminacion?`<div class="mc-row"><span class="mc-lbl">F. Máx Liqu</span><span class="mc-val">${fmtDate(r.fechaTerminacion)}</span></div>`:''}
-            ${r.fechaCierre?`<div class="mc-row"><span class="mc-lbl">F. Cierre</span><span class="mc-val">${fmtDate(r.fechaCierre)}</span></div>`:''}
-            ${r.fechaLiquidacion?`<div class="mc-row"><span class="mc-lbl">F. Liquidación</span><span class="mc-val">${fmtDate(r.fechaLiquidacion)}</span></div>`:''}
           </div>
           <div class="mc-footer" onclick="event.stopPropagation()">
             <button class="mc-btn log" onclick="openBitacoraLiq('${r.id}')">📝 Avance</button>
@@ -5540,6 +5610,33 @@ function renderLiq(){
   }
   const fabLiq=document.getElementById('fab-nuevo-liq');
   if(fabLiq)fabLiq.style.display=adm?'flex':'none';
+}
+
+function renderLiqPager(total, totalPages){
+  let pager=document.getElementById('liq-pager');
+  if(!pager){
+    pager=document.createElement('div');
+    pager.id='liq-pager';
+    pager.style.cssText='display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 32px;border-top:1px solid var(--border);background:var(--surface);flex-wrap:wrap;';
+    const tw=document.querySelector('#page-liquidaciones .table-wrap');
+    if(tw) tw.after(pager);
+  }
+  if(totalPages<=1){pager.style.display='none';return;}
+  pager.style.display='flex';
+  const start=_liqPage*LIQ_PAGE_SIZE+1;
+  const end=Math.min((_liqPage+1)*LIQ_PAGE_SIZE,total);
+  const btnStyle='border:1px solid var(--border);background:white;border-radius:6px;padding:5px 11px;cursor:pointer;font-size:13px;transition:all .15s;';
+  const btnDisStyle=btnStyle+'opacity:.35;cursor:default;pointer-events:none;';
+  pager.innerHTML=`
+    <button onclick="_liqPage=0;renderLiq()" style="${_liqPage===0?btnDisStyle:btnStyle}">«</button>
+    <button onclick="_liqPage=Math.max(0,_liqPage-1);renderLiq()" style="${_liqPage===0?btnDisStyle:btnStyle}">‹ Anterior</button>
+    <span style="font-size:12px;color:var(--muted);font-family:var(--mono);padding:0 6px;">
+      <b style="color:var(--navy);">${start}–${end}</b> de <b style="color:var(--navy);">${total}</b>
+      &nbsp;·&nbsp; Página <b style="color:var(--navy);">${_liqPage+1}</b> / <b>${totalPages}</b>
+    </span>
+    <button onclick="_liqPage=Math.min(${totalPages-1},_liqPage+1);renderLiq()" style="${_liqPage===totalPages-1?btnDisStyle:btnStyle}">Siguiente ›</button>
+    <button onclick="_liqPage=${totalPages-1};renderLiq()" style="${_liqPage===totalPages-1?btnDisStyle:btnStyle}">»</button>
+  `;
 }
 
 function exportModCSV(){
@@ -5612,7 +5709,15 @@ function importarMod(input){
       Promise.all(parsed.map(async rec=>{
         const{_id,_esNuevo,...data}=rec;
         const ex=_esNuevo?null:existing.find(r=>normStr(r.ticket)===normStr(data.ticket));
-        await window._saveModRecord({id:ex?ex.id:_id,...data});
+        // Preservar bitacora, createdBy y createdAt del registro existente
+        await window._saveModRecord({
+          id:ex?ex.id:_id,
+          ...data,
+          bitacora:ex?.bitacora||[],
+          createdBy:ex?.createdBy||'Importación',
+          createdAt:ex?.createdAt||new Date().toISOString(),
+          updatedAt:new Date().toISOString(),
+        });
       })).then(()=>showSyncToast(`✅ ${parsed.length} modificaciones importadas`)).catch(e=>alert('Error: '+e.message));
     }catch(err){alert('Error al leer el archivo: '+err.message);}
     input.value='';
