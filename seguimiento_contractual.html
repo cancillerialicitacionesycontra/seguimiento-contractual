@@ -2185,7 +2185,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, updateDoc, getDocs }
+import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, updateDoc, getDocs, writeBatch }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -2240,6 +2240,21 @@ window._saveLiqRecord=async(data)=>{const{id,...r}=data;await setDoc(doc(db,'liq
 window._deleteLiqRecord=async(id)=>{await deleteDoc(doc(db,'liquidaciones',id));};
 window._saveBitacoraLiq=async(id,bitacoraLiq)=>{await updateDoc(doc(db,'liquidaciones',id),{bitacoraLiq});};
 window._saveBitacoraMod=async(id,bitacora)=>{await updateDoc(doc(db,'modificaciones',id),{bitacora});};
+
+// Guardado masivo con writeBatch (máx 500 por lote) — para importaciones grandes
+window._batchSaveLiq=async(records, onProgress)=>{
+  const BATCH_SIZE=400; // margen bajo 500 para seguridad
+  for(let i=0;i<records.length;i+=BATCH_SIZE){
+    const chunk=records.slice(i,i+BATCH_SIZE);
+    const batch=writeBatch(db);
+    chunk.forEach(data=>{
+      const{id,...r}=data;
+      batch.set(doc(db,'liquidaciones',id),r);
+    });
+    await batch.commit();
+    if(onProgress) onProgress(Math.min(i+BATCH_SIZE, records.length), records.length);
+  }
+};
 window._deleteAllLiq=async()=>{
   const snap=await getDocs(collection(db,'liquidaciones'));
   const batch=[];
@@ -6810,21 +6825,29 @@ function importarLiq(input){
 ` +
         `¿Confirmar importación de ${parsed.length} liquidaciones?`
       )){input.value='';return;}
-      showSyncToast(`Importando ${parsed.length} liquidaciones…`,10000);
-      Promise.all(parsed.map(async rec=>{
+      showSyncToast(`Importando ${parsed.length} liquidaciones…`,60000);
+      // Preparar registros finales
+      const toSave=parsed.map(rec=>{
         const{_id,_esNuevo,_clave,...data}=rec;
         const ex=_esNuevo?null:existing.find(r=>claveUnica(r.ticket,r.numeroProceso)===_clave);
-        await window._saveLiqRecord({
+        return{
           id:ex?ex.id:_id,
           ...data,
           bitacoraLiq:ex?.bitacoraLiq||[],
           createdBy:ex?.createdBy||'Importación',
           createdAt:ex?.createdAt||new Date().toISOString(),
           updatedAt:new Date().toISOString(),
-        });
-      })).then(()=>{
-        showSyncToast(`✅ ${parsed.length} liquidaciones importadas (${nuevos} nuevas, ${actualizar} actualizadas)`);
-      }).catch(e=>alert('Error: '+e.message));
+        };
+      });
+      // Usar writeBatch para garantizar que todos queden guardados
+      window._batchSaveLiq(toSave,(done,total)=>{
+        showSyncToast(`Guardando… ${done}/${total} liquidaciones`,60000);
+      }).then(()=>{
+        showSyncToast(`✅ ${parsed.length} liquidaciones importadas correctamente (${nuevos} nuevas, ${actualizar} actualizadas)`);
+      }).catch(e=>{
+        alert('Error durante la importación: '+e.message+'\nIntenta nuevamente o importa en partes más pequeñas.');
+        console.error('importarLiq error:',e);
+      });
     }catch(err){alert('Error al leer el archivo: '+err.message);}
     input.value='';
   };
