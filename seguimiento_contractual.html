@@ -109,36 +109,36 @@ header .sub{font-size:12px;color:#94A3B8;font-weight:300;}
 
 /* ── TABLE MEJORADA ── */
 .table-wrap{padding:0 32px 32px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
-table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:12px;overflow:hidden;border:1px solid var(--border);font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:12px;overflow:hidden;border:1px solid var(--border);font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.06);}
 thead tr{background:linear-gradient(135deg,var(--navy) 0%,#1A3260 100%);color:white;}
 thead th{padding:13px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;cursor:pointer;user-select:none;border-right:1px solid rgba(255,255,255,.08);}
 thead th:last-child{border-right:none;}
 thead th:hover{background:rgba(255,255,255,.1);}
-tbody tr.main-row{border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+tbody tr.main-row{border-bottom:1px solid var(--border);cursor:pointer;transition:all .15s;}
 tbody tr.main-row:nth-child(even) td{background:#FAFBFC;}
-tbody tr.main-row:hover td{background:#EFF6FF!important;}
-tbody tr.main-row.expanded td{background:#EFF6FF!important;border-bottom:none;}
+tbody tr.main-row:hover td{background:#EFF6FF!important;box-shadow:inset 3px 0 0 var(--accent);}
+tbody tr.main-row.expanded td{background:#EFF6FF!important;border-bottom:none;box-shadow:inset 3px 0 0 var(--accent);}
 tbody td{padding:12px 14px;vertical-align:middle;}
 
 /* ── STATS ── */
 .stats-bar{padding:16px 32px;display:flex;gap:12px;flex-wrap:wrap;}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;min-width:148px;transition:all .2s;position:relative;overflow:hidden;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;min-width:148px;transition:all .2s;position:relative;overflow:hidden;cursor:default;}
 .stat-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:12px 0 0 12px;}
 .stat-card-total::before{background:var(--navy);}
 .stat-card-asesoria::before{background:var(--sky);}
 .stat-card-contractual::before{background:var(--teal);}
 .stat-card-ok::before{background:var(--green);}
-.stat-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.10);transform:translateY(-2px);}
+.stat-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.12);transform:translateY(-3px);}
 .stat-card-total .stat-num{color:var(--navy);}
 .stat-card-asesoria .stat-num{color:var(--sky);}
 .stat-card-contractual .stat-num{color:var(--teal);}
 .stat-card-ok .stat-num{color:var(--green);}
-.stat-card .stat-num{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--navy);display:block;line-height:1.1;}
+.stat-card .stat-num{font-family:var(--mono);font-size:28px;font-weight:700;color:var(--navy);display:block;line-height:1.1;}
 .stat-card .stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);display:block;margin-top:3px;}
+.stat-card .stat-icon{font-size:22px;flex-shrink:0;opacity:.8;}
 
 /* ── STATUS BADGES ── */
-/* Asesoría previa */
-.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.08);}
 .sb-asignado{background:#FEF9C3;color:#92400E;}
 .sb-en-revision-lyc{background:var(--accent-light);color:#1D4ED8;}
 .sb-en-revision-jlc{background:#E0E7FF;color:#3730A3;}
@@ -146,17 +146,16 @@ tbody td{padding:12px 14px;vertical-align:middle;}
 .sb-liq-radicado-git{background:#CFFAFE;color:#0E7490;}
 .sb-liq-radicado-comp{background:#E0F2FE;color:#0369A1;}
 .sb-liq-pte-cerrar{background:#FEE2E2;color:#991B1B;}
-.sb-liq-cierre{background:#F0FDF4;color:#166534;font-weight:700;}
+.sb-liq-cierre{background:#DCFCE7;color:#166534;font-weight:700;box-shadow:0 0 0 1.5px #86EFAC;}
 .sb-en-revision-at{background:var(--purple-light);color:#5B21B6;}
-.sb-aprobado{background:var(--green-light);color:#065F46;}
-/* Proceso contractual */
+.sb-aprobado{background:var(--green-light);color:#065F46;box-shadow:0 0 0 1.5px #86EFAC;}
 .sb-pc-asignado{background:#FEF9C3;color:#92400E;}
 .sb-pc-en-estructuracion{background:var(--teal-light);color:#0E7490;}
 .sb-pc-publicado-secop{background:var(--accent-light);color:#1D4ED8;}
 .sb-pc-en-evaluacion{background:var(--orange-light);color:#C2410C;}
 .sb-pc-adjudicado{background:var(--purple-light);color:#5B21B6;}
 .sb-pc-revision-jlc{background:#E0E7FF;color:#3730A3;font-weight:600;}
-.sb-pc-contratado{background:var(--green-light);color:#065F46;}
+.sb-pc-contratado{background:var(--green-light);color:#065F46;box-shadow:0 0 0 1.5px #86EFAC;}
 .sb-pc-cancelado{background:var(--red-light);color:#991B1B;}
 
 /* ── TABLE ── */
@@ -1689,8 +1688,27 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       <div style="margin-bottom:16px;"><button class="btn btn-primary" onclick="openAddUser()">＋ Agregar Usuario</button></div>
       <div class="users-grid" id="users-grid"></div>
 
+      <!-- Panel de diagnóstico -->
+      <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:20px 24px;margin-top:24px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <span style="font-size:20px;">🔍</span>
+          <div>
+            <div style="font-weight:700;color:#065F46;font-size:14px;">Panel de Diagnóstico — Visibilidad por Abogado</div>
+            <div style="font-size:12px;color:#6B7280;margin-top:2px;">Verifica qué registros ve cada abogado en Procesos, Modificaciones y Liquidaciones</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <select id="diag-abogado-sel" style="padding:8px 12px;border:1.5px solid #BBF7D0;border-radius:8px;font-size:13px;background:white;min-width:220px;">
+            <option value="">— Seleccionar abogado —</option>
+          </select>
+          <button class="btn btn-primary" onclick="runDiagnostico()" style="background:#059669;">🔍 Ejecutar diagnóstico</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('diag-result').innerHTML=''">✕ Limpiar</button>
+        </div>
+        <div id="diag-result" style="margin-top:16px;"></div>
+      </div>
+
       <!-- Zona de mantenimiento -->
-      <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:20px 24px;margin-top:32px;">
+      <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:20px 24px;margin-top:24px;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
           <span style="font-size:22px;">🗑️</span>
           <div>
@@ -2584,7 +2602,7 @@ function showPage(id){
   document.getElementById('page-'+id).classList.add('active');
   document.getElementById('tab-'+id).classList.add('active');
   if(id==='dash')renderDashboard();
-  if(id==='admin')renderAdminPanel();
+  if(id==='admin'){renderAdminPanel();setTimeout(populateDiagAbogados,400);}
   if(id==='modificaciones')renderMod();
   if(id==='liquidaciones')renderLiq();
   if(id==='dash-mod')renderDashMod();
@@ -6325,6 +6343,92 @@ function openModalLiq(id=null){
   document.getElementById('liq-modal-overlay').classList.add('open');
 }
 function closeModalLiq(){document.getElementById('liq-modal-overlay').classList.remove('open');liqEditingId=null;}
+/* ══ DIAGNÓSTICO DE VISIBILIDAD POR ABOGADO ══ */
+function populateDiagAbogados(){
+  const sel=document.getElementById('diag-abogado-sel');
+  if(!sel) return;
+  const abogados=new Set();
+  (window._records||[]).forEach(r=>{if(r.abogado)abogados.add(r.abogado.trim());});
+  (window._modRecords||[]).forEach(r=>{if(r.abogado)abogados.add(r.abogado.trim());});
+  (window._liqRecords||[]).forEach(r=>{if(r.abogado)abogados.add(r.abogado.trim());});
+  const sorted=[...abogados].sort();
+  sel.innerHTML='<option value="">— Seleccionar abogado —</option>'+
+    sorted.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
+}
+
+function runDiagnostico(){
+  const sel=document.getElementById('diag-abogado-sel');
+  const abogado=sel?.value;
+  if(!abogado){alert('Selecciona un abogado para el diagnóstico.');return;}
+  const res=document.getElementById('diag-result');
+  const norm=s=>normStr(s||'');
+  const ab=norm(abogado);
+  const procesos=(window._records||[]).filter(r=>norm(r.abogado)===ab);
+  const mods=(window._modRecords||[]).filter(r=>norm(r.abogado)===ab);
+  const liqs=(window._liqRecords||[]).filter(r=>norm(r.abogado)===ab);
+  const builtinUser=BUILTIN_USERS.find(u=>norm(u.abogado)===ab);
+  const fbUser=(window._fbUsers||[]).find(u=>norm(u.abogado)===ab);
+  const userInfo=builtinUser||fbUser;
+  const mkBadge=(n,color,label)=>`<span style="background:${color}18;color:${color};border:1px solid ${color}33;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;margin-right:6px;">${n} ${label}</span>`;
+  const mkRow=(r,tipo)=>{
+    const est=tipo==='liq'?getEstadoLiq(r.estado):getEstado(r.tipo||'asesoria',r.estado);
+    return `<tr style="border-bottom:1px solid #F1F5F9;">
+      <td style="padding:7px 10px;font-family:monospace;font-size:12px;color:#0F1F3D;font-weight:600;">${escHtml(r.ticket||'—')}</td>
+      <td style="padding:7px 10px;font-size:12px;">${escHtml((r.objeto||r.contratista||'').slice(0,40))}</td>
+      <td style="padding:7px 10px;"><span style="font-size:11px;padding:2px 8px;border-radius:10px;background:#F1F5F9;">${est.label}</span></td>
+      <td style="padding:7px 10px;font-size:11px;color:#64748B;">${(r.bitacora||r.bitacoraLiq||[]).length} entradas</td>
+    </tr>`;
+  };
+  const mkTable=(records,tipo,titulo,color)=>{
+    if(!records.length) return `<div style="color:#94A3B8;font-size:12px;font-style:italic;margin-bottom:8px;">Sin registros de ${titulo}</div>`;
+    return `<div style="margin-bottom:16px;">
+      <div style="font-size:11px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">${titulo} — ${records.length} registros</div>
+      <div style="border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr style="background:#F8FAFC;">
+            <th style="padding:6px 10px;text-align:left;font-size:10px;color:#64748B;">N° Contrato/Ticket</th>
+            <th style="padding:6px 10px;text-align:left;font-size:10px;color:#64748B;">Objeto / Contratista</th>
+            <th style="padding:6px 10px;text-align:left;font-size:10px;color:#64748B;">Estado</th>
+            <th style="padding:6px 10px;text-align:left;font-size:10px;color:#64748B;">Bitácora</th>
+          </tr></thead>
+          <tbody>${records.slice(0,10).map(r=>mkRow(r,tipo)).join('')}
+          ${records.length>10?`<tr><td colspan="4" style="padding:8px 10px;text-align:center;color:#94A3B8;font-size:11px;">… y ${records.length-10} más</td></tr>`:''}</tbody>
+        </table>
+      </div>
+    </div>`;
+  };
+  res.innerHTML=`
+  <div style="background:white;border:1px solid #E2E8F0;border-radius:10px;padding:18px 20px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #F1F5F9;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#0F1F3D;">⚖️ ${escHtml(abogado)}</div>
+        <div style="font-size:11px;color:#64748B;margin-top:3px;">
+          ${userInfo?`Usuario: <b>${escHtml(userInfo.id||userInfo.login||'')}</b> · Rol: <b>${userInfo.role||'viewer'}</b>`:'⚠️ No tiene usuario registrado en el sistema'}
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">
+        ${mkBadge(procesos.length,'#0284C7','procesos')}
+        ${mkBadge(mods.length,'#7C3AED','mods')}
+        ${mkBadge(liqs.length,'#059669','liqs')}
+      </div>
+    </div>
+    ${userInfo?
+      `<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#065F46;">
+        ✅ Al iniciar sesión como <b>${escHtml(userInfo.id||userInfo.login||'')}</b>, verá exactamente:
+        <b>${procesos.length} proceso${procesos.length!==1?'s':''}</b>,
+        <b>${mods.length} modificación${mods.length!==1?'es':''}</b> y
+        <b>${liqs.length} liquidación${liqs.length!==1?'es':''}</b>. No verá registros de otros abogados.
+      </div>`:
+      `<div style="background:#FEF9C3;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#92400E;">
+        ⚠️ Este abogado no tiene usuario — no puede iniciar sesión.
+      </div>`
+    }
+    ${mkTable(procesos,'proc','📋 Procesos','#0284C7')}
+    ${mkTable(mods,'mod','✏️ Modificaciones','#7C3AED')}
+    ${mkTable(liqs,'liq','🔒 Liquidaciones','#059669')}
+  </div>`;
+}
+
 async function limpiarLiquidaciones(){
   if(!isAdmin()) return;
   const total=(window._liqRecords||[]).length;
