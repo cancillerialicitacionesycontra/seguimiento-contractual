@@ -1126,8 +1126,27 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         <input type="text" id="search-mod" placeholder="Buscar ticket, objeto, abogado…" oninput="renderMod()">
       </div>
     </div>
+
+    <!-- Banner de vista filtrada para abogados -->
+    <div id="mod-abogado-banner" style="display:none;background:linear-gradient(90deg,#F5F3FF,#EDE9FE);border-bottom:2px solid var(--purple);padding:10px 32px;align-items:center;gap:10px;">
+      <span style="font-size:18px;">⚖️</span>
+      <div>
+        <span style="font-size:13px;font-weight:600;color:var(--navy);">Vista personal — </span>
+        <span style="font-size:13px;color:var(--purple);font-weight:700;" id="mod-abogado-banner-name"></span>
+      </div>
+      <span style="font-size:11px;color:var(--muted);margin-left:auto;">Solo se muestran las modificaciones asignadas a ti · Solo lectura</span>
+    </div>
+
+    <!-- Chips tipo -->
+    <div class="tipo-bar">
+      <span class="tipo-bar-label">Filtrar por:</span>
+      <button class="tipo-chip active-all" id="mod-chip-all" onclick="setModTipo('all')">✏️ Todas</button>
+      <button class="tipo-chip" id="mod-chip-asesoria" onclick="setModTipo('asesoria')">🔵 Asesoría Previa</button>
+      <button class="tipo-chip" id="mod-chip-contractual" onclick="setModTipo('contractual')">🔷 Proceso Contractual</button>
+    </div>
+
     <!-- Semáforo de vencimiento -->
-    <div class="semaforo-bar">
+    <div class="semaforo-wrap">
       <div class="semaforo-title">🚦 Alertas de Vencimiento — clic para filtrar</div>
       <div class="semaforo-grid">
         <div class="sema-card rojo" onclick="filtrarVencimientoMod('hoy')" title="Ver modificaciones que vencen hoy o ya vencidas">
@@ -1144,18 +1163,29 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         </div>
       </div>
     </div>
+
     <div class="stats-bar">
       <div class="stat-card stat-card-total"><div><span class="stat-num" id="mod-stat-total">0</span><span class="stat-label">Total</span></div></div>
       <div class="stat-card stat-card-asesoria"><div><span class="stat-num" id="mod-stat-asesoria" style="color:var(--sky)">0</span><span class="stat-label">Asesorías</span></div></div>
       <div class="stat-card stat-card-contractual"><div><span class="stat-num" id="mod-stat-contractual" style="color:var(--teal)">0</span><span class="stat-label">Contractuales</span></div></div>
+      <div class="stat-card stat-card-ok"><div><span class="stat-num" id="mod-stat-aprobado" style="color:var(--green)">0</span><span class="stat-label">Aprobados</span></div></div>
+      <div class="stat-card stat-card-ok"><div><span class="stat-num" id="mod-stat-contratado" style="color:var(--green)">0</span><span class="stat-label">Contratados</span></div></div>
     </div>
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>Ticket</th><th>Tipo</th><th>Objeto</th><th>Abogado</th>
-          <th>GIT</th><th>Dependencia</th><th>SECOP</th>
-          <th>F. Asignación</th><th>F. Adjudicación</th><th>⏰ F. Máx. Gestión</th>
-          <th>Estado</th><th>Avance</th><th>Acciones</th>
+          <th onclick="sortByMod('ticket')">Ticket</th>
+          <th onclick="sortByMod('tipo')">Tipo</th>
+          <th onclick="sortByMod('objeto')">Objeto</th>
+          <th onclick="sortByMod('abogado')">Abogado</th>
+          <th onclick="sortByMod('git')">GIT</th>
+          <th onclick="sortByMod('dependencia')">Dependencia</th>
+          <th onclick="sortByMod('secop')">SECOP</th>
+          <th onclick="sortByMod('fechaAsignacion')">F. Asignación</th>
+          <th onclick="sortByMod('fechaAdjudicacion')">F. Adjudicación</th>
+          <th onclick="sortByMod('fechaMaxGestion')" style="white-space:nowrap;">⏰ F. Máx. Gestión</th>
+          <th onclick="sortByMod('estado')">Estado</th>
+          <th>Avance</th><th>Acciones</th>
         </tr></thead>
         <tbody id="mod-table-body"></tbody>
       </table>
@@ -1273,18 +1303,51 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         <input type="text" id="search-liq" placeholder="Buscar N° contrato, contratista, abogado…" oninput="_liqPage=0;renderLiq()">
       </div>
     </div>
+
+    <!-- Banner de vista filtrada para abogados -->
+    <div id="liq-abogado-banner" style="display:none;background:linear-gradient(90deg,#F0FDF4,#DCFCE7);border-bottom:2px solid var(--green);padding:10px 32px;align-items:center;gap:10px;">
+      <span style="font-size:18px;">⚖️</span>
+      <div>
+        <span style="font-size:13px;font-weight:600;color:var(--navy);">Vista personal — </span>
+        <span style="font-size:13px;color:var(--green);font-weight:700;" id="liq-abogado-banner-name"></span>
+      </div>
+      <span style="font-size:11px;color:var(--muted);margin-left:auto;">Solo se muestran las liquidaciones asignadas a ti · Solo lectura</span>
+    </div>
+
+    <!-- Chips trámite -->
+    <div class="tipo-bar">
+      <span class="tipo-bar-label">Filtrar por:</span>
+      <button class="tipo-chip active-all" id="liq-chip-all" onclick="setLiqTramite('all')">🔒 Todos</button>
+      <button class="tipo-chip" id="liq-chip-liq" onclick="setLiqTramite('Liquidacion')">💧 Liquidaciones</button>
+      <button class="tipo-chip" id="liq-chip-cie" onclick="setLiqTramite('Cierre')">🔒 Cierres</button>
+    </div>
+
     <div class="stats-bar">
       <div class="stat-card stat-card-total"><div><span class="stat-num" id="liq-stat-total">0</span><span class="stat-label">Total</span></div></div>
-      <div class="stat-card stat-card-asesoria"><div><span class="stat-num" id="liq-stat-pendiente" style="color:#F59E0B">0</span><span class="stat-label">En Trámite</span></div></div>
-      <div class="stat-card stat-card-ok"><div><span class="stat-num" id="liq-stat-liquidado" style="color:var(--green)">0</span><span class="stat-label">Liquidados / Cerrados</span></div></div>
+      <div class="stat-card stat-card-asesoria"><div><span class="stat-num" id="liq-stat-liquidaciones" style="color:#F59E0B">0</span><span class="stat-label">💧 Liquidaciones</span></div></div>
+      <div class="stat-card stat-card-contractual"><div><span class="stat-num" id="liq-stat-cierres" style="color:var(--teal)">0</span><span class="stat-label">🔒 Cierres</span></div></div>
+      <div class="stat-card stat-card-ok"><div><span class="stat-num" id="liq-stat-pendiente" style="color:#EA580C">0</span><span class="stat-label">En Trámite</span></div></div>
+      <div class="stat-card stat-card-ok"><div><span class="stat-num" id="liq-stat-liquidado" style="color:var(--green)">0</span><span class="stat-label">Finalizados</span></div></div>
     </div>
+
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>N° Contrato</th><th>N° Proceso</th><th>Unid. Admin</th><th>Trámite</th><th>Persona</th><th>Contratista / Proveedor</th><th>Abogado</th>
-          <th>GIT</th><th>Dependencia</th>
-          <th>F. Finalización</th><th>F. Máx para Liqu</th><th>F. Cierre</th><th>F. Liquidación</th>
-          <th>Estado</th><th>Avance</th><th>Acciones</th>
+          <th onclick="sortByLiq('ticket')">N° Contrato</th>
+          <th onclick="sortByLiq('numeroProceso')">N° Proceso</th>
+          <th onclick="sortByLiq('unidadAdmin')">Unid. Admin</th>
+          <th onclick="sortByLiq('tramite')">Trámite</th>
+          <th onclick="sortByLiq('persona')">Persona</th>
+          <th onclick="sortByLiq('contratista')">Contratista / Proveedor</th>
+          <th onclick="sortByLiq('abogado')">Abogado</th>
+          <th onclick="sortByLiq('git')">GIT</th>
+          <th onclick="sortByLiq('dependencia')">Dependencia</th>
+          <th onclick="sortByLiq('fechaInicio')">F. Finalización</th>
+          <th onclick="sortByLiq('fechaTerminacion')" style="white-space:nowrap;">⏰ F. Máx para Liqu</th>
+          <th onclick="sortByLiq('fechaCierre')">F. Cierre</th>
+          <th onclick="sortByLiq('fechaLiquidacion')">F. Liquidación</th>
+          <th onclick="sortByLiq('estado')">Estado</th>
+          <th>Avance</th><th>Acciones</th>
         </tr></thead>
         <tbody id="liq-table-body"></tbody>
       </table>
@@ -1687,6 +1750,23 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       <p class="section-title">Gestión de Usuarios</p>
       <div style="margin-bottom:16px;"><button class="btn btn-primary" onclick="openAddUser()">＋ Agregar Usuario</button></div>
       <div class="users-grid" id="users-grid"></div>
+
+      <!-- Panel de renumeración masiva -->
+      <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:20px 24px;margin-top:24px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <span style="font-size:20px;">🔢</span>
+          <div>
+            <div style="font-weight:700;color:#1E40AF;font-size:14px;">Renumerar Tickets</div>
+            <div style="font-size:12px;color:#6B7280;margin-top:2px;">Reordena los tickets de forma secuencial (1, 2, 3…) en las tres colecciones según el orden de creación</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="renumerarTodos('registros','_records')" style="background:#1D4ED8;">🔢 Renumerar Procesos</button>
+          <button class="btn btn-primary" onclick="renumerarTodos('modificaciones','_modRecords')" style="background:#6D28D9;">🔢 Renumerar Modificaciones</button>
+          <button class="btn btn-primary" onclick="renumerarTodos('liquidaciones','_liqRecords')" style="background:#059669;">🔢 Renumerar Liquidaciones</button>
+        </div>
+        <div id="renum-status" style="font-size:12px;color:#6B7280;margin-top:10px;"></div>
+      </div>
 
       <!-- Panel de diagnóstico -->
       <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:20px 24px;margin-top:24px;">
@@ -2218,6 +2298,8 @@ const firebaseConfig = {
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 window._db=db;
+window._writeBatch=()=>writeBatch(db);
+window._docRef=(col,id)=>doc(db,col,id);
 
 function setConn(online){
   const dot=document.getElementById('fb-dot');
@@ -2588,6 +2670,8 @@ function registroEsDelUsuario(r){
 /* ═══ DATOS ═══ */
 window._records=[];
 let editingId=null,sortField='ticket',sortDir='asc',activeTipo='all';
+let activeModTipo='all',sortFieldMod='ticket',sortDirMod='asc';
+let activeLiqTramite='all',sortFieldLiq='ticket',sortDirLiq='asc';
 
 function showSyncToast(msg,d=2000){
   const t=document.getElementById('sync-toast');
@@ -2618,6 +2702,24 @@ function setTipo(t){
   document.getElementById(idMap[t])?.classList.add(map[t]);
   renderTable();
 }
+function setModTipo(t){
+  activeModTipo=t;
+  ['all','asesoria','contractual'].forEach(v=>{
+    const el=document.getElementById('mod-chip-'+v);
+    if(el){el.className='tipo-chip';if(v===t)el.classList.add(v==='all'?'active-all':v==='asesoria'?'active-asesoria':'active-contractual');}
+  });
+  renderMod();
+}
+function setLiqTramite(t){
+  activeLiqTramite=t;
+  ['all','liq','cie'].forEach(v=>{
+    const el=document.getElementById('liq-chip-'+v);
+    if(el){el.className='tipo-chip';if(v===t)el.classList.add('active-all');}
+  });
+  _liqPage=0;renderLiq();
+}
+function sortByMod(f){if(sortFieldMod===f)sortDirMod=sortDirMod==='asc'?'desc':'asc';else{sortFieldMod=f;sortDirMod='asc';}renderMod();}
+function sortByLiq(f){if(sortFieldLiq===f)sortDirLiq=sortDirLiq==='asc'?'desc':'asc';else{sortFieldLiq=f;sortDirLiq='asc';}renderLiq();}
 
 /* ═══ TABLA ═══ */
 function sortBy(f){if(sortField===f)sortDir=sortDir==='asc'?'desc':'asc';else{sortField=f;sortDir='asc';}renderTable();}
@@ -3107,14 +3209,75 @@ async function saveRecord(){
   }
 }
 function editRecord(id){openModal(id);}
+/* ══ RENUMERACIÓN MASIVA ══ */
+async function renumerarTodos(coleccion, windowKey){
+  if(!isAdmin())return;
+  const registros=window[windowKey]||[];
+  if(!registros.length){alert(`No hay registros en ${coleccion}.`);return;}
+  const st=document.getElementById('renum-status');
+  if(st) st.textContent=`Renumerando ${registros.length} registros de ${coleccion}…`;
+  try{
+    // Ordenar por ticket numérico actual, luego por createdAt como desempate
+    const sorted=[...registros].sort((a,b)=>{
+      const na=parseFloat(a.ticket||'0'),nb=parseFloat(b.ticket||'0');
+      if(!isNaN(na)&&!isNaN(nb)&&na!==nb) return na-nb;
+      // desempate por fecha de creación
+      return (a.createdAt||'').localeCompare(b.createdAt||'');
+    });
+    // Escribir en batches de 400
+    const BATCH_SIZE=400;
+    let cambios=0;
+    for(let i=0;i<sorted.length;i+=BATCH_SIZE){
+      const chunk=sorted.slice(i,i+BATCH_SIZE);
+      const batch=window._writeBatch();
+      chunk.forEach((r,j)=>{
+        const nuevoTicket=String(i+j+1);
+        if(String(r.ticket||'')!==nuevoTicket){
+          batch.update(window._docRef(coleccion,r.id),{ticket:nuevoTicket});
+          cambios++;
+        }
+      });
+      await batch.commit();
+      if(st) st.textContent=`Renumerando… ${Math.min(i+BATCH_SIZE,sorted.length)}/${sorted.length}`;
+    }
+    if(st) st.textContent=`✅ ${sorted.length} registros renumerados (${cambios} cambios aplicados)`;
+    showSyncToast(`✅ ${coleccion} renumerados — ${cambios} cambios`);
+  }catch(e){
+    alert('Error al renumerar: '+e.message);
+    if(st) st.textContent=`❌ Error: ${e.message}`;
+  }
+}
+
+/* ══ RENUMERACIÓN DE TICKETS ══ */
+async function renumerarTickets(coleccion, registros){
+  // Ordenar por ticket numérico actual
+  const sorted=[...registros].sort((a,b)=>{
+    const na=parseFloat(a.ticket||'0'), nb=parseFloat(b.ticket||'0');
+    return na-nb;
+  });
+  // Reasignar tickets secuenciales desde 1 solo donde cambien
+  const batch=window._writeBatch();
+  let cambios=0;
+  sorted.forEach((r,i)=>{
+    const nuevoTicket=String(i+1);
+    if(String(r.ticket||'')!==nuevoTicket){
+      batch.update(window._docRef(coleccion,r.id),{ticket:nuevoTicket});
+      cambios++;
+    }
+  });
+  if(cambios>0) await batch.commit();
+}
+
 async function deleteRecord(id){
   if(!isAdmin())return;
   if(!confirm('¿Eliminar este registro y su bitácora?'))return;
   showSyncToast('Eliminando...');
   try{
     await window._deleteRecord(id);
-    // onSnapshot actualizará window._records y renderTable automáticamente
-    showSyncToast('✅ Eliminado');
+    // Renumerar tickets de Procesos
+    const restantes=(window._records||[]).filter(r=>r.id!==id);
+    await renumerarTickets('registros', restantes, null);
+    showSyncToast('✅ Eliminado y tickets renumerados');
   } catch(err){
     console.error('Error al eliminar:',err);
     alert('Error al eliminar: '+err.message);
@@ -6172,30 +6335,47 @@ async function saveModRecord(){
     showSyncToast('❌ Error',3000);
   }
 }
-function deleteModRecord(id){
+async function deleteModRecord(id){
   if(!isAdmin())return;
   if(!confirm('¿Eliminar esta modificación?'))return;
-  window._deleteModRecord(id).then(()=>showSyncToast('Eliminado')).catch(e=>alert(e.message));
+  showSyncToast('Eliminando...');
+  try{
+    await window._deleteModRecord(id);
+    const restantes=(window._modRecords||[]).filter(r=>r.id!==id);
+    await renumerarTickets('modificaciones', restantes, null);
+    showSyncToast('✅ Eliminado y tickets renumerados');
+  } catch(e){alert(e.message);showSyncToast('❌ Error',3000);}
 }
 function renderMod(){
   const records=window._modRecords||[];
   const q=(document.getElementById('search-mod')?.value||'').toLowerCase();
   const abogadoFiltro=getAbogadoFiltro();
+
+  // Banner abogado en Modificaciones
+  const modBanner=document.getElementById('mod-abogado-banner');
+  const modBannerName=document.getElementById('mod-abogado-banner-name');
+  if(modBanner){if(abogadoFiltro){modBanner.style.display='flex';if(modBannerName)modBannerName.textContent=abogadoFiltro;}else{modBanner.style.display='none';}}
+
   let data=records.filter(r=>{
     if(!registroEsDelUsuario({...r,abogado:r.abogado}))return false;
-    if(q&&!((r.ticket||'').toLowerCase().includes(q)||(r.objeto||'').toLowerCase().includes(q)||(r.abogado||'').toLowerCase().includes(q)))return false;
+    if(activeModTipo&&activeModTipo!=='all'&&r.tipo!==activeModTipo)return false;
+    if(q&&!((r.ticket||'').toLowerCase().includes(q)||(r.objeto||'').toLowerCase().includes(q)||(r.abogado||'').toLowerCase().includes(q)||(r.git||'').toLowerCase().includes(q)||(r.dependencia||'').toLowerCase().includes(q)))return false;
     return true;
   });
+
+  // Ordenar
   data.sort((a,b)=>{
-    const na=parseFloat(a.ticket||''),nb=parseFloat(b.ticket||'');
-    if(!isNaN(na)&&!isNaN(nb))return na-nb;
-    return (a.ticket||'').localeCompare(b.ticket||'',undefined,{numeric:true});
+    const f=sortFieldMod||'ticket',d=sortDirMod||'asc';
+    const va=(a[f]||''),vb=(b[f]||'');
+    const na=parseFloat(va),nb=parseFloat(vb);
+    if(!isNaN(na)&&!isNaN(nb)&&String(na)===va.trim()&&String(nb)===vb.trim())return d==='asc'?na-nb:nb-na;
+    return d==='asc'?va.localeCompare(vb,undefined,{numeric:true,sensitivity:'base'}):vb.localeCompare(va,undefined,{numeric:true,sensitivity:'base'});
   });
 
-  // Actualizar semáforo (sobre todos, sin filtro vencimiento)
+  // Semáforo
   updateSemaforoMod(data);
 
-  // Aplicar filtro de vencimiento DESPUÉS del semáforo
+  // Filtro vencimiento
   if(vencimientoFilterMod){
     data=data.filter(r=>{
       if(estadoIsTerminal(r.tipo,r.estado)) return false;
@@ -6208,9 +6388,15 @@ function renderMod(){
     });
   }
 
-  document.getElementById('mod-stat-total').textContent=records.filter(r=>registroEsDelUsuario(r)).length;
-  document.getElementById('mod-stat-asesoria').textContent=records.filter(r=>registroEsDelUsuario(r)&&r.tipo==='asesoria').length;
-  document.getElementById('mod-stat-contractual').textContent=records.filter(r=>registroEsDelUsuario(r)&&r.tipo==='contractual').length;
+  // KPIs
+  const myRecs=records.filter(r=>registroEsDelUsuario(r));
+  document.getElementById('mod-stat-total').textContent=myRecs.length;
+  document.getElementById('mod-stat-asesoria').textContent=myRecs.filter(r=>r.tipo==='asesoria').length;
+  document.getElementById('mod-stat-contractual').textContent=myRecs.filter(r=>r.tipo==='contractual').length;
+  const aprobEl=document.getElementById('mod-stat-aprobado');
+  const contEl=document.getElementById('mod-stat-contratado');
+  if(aprobEl) aprobEl.textContent=myRecs.filter(r=>r.estado==='aprobado').length;
+  if(contEl)  contEl.textContent=myRecs.filter(r=>r.estado==='contratado').length;
 
   const adm=isAdmin();
   const tbody=document.getElementById('mod-table-body');
@@ -6227,18 +6413,18 @@ function renderMod(){
         const maxCell=r.fechaMaxGestion
           ?`<span style="font-family:var(--mono);font-size:11px;">${fmtDate(r.fechaMaxGestion)}</span>${semBadge}`
           :`<span style="color:#CBD5E1;font-size:11px;">—</span>`;
-        return `<tr>
+        return `<tr class="main-row">
           <td><span class="ticket-badge">${escHtml(r.ticket||'—')}</span></td>
-          <td><span style="padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;background:${tipoBg};color:${tipoCol};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span></td>
+          <td><span class="tipo-badge ${r.tipo||'asesoria'}">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span></td>
           <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.objeto||'—')}</td>
-          <td style="white-space:nowrap;">${escHtml(r.abogado||'—')}</td>
-          <td style="font-size:11px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.git||'—')}</td>
-          <td style="font-size:11px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.dependencia||'—')}</td>
+          <td style="white-space:nowrap;font-size:12px;">${escHtml(r.abogado||'—')}</td>
+          <td style="font-size:11px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.git||'')}">${escHtml((r.git||'').slice(0,22)||'—')}</td>
+          <td style="font-size:11px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.dependencia||'')}">${escHtml((r.dependencia||'').slice(0,22)||'—')}</td>
           <td style="font-family:var(--mono);font-size:11px;">${escHtml(r.secop||'—')}</td>
-          <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(r.fechaAsignacion)||'—'}</td>
-          <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(r.fechaAdjudicacion)||'—'}</td>
+          <td class="date-cell">${fmtDate(r.fechaAsignacion)||'—'}</td>
+          <td class="date-cell">${fmtDate(r.fechaAdjudicacion)||'—'}</td>
           <td style="white-space:nowrap;">${maxCell}</td>
-          <td><span class="${est.css}" style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;">${est.label}</span></td>
+          <td><span class="status-badge ${est.css}">${est.label}</span></td>
           <td><span class="avance-badge"><span class="avance-dot ${nE?'has':''}"></span>${nE}</span></td>
           <td onclick="event.stopPropagation()"><div class="actions-cell">
             <button class="icon-btn" onclick="openBitacoraMod('${r.id}')" title="${!terminal?'Avance':'Ver'}">${!terminal?'📝':'📖'}</button>
@@ -6519,10 +6705,16 @@ async function saveLiqRecord(){
     showSyncToast('❌ Error',3000);
   }
 }
-function deleteLiqRecord(id){
+async function deleteLiqRecord(id){
   if(!isAdmin())return;
   if(!confirm('¿Eliminar esta liquidación?'))return;
-  window._deleteLiqRecord(id).then(()=>showSyncToast('Eliminado')).catch(e=>alert(e.message));
+  showSyncToast('Eliminando...');
+  try{
+    await window._deleteLiqRecord(id);
+    const restantes=(window._liqRecords||[]).filter(r=>r.id!==id);
+    await renumerarTickets('liquidaciones', restantes, null);
+    showSyncToast('✅ Eliminado y tickets renumerados');
+  } catch(e){alert(e.message);showSyncToast('❌ Error',3000);}
 }
 let _liqPage=0;
 const LIQ_PAGE_SIZE=100;
@@ -6531,28 +6723,46 @@ function renderLiq(){
   const records=window._liqRecords||[];
   const q=(document.getElementById('search-liq')?.value||'').toLowerCase();
   const abogadoFiltro=getAbogadoFiltro();
+
+  // Banner abogado en Liquidaciones
+  const liqBanner=document.getElementById('liq-abogado-banner');
+  const liqBannerName=document.getElementById('liq-abogado-banner-name');
+  if(liqBanner){if(abogadoFiltro){liqBanner.style.display='flex';if(liqBannerName)liqBannerName.textContent=abogadoFiltro;}else{liqBanner.style.display='none';}}
+
   let data=records.filter(r=>{
     if(abogadoFiltro&&normStr(r.abogado)!==normStr(abogadoFiltro))return false;
-    if(q&&!((r.ticket||'').toLowerCase().includes(q)||(r.contratista||'').toLowerCase().includes(q)||(r.abogado||'').toLowerCase().includes(q)))return false;
+    if(activeLiqTramite&&activeLiqTramite!=='all'){
+      if(activeLiqTramite==='liq'&&r.tramite!=='Liquidacion')return false;
+      if(activeLiqTramite==='cie'&&r.tramite!=='Cierre')return false;
+    }
+    if(q&&!((r.ticket||'').toLowerCase().includes(q)||(r.contratista||'').toLowerCase().includes(q)||(r.abogado||'').toLowerCase().includes(q)||(r.git||'').toLowerCase().includes(q)||(r.dependencia||'').toLowerCase().includes(q)))return false;
     return true;
   });
+
+  // Ordenar
   data.sort((a,b)=>{
-    const na=parseFloat(a.ticket||''),nb=parseFloat(b.ticket||'');
-    if(!isNaN(na)&&!isNaN(nb))return na-nb;
-    return (a.ticket||'').localeCompare(b.ticket||'',undefined,{numeric:true});
+    const f=sortFieldLiq||'ticket',d=sortDirLiq||'asc';
+    const va=(a[f]||''),vb=(b[f]||'');
+    const na=parseFloat(va),nb=parseFloat(vb);
+    if(!isNaN(na)&&!isNaN(nb)&&String(na)===va.trim()&&String(nb)===vb.trim())return d==='asc'?na-nb:nb-na;
+    return d==='asc'?va.localeCompare(vb,undefined,{numeric:true,sensitivity:'base'}):vb.localeCompare(va,undefined,{numeric:true,sensitivity:'base'});
   });
 
-  // Stats siempre sobre el total
-  const allForStats=records;
-  document.getElementById('liq-stat-total').textContent=allForStats.length;
-  document.getElementById('liq-stat-pendiente').textContent=allForStats.filter(r=>
+  // KPIs sobre total sin filtro tramite/búsqueda
+  const myRecs=records.filter(r=>!abogadoFiltro||normStr(r.abogado)===normStr(abogadoFiltro));
+  document.getElementById('liq-stat-total').textContent=myRecs.length;
+  const liqStat=document.getElementById('liq-stat-liquidaciones');
+  const cieStat=document.getElementById('liq-stat-cierres');
+  if(liqStat) liqStat.textContent=myRecs.filter(r=>r.tramite==='Liquidacion').length;
+  if(cieStat) cieStat.textContent=myRecs.filter(r=>r.tramite==='Cierre').length;
+  document.getElementById('liq-stat-pendiente').textContent=myRecs.filter(r=>
     ['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','revision-jefe','aval-radicar','radicado-git','radicado-competente'].includes(r.estado)
   ).length;
-  document.getElementById('liq-stat-liquidado').textContent=allForStats.filter(r=>
+  document.getElementById('liq-stat-liquidado').textContent=myRecs.filter(r=>
     ['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'].includes(r.estado)
   ).length;
 
-  // Paginación: reset a página 0 si la búsqueda cambia
+  // Paginación
   const totalPages=Math.max(1,Math.ceil(data.length/LIQ_PAGE_SIZE));
   if(_liqPage>=totalPages) _liqPage=0;
   const pageData=data.slice(_liqPage*LIQ_PAGE_SIZE,(_liqPage+1)*LIQ_PAGE_SIZE);
@@ -6565,19 +6775,22 @@ function renderLiq(){
     } else {
       tbody.innerHTML=pageData.map(r=>{
         const est=getEstadoLiq(r.estado);
-        return `<tr>
+        const tramiteBadge=r.tramite==='Liquidacion'
+          ?`<span style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">Liquidación</span>`
+          :`<span style="background:#CFFAFE;color:#0E7490;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">Cierre</span>`;
+        return `<tr class="main-row">
           <td><span class="ticket-badge">${escHtml(r.ticket||'—')}</span></td>
           <td style="font-family:var(--mono);font-size:11px;">${escHtml(r.numeroProceso||'—')}</td>
           <td style="font-size:11px;font-weight:600;color:var(--navy);">${escHtml(r.unidadAdmin||'—')}</td>
-          <td style="font-size:11px;">${escHtml(r.tramite||'—')}</td>
+          <td>${tramiteBadge}</td>
           <td style="font-size:11px;">${escHtml(r.persona||'—')}</td>
           <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.contratista||'—')}</td>
-          <td style="white-space:nowrap;">${escHtml(r.abogado||'—')}</td>
-          <td style="font-size:11px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.git||'—')}</td>
-          <td style="font-size:11px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.dependencia||'—')}</td>
-          <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(r.fechaInicio)||'—'}</td>
-          <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(r.fechaTerminacion)||'—'}</td>
-          <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(r.fechaCierre)||'—'}</td>
+          <td style="white-space:nowrap;font-size:12px;">${escHtml(r.abogado||'—')}</td>
+          <td style="font-size:11px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.git||'')}">${escHtml((r.git||'').slice(0,22)||'—')}</td>
+          <td style="font-size:11px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.dependencia||'')}">${escHtml((r.dependencia||'').slice(0,22)||'—')}</td>
+          <td class="date-cell">${fmtDate(r.fechaInicio)||'—'}</td>
+          <td class="date-cell">${fmtDate(r.fechaTerminacion)||'—'}</td>
+          <td class="date-cell">${fmtDate(r.fechaCierre)||'—'}</td>
           <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(r.fechaLiquidacion)||'—'}</td>
           <td><span class="${est.css}" style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;">${est.label}</span></td>
           <td style="text-align:center;">
