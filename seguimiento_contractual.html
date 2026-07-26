@@ -1751,56 +1751,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       <div style="margin-bottom:16px;"><button class="btn btn-primary" onclick="openAddUser()">＋ Agregar Usuario</button></div>
       <div class="users-grid" id="users-grid"></div>
 
-      <!-- Panel de renumeración masiva -->
-      <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:20px 24px;margin-top:24px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-          <span style="font-size:20px;">🔢</span>
-          <div>
-            <div style="font-weight:700;color:#1E40AF;font-size:14px;">Renumerar Tickets</div>
-            <div style="font-size:12px;color:#6B7280;margin-top:2px;">Reordena los tickets de forma secuencial (1, 2, 3…) en las tres colecciones según el orden de creación</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="renumerarTodos('registros','_records')" style="background:#1D4ED8;">🔢 Renumerar Procesos</button>
-          <button class="btn btn-primary" onclick="renumerarTodos('modificaciones','_modRecords')" style="background:#6D28D9;">🔢 Renumerar Modificaciones</button>
-          <button class="btn btn-primary" onclick="renumerarTodos('liquidaciones','_liqRecords')" style="background:#059669;">🔢 Renumerar Liquidaciones</button>
-        </div>
-        <div id="renum-status" style="font-size:12px;color:#6B7280;margin-top:10px;"></div>
-      </div>
-
-      <!-- Panel de diagnóstico -->
-      <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:20px 24px;margin-top:24px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-          <span style="font-size:20px;">🔍</span>
-          <div>
-            <div style="font-weight:700;color:#065F46;font-size:14px;">Panel de Diagnóstico — Visibilidad por Abogado</div>
-            <div style="font-size:12px;color:#6B7280;margin-top:2px;">Verifica qué registros ve cada abogado en Procesos, Modificaciones y Liquidaciones</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <select id="diag-abogado-sel" style="padding:8px 12px;border:1.5px solid #BBF7D0;border-radius:8px;font-size:13px;background:white;min-width:220px;">
-            <option value="">— Seleccionar abogado —</option>
-          </select>
-          <button class="btn btn-primary" onclick="runDiagnostico()" style="background:#059669;">🔍 Ejecutar diagnóstico</button>
-          <button class="btn btn-ghost" onclick="document.getElementById('diag-result').innerHTML=''">✕ Limpiar</button>
-        </div>
-        <div id="diag-result" style="margin-top:16px;"></div>
-      </div>
-
-      <!-- Zona de mantenimiento -->
-      <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:20px 24px;margin-top:24px;">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <span style="font-size:22px;">🗑️</span>
-          <div>
-            <div style="font-weight:700;color:#991B1B;font-size:14px;">Eliminar todos los registros de Liquidaciones</div>
-            <div style="font-size:12px;color:#B91C1C;margin-top:2px;">Elimina permanentemente todos los expedientes de la colección Liquidaciones. No se puede deshacer.</div>
-          </div>
-        </div>
-        <button class="btn" onclick="limpiarLiquidaciones()" style="background:#DC2626;color:white;border:none;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
-          🗑️ Eliminar todos los registros de Liquidaciones
-        </button>
-        <span id="liq-clean-status" style="font-size:12px;margin-left:12px;color:#6B7280;"></span>
-      </div>
     </div>
   </div>
 </div>
