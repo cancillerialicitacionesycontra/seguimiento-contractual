@@ -3567,6 +3567,11 @@ function renderAdminPanel(){
         <div class="uname">${escHtml(u.name)}</div>
         <div class="ulogin">@${escHtml(u.username)}</div>
         <div class="urole"><span class="role-badge ${u.role}">${u.role==='admin'?'🔑 Admin':'👁 Viewer'}</span></div>
+        <div style="margin-top:6px;">
+          <button onclick="toggleRol('${u.id}')" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1.5px solid ${u.role==='admin'?'#FECACA':'#BBF7D0'};background:${u.role==='admin'?'#FEF2F2':'#F0FDF4'};color:${u.role==='admin'?'#991B1B':'#065F46'};cursor:pointer;font-weight:600;">
+            ${u.role==='admin'?'⬇ Cambiar a Viewer':'⬆ Cambiar a Admin'}
+          </button>
+        </div>
       </div>
       <div class="uc-actions">
         <button class="icon-btn" onclick="openEditUser('${u.id}')">✏️</button>
@@ -3596,6 +3601,37 @@ async function saveUser(){
   try{await window._saveUser(userData);if(editingUserId===currentUser?.id){currentUser={...currentUser,name,username,role};applyUserUI();}showSyncToast('✅ Usuario guardado');closeUserModal();}
   catch(err){showErr('Error: '+err.message);}
 }
+async function toggleRol(id){
+  if(id===currentUser?.id){alert('No puedes cambiar tu propio rol.');return;}
+  const users=loadUsers();
+  const u=users.find(x=>x.id===id);
+  if(!u){alert('Usuario no encontrado.');return;}
+  const nuevoRol=u.role==='admin'?'viewer':'admin';
+  const nombre=u.name||u.username;
+  if(!confirm(`¿Cambiar rol de ${nombre} a ${nuevoRol==='admin'?'🔑 Admin':'👁 Viewer'}?`))return;
+
+  const builtin=BUILTIN_USERS.find(b=>b.id===id);
+  if(builtin){
+    // Usuario builtin — actualizar en memoria y persistir en Firebase
+    builtin.role=nuevoRol;
+    // Guardar en Firebase para persistir entre sesiones
+    try{
+      await window._saveUser({...u,role:nuevoRol,updatedAt:new Date().toISOString()});
+      showSyncToast(`✅ ${nombre} ahora es ${nuevoRol==='admin'?'Admin':'Viewer'}`);
+    } catch(e){
+      // Si Firebase falla, al menos queda en memoria para esta sesión
+      showSyncToast(`✅ ${nombre} ahora es ${nuevoRol==='admin'?'Admin':'Viewer'} (solo esta sesión)`);
+    }
+  } else {
+    // Usuario Firebase normal
+    try{
+      await window._saveUser({...u,role:nuevoRol,updatedAt:new Date().toISOString()});
+      showSyncToast(`✅ ${nombre} ahora es ${nuevoRol==='admin'?'Admin':'Viewer'}`);
+    } catch(e){alert('Error al cambiar rol: '+e.message);return;}
+  }
+  renderAdminPanel();
+}
+
 async function deleteUser(id){
   if(BUILTIN_USERS.find(b=>b.id===id)){alert('No puedes eliminar usuarios base.');return;}
   if(id===currentUser?.id){alert('No puedes eliminarte a ti mismo.');return;}
