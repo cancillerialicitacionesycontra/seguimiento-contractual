@@ -1751,6 +1751,22 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       <div style="margin-bottom:16px;"><button class="btn btn-primary" onclick="openAddUser()">＋ Agregar Usuario</button></div>
       <div class="users-grid" id="users-grid"></div>
 
+      <!-- Actualizar solo Observaciones de Liquidaciones -->
+      <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:20px 24px;margin-top:24px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="font-size:20px;">📝</span>
+          <div>
+            <div style="font-weight:700;color:#1E40AF;font-size:14px;">Actualizar Observaciones — Liquidaciones</div>
+            <div style="font-size:12px;color:#6B7280;margin-top:2px;">Reemplaza solo el campo de observaciones usando un Excel con columnas: <b>No. CONTRATO · No. PROCESO · OBSERVACIONES</b></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="document.getElementById('import-obs-liq-input').click()" style="background:#1D4ED8;">📂 Seleccionar Excel de Observaciones</button>
+          <input type="file" id="import-obs-liq-input" accept=".xlsx,.xls" style="display:none;" onchange="importarObsLiq(this)">
+          <span id="obs-liq-status" style="font-size:12px;color:#6B7280;"></span>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -6610,6 +6626,76 @@ function runDiagnostico(){
     ${mkTable(mods,'mod','✏️ Modificaciones','#7C3AED')}
     ${mkTable(liqs,'liq','🔒 Liquidaciones','#059669')}
   </div>`;
+}
+
+/* ══ IMPORTAR SOLO OBSERVACIONES DE LIQUIDACIONES ══ */
+async function importarObsLiq(input){
+  if(!isAdmin()) return;
+  const file=input.files[0]; if(!file) return;
+  input.value='';
+  const st=document.getElementById('obs-liq-status');
+  if(st) st.textContent='Leyendo archivo…';
+
+  const buf=await file.arrayBuffer();
+  const wb=XLSX.read(buf,{type:'array'});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  if(rows.length<2){alert('El archivo no tiene datos.');return;}
+
+  // Mapear columnas — busca No. CONTRATO, No. PROCESO, OBSERVACIONES
+  const hdr=rows[0].map(h=>String(h||'').trim().toUpperCase());
+  const iCon = hdr.findIndex(h=>h.includes('CONTRATO'));
+  const iPro = hdr.findIndex(h=>h.includes('PROCESO'));
+  const iObs = hdr.findIndex(h=>h.includes('OBSERVACION'));
+  if(iCon<0||iObs<0){alert('El archivo debe tener columnas: No. CONTRATO y OBSERVACIONES.');return;}
+
+  // Construir índice contrato+proceso → observación
+  const obsMap={};
+  rows.slice(1).forEach(row=>{
+    const con=String(row[iCon]||'').trim().toUpperCase();
+    const pro=iPro>=0?String(row[iPro]||'').trim().toUpperCase().replace('N/A',''):'';
+    const obs=String(row[iObs]||'').trim();
+    if(con) obsMap[con+'||'+pro]=obs;
+  });
+
+  const total=Object.keys(obsMap).length;
+  if(st) st.textContent=`${total} observaciones leídas. Actualizando Firebase…`;
+
+  // Cruzar con registros actuales
+  const records=window._liqRecords||[];
+  const toUpdate=[];
+  records.forEach(r=>{
+    const con=(r.ticket||'').toUpperCase();
+    const pro=(r.numeroProceso||'').toUpperCase().replace('N/A','');
+    let obs=obsMap[con+'||'+pro];
+    // fallback: solo por contrato
+    if(obs===undefined) obs=obsMap[con+'||'] ?? obsMap[Object.keys(obsMap).find(k=>k.startsWith(con+'||'))||''] ?? null;
+    if(obs!==null && obs!==undefined) toUpdate.push({id:r.id, obs});
+  });
+
+  if(!toUpdate.length){alert('No se encontraron registros coincidentes.');if(st)st.textContent='Sin coincidencias.';return;}
+
+  const confirm1=confirm(`Se actualizarán las observaciones de ${toUpdate.length} registros de liquidaciones.\n\n¿Confirmar?`);
+  if(!confirm1){if(st)st.textContent='Cancelado.';return;}
+
+  // Escribir en batches de 400
+  const BATCH_SIZE=400;
+  let done=0;
+  try{
+    for(let i=0;i<toUpdate.length;i+=BATCH_SIZE){
+      const chunk=toUpdate.slice(i,i+BATCH_SIZE);
+      const batch=window._writeBatch();
+      chunk.forEach(({id,obs})=>batch.update(window._docRef('liquidaciones',id),{obs,updatedAt:new Date().toISOString()}));
+      await batch.commit();
+      done+=chunk.length;
+      if(st) st.textContent=`Actualizando… ${done}/${toUpdate.length}`;
+    }
+    if(st) st.textContent=`✅ ${done} observaciones actualizadas correctamente`;
+    showSyncToast(`✅ ${done} observaciones de liquidaciones actualizadas`);
+  } catch(e){
+    alert('Error al actualizar: '+e.message);
+    if(st) st.textContent=`❌ Error: ${e.message}`;
+  }
 }
 
 async function limpiarLiquidaciones(){
