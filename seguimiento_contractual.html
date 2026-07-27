@@ -4303,22 +4303,113 @@ function pdfReportId(){
 }
 
 /* ── Header institucional ── */
+/* ══════════════════════════════════════════════
+   PDF HELPERS — MEJORAS COMPLETAS
+══════════════════════════════════════════════ */
+
+/* ── Portada separada ── */
+function pdfPortada(titulo, subtitulo, stats=[]){
+  const fecha=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  return `
+  <div style="min-height:80vh;display:flex;flex-direction:column;justify-content:space-between;page-break-after:always;padding:40px 0;">
+    <div style="height:8px;background:linear-gradient(90deg,#FCD116 33%,#003893 33% 66%,#CE1126 66%);border-radius:4px;margin-bottom:40px;"></div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:0 40px;">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.3em;color:${PDF_GRAY};margin-bottom:8px;">República de Colombia</div>
+      <div style="font-size:18px;font-weight:800;color:${PDF_NAVY};margin-bottom:4px;">Ministerio de Relaciones Exteriores</div>
+      <div style="font-size:11px;color:${PDF_GRAY};margin-bottom:60px;">GIT Licitaciones y Contratos</div>
+      <div style="width:60px;height:4px;background:${PDF_GOLD};border-radius:2px;margin:0 auto 40px;"></div>
+      <div style="font-size:9px;text-transform:uppercase;letter-spacing:.2em;color:${PDF_GRAY};margin-bottom:16px;font-weight:600;">Informe de Gestión Contractual</div>
+      <div style="font-size:34px;font-weight:900;color:${PDF_NAVY};line-height:1.15;margin-bottom:16px;letter-spacing:-.02em;">${titulo}</div>
+      ${subtitulo?`<div style="font-size:13px;color:${PDF_GRAY};font-style:italic;">${subtitulo}</div>`:''}
+      ${stats.length?`<div style="display:grid;grid-template-columns:repeat(${Math.min(stats.length,4)},1fr);gap:16px;margin-top:50px;max-width:600px;margin-left:auto;margin-right:auto;">${stats.map(s=>`<div style="background:${s.color}10;border:1px solid ${s.color}30;border-radius:12px;padding:16px;border-top:3px solid ${s.color};"><div style="font-size:28px;font-weight:800;color:${s.color};font-family:'JetBrains Mono',monospace;">${s.value}</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:${PDF_GRAY};margin-top:4px;">${s.label}</div></div>`).join('')}</div>`:''}
+    </div>
+    <div style="border-top:1px solid ${PDF_BORDER};padding-top:16px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:9px;color:${PDF_GRAY};">Confidencial · Uso Interno · No divulgar sin autorización</div>
+      <div style="font-size:9px;color:${PDF_GRAY};text-align:right;">${fecha}<br>${hora} horas</div>
+    </div>
+  </div>`;
+}
+
+/* ── Tabla de contenido ── */
+function pdfTOC(secciones){
+  return `<div style="background:${PDF_BG};border:1px solid ${PDF_BORDER};border-radius:12px;padding:20px 24px;margin-bottom:28px;page-break-after:always;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:${PDF_NAVY};font-weight:700;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid ${PDF_NAVY};">📑 Tabla de Contenido</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${secciones.map((s,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dotted ${PDF_BORDER};"><span style="background:${PDF_NAVY};color:white;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${i+1}</span><span style="font-size:11px;color:${PDF_NAVY};font-weight:600;flex:1;">${s.titulo}</span><span style="font-size:10px;color:${PDF_GRAY};font-style:italic;">${s.desc||''}</span></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ── Semáforo de cumplimiento por fecha ── */
+function pdfSemaforoCumplimiento(fechaMaxStr){
+  if(!fechaMaxStr) return '<span style="color:#CBD5E1;font-size:10px;">—</span>';
+  const parts=fechaMaxStr.split('/');
+  const fecha=parts.length===3?new Date(parts[2],parts[1]-1,parts[0]):new Date(fechaMaxStr);
+  if(isNaN(fecha)) return '<span style="color:#CBD5E1;font-size:10px;">—</span>';
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const diff=Math.ceil((fecha-hoy)/(1000*60*60*24));
+  if(diff<0)  return `<span style="background:#FEF2F2;color:#991B1B;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;">🔴 Vencido ${Math.abs(diff)}d</span>`;
+  if(diff===0)return `<span style="background:#FEF2F2;color:#DC2626;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;">🔴 Vence hoy</span>`;
+  if(diff<=3) return `<span style="background:#FFF7ED;color:#C2410C;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;">🟠 ${diff}d</span>`;
+  if(diff<=7) return `<span style="background:#FEFCE8;color:#854D0E;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;">🟡 ${diff}d</span>`;
+  return `<span style="background:#F0FDF4;color:#166534;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;">🟢 ${diff}d</span>`;
+}
+
+/* ── Días en estado actual ── */
+function pdfDiasEnEstado(updatedAt){
+  if(!updatedAt) return '—';
+  const upd=new Date(updatedAt);
+  if(isNaN(upd)) return '—';
+  const diff=Math.ceil((new Date()-upd)/(1000*60*60*24));
+  const color=diff>30?'#991B1B':diff>14?'#92400E':'#065F46';
+  const bg=diff>30?'#FEF2F2':diff>14?'#FEF9C3':'#F0FDF4';
+  return `<span style="background:${bg};color:${color};padding:2px 6px;border-radius:8px;font-size:9px;font-weight:600;">${diff}d</span>`;
+}
+
+/* ── Gráfico SVG de barras horizontal ── */
+function pdfBarChart(datos, colorFn){
+  const max=Math.max(...datos.map(d=>d.value),1);
+  const h=datos.length*28+16;
+  const bars=datos.map((d,i)=>{
+    const w=Math.round(d.value/max*280);
+    const color=colorFn?colorFn(d):PDF_SKY;
+    return `<g transform="translate(0,${i*28+8})"><text x="0" y="14" font-size="9" fill="#64748B" font-family="Inter,sans-serif">${escHtml((d.label||'').slice(0,22))}</text><rect x="160" y="4" width="${w}" height="14" rx="4" fill="${color}" opacity=".85"/><text x="${165+w}" y="14" font-size="9" fill="${color}" font-family="monospace" font-weight="700">${d.value}</text></g>`;
+  }).join('');
+  return `<div style="margin-bottom:18px;"><svg viewBox="0 0 460 ${h}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">${bars}</svg></div>`;
+}
+
+/* ── Índice de grupos (dependencias o GITs) con conteos ── */
+function pdfIndiceGrupos(grupos){
+  return `<div style="background:${PDF_BG};border:1px solid ${PDF_BORDER};border-radius:10px;padding:16px 20px;margin-bottom:22px;">
+    <div style="font-size:9px;text-transform:uppercase;letter-spacing:.15em;color:${PDF_NAVY};font-weight:700;margin-bottom:12px;">📋 Índice de Grupos</div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">
+      ${grupos.map((g,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:white;border-radius:6px;border:1px solid ${PDF_BORDER};">
+        <span style="font-size:9px;color:white;background:${PDF_NAVY};padding:2px 6px;border-radius:4px;font-weight:700;">${i+1}</span>
+        <span style="font-size:10px;color:${PDF_NAVY};font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml((g.nombre||'').slice(0,35))}</span>
+        <span style="font-size:10px;color:${PDF_GRAY};font-family:monospace;">${g.total}</span>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ── Marca de agua USO INTERNO ── */
+function pdfWatermark(){
+  return `<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);font-size:80px;font-weight:900;color:rgba(15,31,61,.04);letter-spacing:.1em;pointer-events:none;z-index:0;white-space:nowrap;font-family:'Inter',sans-serif;">USO INTERNO</div>`;
+}
+
 function pdfHeader(titulo, subtitulo=''){
   const fecha=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   return `
   ${pdfPrintStyles()}
+  ${pdfWatermark()}
   <div class="no-print" style="display:flex;gap:10px;margin-bottom:24px;padding:16px;background:#F8FAFC;border-radius:10px;border:1px solid ${PDF_BORDER};align-items:center;">
-    <button onclick="window.print()" style="background:${PDF_NAVY};color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:.03em;display:flex;align-items:center;gap:8px;">🖨️ Imprimir / Guardar PDF</button>
+    <button onclick="window.print()" style="background:${PDF_NAVY};color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:.03em;">🖨️ Imprimir / Guardar PDF</button>
     <button onclick="window.close()" style="background:white;color:${PDF_GRAY};border:1.5px solid ${PDF_BORDER};padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;">✕ Cerrar</button>
   </div>
-
-  <!-- MEMBRETE INSTITUCIONAL -->
   <div style="border:1px solid ${PDF_BORDER};border-radius:12px;overflow:hidden;margin-bottom:6px;box-shadow:0 4px 20px rgba(0,0,0,.08);">
-    <!-- Franja superior tricolor -->
     <div style="height:5px;background:linear-gradient(90deg,#FCD116 33%,#003893 33% 66%,#CE1126 66%);"></div>
-
-    <!-- Cabecera -->
     <div style="background:${PDF_NAVY};padding:20px 28px;display:flex;align-items:center;gap:16px;">
       <div style="width:4px;background:${PDF_GOLD};border-radius:2px;align-self:stretch;flex-shrink:0;"></div>
       <div>
@@ -4331,11 +4422,7 @@ function pdfHeader(titulo, subtitulo=''){
         <div style="color:rgba(255,255,255,.35);font-size:8px;">${hora} horas</div>
       </div>
     </div>
-
-    <!-- Franja dorada delgada -->
     <div style="height:3px;background:linear-gradient(90deg,${PDF_GOLD},#FEF3C7,${PDF_GOLD});"></div>
-
-    <!-- Título del informe -->
     <div style="background:white;padding:20px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px;">
       <div>
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:.18em;color:${PDF_GRAY};margin-bottom:6px;font-weight:600;">Informe de Gestión Contractual</div>
@@ -4348,8 +4435,6 @@ function pdfHeader(titulo, subtitulo=''){
       </div>
     </div>
   </div>
-
-  <!-- Línea de confidencialidad -->
   <div style="text-align:center;font-size:8.5px;color:${PDF_GRAY};letter-spacing:.12em;text-transform:uppercase;margin-bottom:24px;padding:6px;border-bottom:1px dashed ${PDF_BORDER};">
     Documento de uso interno — Ministerio de Relaciones Exteriores de Colombia — No divulgar sin autorización
   </div>`;
@@ -4358,45 +4443,26 @@ function pdfHeader(titulo, subtitulo=''){
 /* ── Caja introductoria ── */
 function pdfIntroBox(texto){
   return `<div style="background:linear-gradient(135deg,#EFF6FF,#F0F9FF);border-left:4px solid ${PDF_SKY};border-radius:0 10px 10px 0;padding:16px 20px;margin-bottom:24px;box-shadow:0 1px 4px rgba(2,132,199,.08);">
-    <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.16em;color:${PDF_SKY};font-weight:700;margin-bottom:7px;display:flex;align-items:center;gap:6px;">
-      <span style="width:16px;height:16px;background:${PDF_SKY};border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:white;font-size:9px;">📋</span>
-      Alcance del Informe
-    </div>
+    <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.16em;color:${PDF_SKY};font-weight:700;margin-bottom:7px;">📋 Alcance del Informe</div>
     <div style="font-size:11.5px;color:#1E293B;line-height:1.8;">${texto}</div>
   </div>`;
 }
 
-/* ── Caja de conclusiones / hallazgos ── */
+/* ── Caja de conclusiones ── */
 function pdfConclusions(puntos){
   const tipos={
-    ok:    {bg:'#F0FDF4',border:'#86EFAC',left:'#22C55E',icon:'✅',color:'#166534',label:'Hallazgo positivo'},
-    warn:  {bg:'#FFFBEB',border:'#FDE68A',left:'#F59E0B',icon:'⚠️',color:'#92400E',label:'Punto de atención'},
-    alert: {bg:'#FEF2F2',border:'#FECACA',left:'#EF4444',icon:'🔴',color:'#991B1B',label:'Alerta crítica'},
-    info:  {bg:'#EFF6FF',border:'#BFDBFE',left:'#3B82F6',icon:'ℹ️',color:'#1E40AF',label:'Observación'},
+    ok:   {bg:'#F0FDF4',border:'#86EFAC',left:'#22C55E',icon:'✅',color:'#166534',label:'Hallazgo positivo'},
+    warn: {bg:'#FFFBEB',border:'#FDE68A',left:'#F59E0B',icon:'⚠️',color:'#92400E',label:'Punto de atención'},
+    alert:{bg:'#FEF2F2',border:'#FECACA',left:'#EF4444',icon:'🔴',color:'#991B1B',label:'Alerta crítica'},
+    info: {bg:'#EFF6FF',border:'#BFDBFE',left:'#3B82F6',icon:'ℹ️',color:'#1E40AF',label:'Observación'},
   };
-  return `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px;">
-    ${puntos.map((p,i)=>{const t=tipos[p.tipo]||tipos.info;return `
-    <div style="background:${t.bg};border:1px solid ${t.border};border-left:4px solid ${t.left};border-radius:0 8px 8px 0;padding:12px 16px;display:flex;gap:12px;align-items:flex-start;">
-      <div style="flex-shrink:0;width:22px;height:22px;background:${t.left};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:1px;">${t.icon}</div>
-      <div style="flex:1;">
-        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:${t.left};font-weight:700;margin-bottom:4px;">${t.label}</div>
-        <div style="font-size:11.5px;color:${t.color};line-height:1.65;">${p.txt}</div>
-      </div>
-    </div>`;}).join('')}
-  </div>`;
+  return `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px;">${puntos.map(p=>{const t=tipos[p.tipo]||tipos.info;return `<div style="background:${t.bg};border:1px solid ${t.border};border-left:4px solid ${t.left};border-radius:0 8px 8px 0;padding:12px 16px;display:flex;gap:12px;align-items:flex-start;"><div style="flex-shrink:0;width:22px;height:22px;background:${t.left};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:1px;">${t.icon}</div><div style="flex:1;"><div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:${t.left};font-weight:700;margin-bottom:4px;">${t.label}</div><div style="font-size:11.5px;color:${t.color};line-height:1.65;">${p.txt}</div></div></div>`;}).join('')}</div>`;
 }
 
 /* ── Grid de KPIs ── */
 function pdfKpiGrid(kpis){
   const cols=Math.min(kpis.length,4);
-  return `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:12px;margin-bottom:24px;">
-    ${kpis.map(k=>`
-    <div style="background:white;border:1px solid ${PDF_BORDER};border-radius:10px;padding:18px;border-top:4px solid ${k.color};box-shadow:0 2px 8px rgba(0,0,0,.04);">
-      <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.12em;color:${PDF_GRAY};margin-bottom:10px;font-weight:600;">${k.label}</div>
-      <div style="font-size:32px;font-weight:800;color:${k.color};font-family:'JetBrains Mono',monospace;line-height:1;margin-bottom:6px;">${k.value}</div>
-      ${k.sub?`<div style="font-size:10px;color:${PDF_GRAY};border-top:1px solid ${PDF_BORDER};padding-top:6px;margin-top:4px;">${k.sub}</div>`:''}
-    </div>`).join('')}
-  </div>`;
+  return `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:12px;margin-bottom:24px;">${kpis.map(k=>`<div style="background:white;border:1px solid ${PDF_BORDER};border-radius:10px;padding:18px;border-top:4px solid ${k.color};box-shadow:0 2px 8px rgba(0,0,0,.04);"><div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.12em;color:${PDF_GRAY};margin-bottom:10px;font-weight:600;">${k.label}</div><div style="font-size:32px;font-weight:800;color:${k.color};font-family:'JetBrains Mono',monospace;line-height:1;margin-bottom:6px;">${k.value}</div>${k.sub?`<div style="font-size:10px;color:${PDF_GRAY};border-top:1px solid ${PDF_BORDER};padding-top:6px;margin-top:4px;">${k.sub}</div>`:''}</div>`).join('')}</div>`;
 }
 
 /* ── Título de sección numerado ── */
@@ -4404,109 +4470,53 @@ let _pdfSectionN=0;
 function pdfSectionTitle(icon, title, resetCounter=false){
   if(resetCounter) _pdfSectionN=0;
   _pdfSectionN++;
-  return `<div class="pdf-section" style="display:flex;align-items:center;gap:10px;margin:32px 0 14px;page-break-after:avoid;">
-    <div style="background:${PDF_NAVY};color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${_pdfSectionN}</div>
-    <div style="flex:1;height:1px;background:linear-gradient(90deg,${PDF_NAVY},${PDF_BORDER});"></div>
-    <div style="background:${PDF_NAVY};border-radius:6px;padding:8px 16px;display:flex;align-items:center;gap:8px;">
-      <span style="font-size:14px;">${icon}</span>
-      <span style="font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.12em;">${title}</span>
-    </div>
-    <div style="flex:1;height:1px;background:linear-gradient(90deg,${PDF_BORDER},transparent);"></div>
-  </div>`;
+  return `<div class="pdf-section" style="display:flex;align-items:center;gap:10px;margin:32px 0 14px;page-break-after:avoid;"><div style="background:${PDF_NAVY};color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${_pdfSectionN}</div><div style="flex:1;height:1px;background:linear-gradient(90deg,${PDF_NAVY},${PDF_BORDER});"></div><div style="background:${PDF_NAVY};border-radius:6px;padding:8px 16px;display:flex;align-items:center;gap:8px;"><span style="font-size:14px;">${icon}</span><span style="font-size:10px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:.12em;">${title}</span></div><div style="flex:1;height:1px;background:linear-gradient(90deg,${PDF_BORDER},transparent);"></div></div>`;
 }
 
 /* ── Tabla estilizada ── */
 function pdfTable(headers, rows, colWidths=[]){
   const ths=headers.map((h,i)=>`<th style="padding:10px 12px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:white;background:${PDF_NAVY};width:${colWidths[i]||'auto'};white-space:nowrap;">${h}</th>`).join('');
-  const trs=rows.map((r,ri)=>`<tr style="background:${ri%2===0?'white':'#F8FAFC'};">${r.map(c=>`<td style="padding:9px 12px;font-size:10.5px;color:#1E293B;border-bottom:1px solid ${PDF_BORDER};vertical-align:top;">${c??'—'}</td>`).join('')}</tr>`).join('');
-  return `<div style="border-radius:10px;overflow:hidden;border:1px solid ${PDF_BORDER};margin-bottom:22px;box-shadow:0 2px 8px rgba(0,0,0,.04);">
-    <table style="width:100%;border-collapse:collapse;">
-      <thead><tr>${ths}</tr></thead>
-      <tbody>${trs}${!rows.length?`<tr><td colspan="${headers.length}" style="padding:20px;text-align:center;color:${PDF_GRAY};font-style:italic;font-size:11px;">Sin registros para mostrar</td></tr>`:''}</tbody>
-    </table>
-  </div>`;
+  const trs=rows.map((r,ri)=>`<tr style="background:${ri%2===0?'white':'#F8FAFC'};">${r.map(c=>`<td style="padding:9px 12px;font-size:10.5px;color:#1E293B;border-bottom:1px solid ${PDF_BORDER};vertical-align:middle;">${c??'—'}</td>`).join('')}</tr>`).join('');
+  return `<div style="border-radius:10px;overflow:hidden;border:1px solid ${PDF_BORDER};margin-bottom:22px;box-shadow:0 2px 8px rgba(0,0,0,.04);"><table style="width:100%;border-collapse:collapse;"><thead><tr>${ths}</tr></thead><tbody>${trs}${!rows.length?`<tr><td colspan="${headers.length}" style="padding:20px;text-align:center;color:${PDF_GRAY};font-style:italic;font-size:11px;">Sin registros para mostrar</td></tr>`:''}</tbody></table></div>`;
 }
 
-/* ── Barra de progreso horizontal ── */
+/* ── Barra de progreso ── */
 function pdfProgressBar(pct, color, height='8px'){
   const p=Math.min(Math.max(pct,0),100);
-  return `<div style="background:#F1F5F9;border-radius:4px;height:${height};overflow:hidden;">
-    <div style="width:${p}%;height:100%;background:${color};border-radius:4px;transition:width .3s;"></div>
-  </div>`;
+  return `<div style="background:#F1F5F9;border-radius:4px;height:${height};overflow:hidden;"><div style="width:${p}%;height:100%;background:${color};border-radius:4px;"></div></div>`;
 }
 
-/* ── Tarjeta métrica compacta ── */
+/* ── Tarjeta métrica ── */
 function pdfMetricCard(label, value, sub, color, icon=''){
-  return `<div style="background:${color}10;border:1px solid ${color}30;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-    ${icon?`<div style="width:36px;height:36px;background:${color}20;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${icon}</div>`:''}
-    <div style="flex:1;min-width:0;">
-      <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.1em;color:${color};font-weight:700;margin-bottom:3px;">${label}</div>
-      <div style="font-size:24px;font-weight:800;color:${PDF_NAVY};font-family:'JetBrains Mono',monospace;line-height:1;">${value}</div>
-      ${sub?`<div style="font-size:9.5px;color:${PDF_GRAY};margin-top:3px;">${sub}</div>`:''}
-    </div>
-  </div>`;
+  return `<div style="background:${color}10;border:1px solid ${color}30;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 4px rgba(0,0,0,.04);">${icon?`<div style="width:36px;height:36px;background:${color}20;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${icon}</div>`:''}<div style="flex:1;min-width:0;"><div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.1em;color:${color};font-weight:700;margin-bottom:3px;">${label}</div><div style="font-size:24px;font-weight:800;color:${PDF_NAVY};font-family:'JetBrains Mono',monospace;line-height:1;">${value}</div>${sub?`<div style="font-size:9.5px;color:${PDF_GRAY};margin-top:3px;">${sub}</div>`:''}</div></div>`;
 }
 
 /* ── Separador visual ── */
-function pdfDivider(){
-  return `<div style="height:1px;background:linear-gradient(90deg,transparent,${PDF_BORDER},transparent);margin:24px 0;"></div>`;
-}
+function pdfDivider(){return `<div style="height:1px;background:linear-gradient(90deg,transparent,${PDF_BORDER},transparent);margin:24px 0;"></div>`;}
 
 /* ── Caja de alerta ── */
 function pdfAlertBox(texto, tipo='info'){
-  const cfg={
-    info:  {bg:'#EFF6FF',border:'#60A5FA',left:'#3B82F6',label:'ℹ️ Observación',  color:'#1E40AF'},
-    warn:  {bg:'#FFFBEB',border:'#FCD34D',left:'#F59E0B',label:'⚠️ Atención',     color:'#92400E'},
-    danger:{bg:'#FEF2F2',border:'#FCA5A5',left:'#EF4444',label:'🔴 Alerta Crítica',color:'#991B1B'},
-    ok:    {bg:'#F0FDF4',border:'#86EFAC',left:'#22C55E',label:'✅ Resultado',     color:'#065F46'},
-  }[tipo]||{bg:'#F8FAFC',border:PDF_GRAY,left:PDF_GRAY,label:'Nota',color:PDF_GRAY};
-  return `<div style="background:${cfg.bg};border:1px solid ${cfg.border};border-left:4px solid ${cfg.left};border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:10px;">
-    <div style="font-size:8.5px;font-weight:700;color:${cfg.color};text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">${cfg.label}</div>
-    <div style="font-size:11px;color:#1E293B;line-height:1.65;">${texto}</div>
-  </div>`;
+  const cfg={info:{bg:'#EFF6FF',border:'#60A5FA',left:'#3B82F6',label:'ℹ️ Observación',color:'#1E40AF'},warn:{bg:'#FFFBEB',border:'#FCD34D',left:'#F59E0B',label:'⚠️ Atención',color:'#92400E'},danger:{bg:'#FEF2F2',border:'#FCA5A5',left:'#EF4444',label:'🔴 Alerta Crítica',color:'#991B1B'},ok:{bg:'#F0FDF4',border:'#86EFAC',left:'#22C55E',label:'✅ Resultado',color:'#065F46'}}[tipo]||{bg:'#F8FAFC',border:PDF_GRAY,left:PDF_GRAY,label:'Nota',color:PDF_GRAY};
+  return `<div style="background:${cfg.bg};border:1px solid ${cfg.border};border-left:4px solid ${cfg.left};border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:10px;"><div style="font-size:8.5px;font-weight:700;color:${cfg.color};text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">${cfg.label}</div><div style="font-size:11px;color:#1E293B;line-height:1.65;">${texto}</div></div>`;
 }
 
-/* ── Bloque de firmas ── */
+/* ── Firmas ── */
 function pdfFirmas(firmantes=[]){
-  const lista=firmantes.length?firmantes:[
-    {cargo:'Elaboró',nombre:'',area:'Grupo de Licitaciones y Contratos'},
-    {cargo:'Revisó',nombre:'',area:'Dirección Administrativa y Financiera'},
-    {cargo:'Aprobó',nombre:'',area:'Coordinación GIT LyC'},
-  ];
-  return `
-  <div style="margin-top:40px;padding-top:20px;border-top:2px solid ${PDF_BORDER};">
-    <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.15em;color:${PDF_GRAY};font-weight:700;text-align:center;margin-bottom:24px;">Control de Elaboración y Aprobación</div>
-    <div style="display:grid;grid-template-columns:repeat(${lista.length},1fr);gap:20px;">
-      ${lista.map(f=>`
-      <div style="text-align:center;">
-        <div style="border-top:1.5px solid ${PDF_NAVY};margin-bottom:8px;padding-top:8px;"></div>
-        <div style="font-size:10px;font-weight:700;color:${PDF_NAVY};margin-bottom:2px;">${f.cargo}</div>
-        <div style="font-size:10px;color:#1E293B;min-height:16px;">${f.nombre||''}</div>
-        <div style="font-size:9px;color:${PDF_GRAY};margin-top:2px;">${f.area}</div>
-      </div>`).join('')}
-    </div>
-  </div>`;
+  const lista=firmantes.length?firmantes:[{cargo:'Elaboró',nombre:'',area:'GIT Licitaciones y Contratos'},{cargo:'Revisó',nombre:'',area:'Dirección Administrativa y Financiera'},{cargo:'Aprobó',nombre:'',area:'Coordinación GIT LyC'}];
+  return `<div style="margin-top:40px;padding-top:20px;border-top:2px solid ${PDF_BORDER};"><div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.15em;color:${PDF_GRAY};font-weight:700;text-align:center;margin-bottom:24px;">Control de Elaboración y Aprobación</div><div style="display:grid;grid-template-columns:repeat(${lista.length},1fr);gap:20px;">${lista.map(f=>`<div style="text-align:center;"><div style="border-top:1.5px solid ${PDF_NAVY};margin-bottom:8px;padding-top:8px;"></div><div style="font-size:10px;font-weight:700;color:${PDF_NAVY};margin-bottom:2px;">${f.cargo}</div><div style="font-size:10px;color:#1E293B;min-height:16px;">${f.nombre||''}</div><div style="font-size:9px;color:${PDF_GRAY};margin-top:2px;">${f.area}</div></div>`).join('')}</div></div>`;
 }
 
 /* ── Footer ── */
 function pdfFooter(){
   const ts=new Date().toLocaleString('es-CO',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  return `
-  <div style="margin-top:32px;padding:14px 20px;background:${PDF_BG};border-top:2px solid ${PDF_BORDER};border-radius:0 0 8px 8px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-    <div style="font-size:8.5px;color:${PDF_GRAY};">Ministerio de Relaciones Exteriores de Colombia &nbsp;·&nbsp; GIT Licitaciones y Contratos &nbsp;·&nbsp; Uso Interno</div>
-    <div style="width:24px;height:3px;background:${PDF_GOLD};border-radius:2px;flex-shrink:0;"></div>
-    <div style="text-align:right;font-size:8.5px;color:${PDF_GRAY};">${ts}</div>
-  </div>`;
+  return `<div style="margin-top:32px;padding:14px 20px;background:${PDF_BG};border-top:2px solid ${PDF_BORDER};border-radius:0 0 8px 8px;display:flex;align-items:center;justify-content:space-between;gap:10px;"><div style="font-size:8.5px;color:${PDF_GRAY};">Ministerio de Relaciones Exteriores de Colombia &nbsp;·&nbsp; GIT Licitaciones y Contratos &nbsp;·&nbsp; Uso Interno</div><div style="width:24px;height:3px;background:${PDF_GOLD};border-radius:2px;flex-shrink:0;"></div><div style="text-align:right;font-size:8.5px;color:${PDF_GRAY};">${ts}</div></div>`;
 }
 
 /* ── Abrir ventana PDF ── */
 function abrirPdf(html, titulo='Informe'){
   _pdfSectionN=0;
   const win=window.open('','_blank');
-  win.document.write(`<!DOCTYPE html><html lang="es"><head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>${escHtml(titulo)} — MRE</title>
-  </head><body><div class="pdf-page">${html}</div></body></html>`);
+  win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escHtml(titulo)} — MRE</title></head><body><div class="pdf-page">${html}</div></body></html>`);
   win.document.close();
 }
 
@@ -4586,11 +4596,23 @@ function pdfGeneral(records){
   if(!puntos.length) puntos.push({tipo:'ok',txt:'El estado general de los procesos es normal. No se identifican alertas críticas en la fecha de emisión de este informe.'});
 
   abrirPdf(`
+    ${pdfPortada('Informe General de Seguimiento Contractual',`Consolidado de asesorías previas y procesos contractuales · ${fechaHoy}`,[
+      {value:records.length,  label:'Total procesos',  color:PDF_NAVY},
+      {value:finalizados.length,label:'Finalizados',   color:PDF_GREEN},
+      {value:activos.length,  label:'En trámite',      color:PDF_SKY},
+      {value:vencidos.length+hoy.length,label:'En riesgo', color:vencidos.length+hoy.length>0?PDF_RED:PDF_GREEN},
+    ])}
     ${pdfHeader('Informe General de Seguimiento Contractual',`Consolidado de asesorías previas y procesos contractuales · ${fechaHoy}`)}
+    ${pdfTOC([
+      {titulo:'Indicadores Generales',            desc:`${records.length} procesos registrados`},
+      {titulo:'Nivel de Riesgo Contractual',      desc:`${totalRiesgo} expedientes en riesgo`},
+      {titulo:'Análisis y Recomendaciones',       desc:'Hallazgos y puntos de atención'},
+      {titulo:'Distribución por Estado',          desc:'Asesorías y Contractuales'},
+      {titulo:'Carga de Trabajo por Abogado',     desc:`${abogRows.length} abogados`},
+    ])}
     ${pdfIntroBox(`Informe ejecutivo del estado actual de los procesos de asesoría previa y contratación del Ministerio de Relaciones Exteriores. Consolida <strong>${records.length} registros</strong> con indicadores de gestión, distribución por estado, carga por abogado y análisis de riesgo. Generado el ${fechaHoy} a las ${hora} horas.`)}
 
-    <!-- KPIs -->
-    ${pdfSectionTitle('📊','Indicadores Generales')}
+    ${pdfSectionTitle('📊','Indicadores Generales',true)}
     ${pdfKpiGrid([
       {label:'Total Procesos',      value:records.length,   color:PDF_NAVY,   sub:'Registrados en el sistema'},
       {label:'Asesorías Previas',   value:asesorias.length, color:PDF_SKY,    sub:`${Math.round(asesorias.length/Math.max(records.length,1)*100)}% del total`},
@@ -4604,7 +4626,7 @@ function pdfGeneral(records){
       ${pdfMetricCard('Próx. 3 días', prox3.length, 'Alta prioridad', PDF_ORANGE, '🟠')}
     </div>
 
-    <!-- Nivel de riesgo -->
+    ${pdfSectionTitle('🚦','Nivel de Riesgo Contractual')}
     <div style="background:${colorRiesgo}12;border:2px solid ${colorRiesgo};border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:16px;">
       <div style="width:52px;height:52px;border-radius:50%;background:${colorRiesgo};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${nivelRiesgo==='BAJO'?'✅':nivelRiesgo==='MODERADO'?'⚠️':'🔴'}</div>
       <div>
@@ -4614,24 +4636,21 @@ function pdfGeneral(records){
       </div>
     </div>
 
-    <!-- Análisis y recomendaciones -->
     ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
     ${pdfConclusions(puntos)}
 
-    <!-- Distribución por estado -->
     ${pdfSectionTitle('📋','Distribución por Estado de Trámite')}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
       <div style="background:white;border:1px solid ${PDF_BORDER};border-radius:10px;padding:16px;">
         <div style="font-size:10px;font-weight:700;color:${PDF_SKY};text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #E0F2FE;">🔵 Asesoría Previa — ${asesorias.length} procesos</div>
-        ${barraEstados(estadosA,maxA,PDF_SKY)}
+        ${pdfBarChart(estadosA.map(e=>({label:e.label,value:e.cnt})),d=>PDF_SKY)}
       </div>
       <div style="background:white;border:1px solid ${PDF_BORDER};border-radius:10px;padding:16px;">
         <div style="font-size:10px;font-weight:700;color:${PDF_TEAL};text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #CFFAFE;">🔷 Proceso Contractual — ${contractuales.length} procesos</div>
-        ${barraEstados(estadosC,maxC,PDF_TEAL)}
+        ${pdfBarChart(estadosC.map(e=>({label:e.label,value:e.cnt})),d=>PDF_TEAL)}
       </div>
     </div>
 
-    <!-- Carga por abogado -->
     ${pdfSectionTitle('⚖️','Carga de Trabajo por Abogado')}
     ${pdfTable(
       ['Abogado','Total','Finalizados','Activos','Vencidos','% Cumplimiento'],
@@ -5942,7 +5961,20 @@ function pdfConsolidadoGeneral(){
   if(!puntos.length) puntos.push({tipo:'ok',txt:'El estado general de la actividad contractual es normal. No se identifican alertas críticas.'});
 
   abrirPdf(`
+    ${pdfPortada('Resumen Ejecutivo Global — Gestión Contractual',`Consolidado de Procesos · Modificaciones · Liquidaciones y Cierres · ${fechaHoy}`,[
+      {value:total,       label:'Total expedientes',  color:PDF_NAVY},
+      {value:proc.length, label:'Procesos',            color:PDF_SKY},
+      {value:mod.length,  label:'Modificaciones',      color:PDF_PURPLE},
+      {value:liq.length,  label:'Liquidaciones',       color:PDF_GREEN},
+    ])}
     ${pdfHeader('Resumen Ejecutivo Global — Gestión Contractual','Consolidado de Procesos · Modificaciones · Liquidaciones y Cierres · '+fechaHoy)}
+    ${pdfTOC([
+      {titulo:'Resumen Ejecutivo — Los Tres Módulos', desc:`${total} expedientes totales`},
+      {titulo:'Análisis y Alertas para el Comité',   desc:`${totalAlertas} alertas identificadas`},
+      {titulo:'Módulo 1 — Procesos',                 desc:`${proc.length} expedientes`},
+      {titulo:'Módulo 2 — Modificaciones',           desc:`${mod.length} expedientes`},
+      {titulo:'Módulo 3 — Liquidaciones y Cierres',  desc:`${liq.length} expedientes`},
+    ])}
     ${pdfIntroBox(`Informe ejecutivo integral de la gestión contractual del Ministerio de Relaciones Exteriores. Consolida <strong>${total} registros</strong> en tres módulos: <strong>Procesos (${proc.length})</strong>, <strong>Modificaciones (${mod.length})</strong> y <strong>Liquidaciones y Cierres (${liq.length})</strong>. Preparado el ${fechaHoy} a las ${hora} horas para presentación en comité directivo.`)}
 
     ${pdfSectionTitle('📊','Resumen Ejecutivo — Los Tres Módulos',true)}
@@ -6451,6 +6483,8 @@ function openModalLiq(id=null){
   liqEditingId=id;
   const r=id?(window._liqRecords||[]).find(x=>x.id===id):null;
   document.getElementById('liq-modal-title').textContent=r?'Editar Liquidación':'Nueva Liquidación / Cierre';
+
+  // Campos básicos
   const ti=document.getElementById('liq-f-ticket');
   ti.value=r?.ticket||'';
   ti.readOnly=false;
@@ -6458,24 +6492,31 @@ function openModalLiq(id=null){
   ti.style.color='';
   document.getElementById('liq-f-proceso').value=r?.numeroProceso||'';
   document.getElementById('liq-f-unidad').value=r?.unidadAdmin||'';
-  document.getElementById('liq-f-tramite').value=r?.tramite||'';
-  document.getElementById('liq-f-persona').value=r?.persona||'';
+  document.getElementById('liq-f-tramite').value=r?.tramite||'Liquidacion';
+  document.getElementById('liq-f-persona').value=r?.persona||'Juridica';
   document.getElementById('liq-f-contratista').value=r?.contratista||'';
   document.getElementById('liq-f-estado').value=r?.estado||'pendiente-enviar';
   buildAbogadoOptions('liq-f-abogado',r?.abogado||'');
-  const gitSrc=document.getElementById('f-git');
+
+  // GIT — poblar desde registros únicos de liquidaciones
   const gitDst=document.getElementById('liq-f-git');
-  if(gitSrc&&gitDst)gitDst.innerHTML=gitSrc.innerHTML;
+  const gitsUnicos=[...new Set((window._liqRecords||[]).map(x=>(x.git||'').trim()).filter(Boolean))].sort();
+  gitDst.innerHTML='<option value="">— Sin GIT —</option>'+gitsUnicos.map(g=>`<option value="${escHtml(g)}">${escHtml(g)}</option>`).join('');
   gitDst.value=r?.git||'';
-  const depSrc=document.getElementById('f-dependencia');
+
+  // Dependencia — poblar desde registros únicos de liquidaciones
   const depDst=document.getElementById('liq-f-dependencia');
-  if(depSrc&&depDst)depDst.innerHTML=depSrc.innerHTML;
+  const depsUnicas=[...new Set((window._liqRecords||[]).map(x=>(x.dependencia||'').trim()).filter(Boolean))].sort();
+  depDst.innerHTML='<option value="">— Sin dependencia —</option>'+depsUnicas.map(d=>`<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
   depDst.value=r?.dependencia||'';
+
+  // Fechas y observaciones
   document.getElementById('liq-f-inicio').value=r?.fechaInicio||'';
   document.getElementById('liq-f-terminacion').value=r?.fechaTerminacion||'';
   document.getElementById('liq-f-cierre').value=r?.fechaCierre||'';
   document.getElementById('liq-f-liquidacion').value=r?.fechaLiquidacion||'';
   document.getElementById('liq-f-obs').value=r?.obs||'';
+
   document.getElementById('liq-modal-overlay').classList.add('open');
 }
 function closeModalLiq(){document.getElementById('liq-modal-overlay').classList.remove('open');liqEditingId=null;}
@@ -6602,7 +6643,8 @@ async function limpiarLiquidaciones(){
   }
 }
 async function saveLiqRecord(){
-  if(!isAdmin())return;;
+  if(!isAdmin())return;
+  const ticket=sanitize(document.getElementById('liq-f-ticket').value.trim(),50);
   const abogado=document.getElementById('liq-f-abogado').value;
   const contratista=sanitize(document.getElementById('liq-f-contratista').value.trim(),500);
   if(!ticket||!abogado||!contratista){alert('Completa los campos obligatorios: N° Contrato, Abogado y Contratista.');return;}
