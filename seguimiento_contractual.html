@@ -1751,6 +1751,21 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       <div style="margin-bottom:16px;"><button class="btn btn-primary" onclick="openAddUser()">＋ Agregar Usuario</button></div>
       <div class="users-grid" id="users-grid"></div>
 
+      <!-- Eliminar liquidaciones -->
+      <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:20px 24px;margin-top:24px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <span style="font-size:22px;">🗑️</span>
+          <div>
+            <div style="font-weight:700;color:#991B1B;font-size:14px;">Eliminar todos los registros de Liquidaciones</div>
+            <div style="font-size:12px;color:#B91C1C;margin-top:2px;">Elimina permanentemente todos los expedientes. No se puede deshacer.</div>
+          </div>
+        </div>
+        <button class="btn" onclick="limpiarLiquidaciones()" style="background:#DC2626;color:white;border:none;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+          🗑️ Eliminar todos los registros de Liquidaciones
+        </button>
+        <span id="liq-clean-status" style="font-size:12px;margin-left:12px;color:#6B7280;"></span>
+      </div>
+
       <!-- Actualizar solo Observaciones de Liquidaciones -->
       <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:20px 24px;margin-top:24px;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
@@ -5182,9 +5197,9 @@ function cerrarSelectorAbogado(){
 /* ─── Selector Dependencia Liquidaciones ─── */
 function abrirSelectorLiqDep(){
   if(!isAdmin()){alert('Solo los administradores pueden generar informes.');return;}
-  // Solo registros sin GIT
-  const records=(window._liqRecords||[]).filter(r=>!(r.git||'').trim());
-  if(!records.length){alert('No hay liquidaciones de dependencia registradas.');return;}
+  // Solo registros CON dependencia y SIN git
+  const records=(window._liqRecords||[]).filter(r=>(r.dependencia||'').trim() && !(r.git||'').trim());
+  if(!records.length){alert('No hay liquidaciones de dependencia sin GIT registradas.');return;}
   const deps=[...new Set(records.map(r=>(r.dependencia||'').trim()).filter(Boolean))].sort();
   const sel=document.getElementById('inf-liq-dep-sel');
   sel.innerHTML='<option value="">📊 Todas las dependencias (informe general)</option>'+
@@ -5204,10 +5219,11 @@ function generarInformeLiqDep(){
 /* ─── Selector GIT Liquidaciones ─── */
 function abrirSelectorLiqGIT(){
   if(!isAdmin()){alert('Solo los administradores pueden generar informes.');return;}
-  // Solo registros con GIT
-  const records=(window._liqRecords||[]).filter(r=>(r.git||'').trim());
-  if(!records.length){alert('No hay liquidaciones de GIT registradas.');return;}
-  const gits=[...new Set(records.map(r=>(r.git||'').trim()).filter(Boolean))].sort();
+  // Agrupa por campo GIT — independiente del campo Dependencia
+  const records=(window._liqRecords||[]);
+  const conGit=records.filter(r=>(r.git||'').trim());
+  if(!conGit.length){alert('No hay liquidaciones con GIT registrado.');return;}
+  const gits=[...new Set(conGit.map(r=>(r.git||'').trim()).filter(Boolean))].sort();
   const sel=document.getElementById('inf-liq-git-sel');
   sel.innerHTML='<option value="">📊 Todos los GITs (informe general)</option>'+
     gits.map(g=>`<option value="${escHtml(g)}">${escHtml(g.slice(0,60))}${g.length>60?'…':''}</option>`).join('');
@@ -5316,6 +5332,58 @@ function pdfModIndividual(abogado){
 }
 
 /* ═══ INFORMES — LIQUIDACIONES ADICIONALES ═══ */
+/* ══ HELPER: Resumen de pendientes por trámite — detalle de contratos ══ */
+function pdfResumenTramite(records){
+  const tramStates=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','revision-jefe','aval-radicar','radicado-git','radicado-competente'];
+
+  const liq = records.filter(r=>r.tramite==='Liquidacion');
+  const cie = records.filter(r=>r.tramite==='Cierre');
+
+  const liqPend = liq.filter(r=>tramStates.includes(r.estado));
+  const ciePend = cie.filter(r=>tramStates.includes(r.estado));
+
+  const ESTADO_LIQ_LABEL={
+    'pendiente-enviar':'Pendiente enviar proyecto',
+    'en-asesoria':'En asesoría',
+    'observaciones-area':'Observaciones en el área',
+    'revision-coord':'Revisión Coord. GIT LyC',
+    'revision-jefe':'Revisión Jefe L y C',
+    'aval-radicar':'Aval para radicar',
+    'radicado-git':'Radicado en GIT LyC',
+    'radicado-competente':'Radicado en competente',
+    'liquidado-pte-cerrar':'Liq. Pte. cerrar',
+    'liquidado-cerrado':'Liquidado y cerrado',
+    'cierre-contractual':'Cierre contractual',
+  };
+
+  const mkRows=recs=>recs.map(r=>[
+    `<b style="font-family:monospace;font-size:10px;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
+    `<span style="font-size:10px;">${escHtml(r.numeroProceso||'—')}</span>`,
+    `<span style="font-size:10px;">${escHtml((r.contratista||'—').slice(0,35))}${(r.contratista||'').length>35?'…':''}</span>`,
+    `<span style="background:#F1F5F9;color:${PDF_NAVY};padding:2px 7px;border-radius:8px;font-size:9px;font-weight:600;">${escHtml(ESTADO_LIQ_LABEL[r.estado]||r.estado||'—')}</span>`,
+    `<span style="font-size:10px;font-family:monospace;">${escHtml(r.fechaInicio||'—')}</span>`,
+    `<span style="font-size:10px;font-family:monospace;">${escHtml(r.fechaTerminacion||'—')}</span>`,
+    `<span style="font-size:9px;color:#475569;">${escHtml((r.obs||'—').slice(0,50))}${(r.obs||'').length>50?'…':''}</span>`,
+  ]);
+
+  const mkSection=(recs, titulo, color, bg, border)=>{
+    if(!recs.length) return `<div style="background:${bg};border:1px solid ${border};border-radius:8px;padding:10px 14px;margin-bottom:20px;"><div style="font-size:11px;font-weight:700;color:${color};">${titulo} — Sin contratos pendientes</div></div>`;
+    return `
+    <div style="background:${bg};border:2px solid ${border};border-radius:10px;padding:14px 16px;margin-bottom:20px;">
+      <div style="font-size:12px;font-weight:700;color:${color};margin-bottom:10px;">${titulo} — ${recs.length} contratos pendientes</div>
+      ${pdfTable(
+        ['N° Contrato','N° Proceso','Contratista / Proveedor','Estado','F. Finalización','F. Máx. Liqu','Observaciones'],
+        mkRows(recs),
+        ['8%','9%','22%','16%','9%','9%','25%']
+      )}
+    </div>`;
+  };
+
+  return `
+  ${mkSection(liqPend,'💧 LIQUIDACIONES — Pendientes de Trámite','#B45309','#FFFBEB','#FCD34D')}
+  ${mkSection(ciePend,'🔒 CIERRES — Pendientes de Trámite','#0E7490','#F0FDFA','#99F6E4')}`;
+}
+
 function pdfLiqPorAbogado(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
   const records=window._liqRecords||[];
@@ -5417,6 +5485,8 @@ function pdfLiqPorAbogado(){
       cieResRows,['18%','5%','9%','9%','9%','9%','9%','9%','11%']
     ):'<p style="color:#9CA3AF;text-align:center;font-size:12px;">Sin cierres registrados</p>'}
 
+    ${pdfSectionTitle('📋','Resumen de Pendientes por Trámite — Liquidaciones vs Cierres')}
+    ${pdfResumenTramite(records)}
     ${pdfSectionTitle('📁','Detalle por Abogado')}
     ${detalles}
     ${pdfFooter()}
@@ -5504,6 +5574,9 @@ function pdfLiqIndividual(abogado){
     ${pdfConclusions(puntos)}
 
     ${liqRecs.length?`
+    ${pdfSectionTitle('📋','Resumen de Pendientes por Trámite — Liquidaciones vs Cierres')}
+    ${pdfResumenTramite(all)}
+
     ${pdfSectionTitle('💧','Resumen de Liquidaciones por Estado')}
     ${pdfTable(
       ['Abogado','Total','En asesoría','Obs. área','Rev. Coord.','Aval radicar','Rad. GIT LyC','Rad. competente','Liq. y cerrado','Liq. Pte. cerrar','Cierre Contractual'],
@@ -5532,9 +5605,9 @@ function pdfLiqIndividual(abogado){
 /* ═══ INFORME LIQUIDACIONES POR DEPENDENCIA ═══ */
 function pdfLiqPorDependencia(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
-  // Sin GIT = pertenece a la dependencia directamente
-  const allRecords=(window._liqRecords||[]).filter(r=>!(r.git||'').trim());
-  if(!allRecords.length){alert('No hay liquidaciones de dependencia para generar el informe.');return;}
+  // Solo registros CON dependencia y SIN git
+  const allRecords=(window._liqRecords||[]).filter(r=>(r.dependencia||'').trim() && !(r.git||'').trim());
+  if(!allRecords.length){alert('No hay liquidaciones de dependencia sin GIT para generar el informe.');return;}
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
@@ -5617,6 +5690,8 @@ function pdfLiqPorDependencia(){
       ['Dependencia','Total','💧Liq.','Fin.Liq','Pte.Liq','🔒Cie.','Fin.Cie','Pte.Cie'],
       resRows,['30%','6%','7%','7%','7%','7%','7%','7%']
     )}
+    ${pdfSectionTitle('📋','Resumen de Pendientes por Trámite — Liquidaciones vs Cierres')}
+    ${pdfResumenTramite(allRecords)}
     ${pdfSectionTitle('📁','Detalle por Dependencia')}
     ${detalles}
     ${pdfFooter()}
@@ -5626,9 +5701,9 @@ function pdfLiqPorDependencia(){
 /* ═══ INFORME LIQUIDACIONES POR GIT ═══ */
 function pdfLiqPorGIT(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
-  // Con GIT = pertenece al grupo interno de trabajo
+  // Agrupa por campo GIT — independiente del campo Dependencia
   const allRecords=(window._liqRecords||[]).filter(r=>(r.git||'').trim());
-  if(!allRecords.length){alert('No hay liquidaciones de GIT para generar el informe.');return;}
+  if(!allRecords.length){alert('No hay liquidaciones con GIT para generar el informe.');return;}
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
@@ -5714,6 +5789,8 @@ function pdfLiqPorGIT(){
       ['GIT','Total','💧Liq.','Fin.Liq','Pte.Liq','🔒Cie.','Fin.Cie','Pte.Cie'],
       resRows,['30%','6%','7%','7%','7%','7%','7%','7%']
     )}
+    ${pdfSectionTitle('📋','Resumen de Pendientes por Trámite — Liquidaciones vs Cierres')}
+    ${pdfResumenTramite(allRecords)}
     ${pdfSectionTitle('📁','Detalle por GIT — separado por Trámite')}
     ${detalles}
     ${pdfFooter()}
@@ -5722,9 +5799,9 @@ function pdfLiqPorGIT(){
 
 /* ═══ INFORME INDIVIDUAL POR DEPENDENCIA ═══ */
 function pdfLiqDependenciaIndividual(dep){
-  // Sin GIT = pertenece a la dependencia directamente
+  // Solo registros CON esa dependencia y SIN git
   const allRecords=(window._liqRecords||[]).filter(r=>(r.dependencia||'').trim()===dep && !(r.git||'').trim());
-  if(!allRecords.length){alert(`No hay liquidaciones de dependencia para: ${dep}`);return;}
+  if(!allRecords.length){alert(`No hay liquidaciones sin GIT para la dependencia: ${dep}`);return;}
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
@@ -5771,6 +5848,9 @@ function pdfLiqDependenciaIndividual(dep){
 
     ${pdfSectionTitle('💡','Análisis y Recomendaciones')}
     ${pdfConclusions(puntos)}
+
+    ${pdfSectionTitle('📋','Resumen de Pendientes por Trámite — Liquidaciones vs Cierres')}
+    ${pdfResumenTramite(allRecords)}
 
     <div style="background:#FFFBEB;border:2px solid #FCD34D;border-radius:12px;padding:16px 20px;margin-bottom:20px;">
       <div style="font-size:13px;font-weight:700;color:#B45309;margin-bottom:12px;">💧 LIQUIDACIONES — ${liqRecs.length} expedientes</div>
@@ -5877,6 +5957,9 @@ function pdfLiqGITIndividual(git){
 
     ${pdfSectionTitle('💡','Análisis y Recomendaciones')}
     ${pdfConclusions(puntos)}
+
+    ${pdfSectionTitle('📋','Resumen de Pendientes por Trámite — Liquidaciones vs Cierres')}
+    ${pdfResumenTramite(allRecords)}
 
     <!-- SECCIÓN LIQUIDACIONES -->
     <div style="background:#FFFBEB;border:2px solid #FCD34D;border-radius:12px;padding:16px 20px;margin-bottom:20px;">
@@ -7202,8 +7285,9 @@ function importarLiq(input){
   const normAbogadoLiq=(s)=>{const u=(s||'').trim().toUpperCase();return LIQ_ABOGADO_MAP[u]||u;};
 
   // ── Clave de deduplicación: N° Contrato + N° Proceso ──
-  // Mismo contrato + mismo proceso → es el mismo registro → actualizar
-  // Mismo contrato + distinto proceso → contrato en otro expediente → crear nuevo
+  // Si hay match exacto → actualizar ese registro
+  // Si solo hay match por N° Contrato (proceso diferente o vacío) → actualizar igualmente
+  // Si no hay ningún match → crear nuevo
   const claveUnica=(ticket,numeroProceso)=>{
     const t=normStr(ticket||'');
     const p=normStr(numeroProceso||'');
@@ -7225,14 +7309,26 @@ function importarLiq(input){
       const parsed=[];
       allRows.slice(1).forEach((row,ri)=>{
         const rawTicket=String(row[colIdx['ticket']]||'').trim();
-        if(!rawTicket)return;
-        const rawProceso=String(row[colIdx['numeroProceso']]||'').trim();
+        const rawProcesoRaw=String(row[colIdx['numeroProceso']]||'').trim();
+        // Normalizar valores nulos de proceso
+        const rawProceso=['NONE','N/A','NA','NULL','—','-'].includes(rawProcesoRaw.toUpperCase())?'':rawProcesoRaw;
+        // Regla: debe tener al menos N° Contrato O N° Proceso
+        if(!rawTicket && !rawProceso) return;
         const estado=LIQ_ESTADO_MAP[(String(row[colIdx['estado']]||'')).toLowerCase().trim()]||'pendiente-enviar';
         const abogado=normAbogadoLiq(String(row[colIdx['abogado']]||''));
 
-        // Buscar registro existente por CLAVE ÚNICA = N° Contrato + N° Proceso
+        // Buscar registro existente:
+        // 1) Match exacto N° Contrato + N° Proceso
+        // 2) Fallback: solo N° Contrato, ÚNICAMENTE si hay un solo registro con ese ticket
+        // Si no tiene contrato pero sí proceso → siempre nueva línea
         const clave=claveUnica(rawTicket, rawProceso);
-        const ex=existing.find(r=>claveUnica(r.ticket, r.numeroProceso)===clave);
+        let ex=existing.find(r=>claveUnica(r.ticket, r.numeroProceso)===clave);
+        if(!ex && rawTicket){
+          const porTicket=existing.filter(r=>normStr(r.ticket)===normStr(rawTicket));
+          if(porTicket.length===1) ex=porTicket[0]; // único → actualizar
+          // Si hay más de uno → procesos distintos → crear nuevo
+        }
+        // Sin ticket pero con proceso → siempre nuevo registro
 
         parsed.push({
           ticket:rawTicket,
@@ -7347,7 +7443,42 @@ function pdfLiq(){
     }).filter(Boolean);
   };
 
-  // Tabla abogados desglosada
+  // Desglose detallado por estado de LIQUIDACIONES
+  const liqPendEnviarN = recsLiq.filter(r=>r.estado==='pendiente-enviar').length;
+  const liqEnAsesoria  = recsLiq.filter(r=>r.estado==='en-asesoria').length;
+  const liqObsArea     = recsLiq.filter(r=>r.estado==='observaciones-area').length;
+  const liqRevCoord    = recsLiq.filter(r=>r.estado==='revision-coord').length;
+  const liqRevJefe     = recsLiq.filter(r=>r.estado==='revision-jefe').length;
+  const liqAval        = recsLiq.filter(r=>r.estado==='aval-radicar').length;
+  const liqRadGIT      = recsLiq.filter(r=>r.estado==='radicado-git').length;
+  const liqRadComp     = recsLiq.filter(r=>r.estado==='radicado-competente').length;
+
+  // Desglose detallado por estado de CIERRES
+  const ciePendEnviarN = recsCie.filter(r=>r.estado==='pendiente-enviar').length;
+  const cieEnAsesoria  = recsCie.filter(r=>r.estado==='en-asesoria').length;
+  const cieObsArea     = recsCie.filter(r=>r.estado==='observaciones-area').length;
+  const cieRevCoord    = recsCie.filter(r=>r.estado==='revision-coord').length;
+  const cieRevJefe     = recsCie.filter(r=>r.estado==='revision-jefe').length;
+  const cieAval        = recsCie.filter(r=>r.estado==='aval-radicar').length;
+  const cieRadGIT      = recsCie.filter(r=>r.estado==='radicado-git').length;
+  const cieRadComp     = recsCie.filter(r=>r.estado==='radicado-competente').length;
+
+  // Función para generar fila de estado
+  const mkEstadoRow=(label, n, tot2, colorFin=false)=>{
+    if(!n) return '';
+    const pct = tot2?Math.round(n/tot2*100):0;
+    const color = colorFin?PDF_GREEN:PDF_SKY;
+    const bg    = colorFin?'#D1FAE5':'#DBEAFE';
+    const fg    = colorFin?'#065F46':'#1E40AF';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F1F5F9;">
+      <div style="flex:1;font-size:11px;color:${PDF_NAVY};">${label}</div>
+      <div style="width:120px;background:#F1F5F9;border-radius:4px;height:8px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:4px;"></div>
+      </div>
+      <span style="background:${bg};color:${fg};padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;min-width:28px;text-align:center;">${n}</span>
+      <span style="font-size:10px;color:${PDF_GRAY};min-width:32px;text-align:right;">${pct}%</span>
+    </div>`;
+  };
   const byAbog={};
   records.forEach(r=>{
     const k=r.abogado||'Sin asignar';
@@ -7408,11 +7539,23 @@ function pdfLiq(){
         <span style="font-size:18px;">💧</span> LIQUIDACIONES — ${recsLiq.length} expedientes
       </div>
       ${pdfKpiGrid([
-        {label:'Liq. y Cerrado',    value:liqCerrado,  color:PDF_GREEN,   sub:'Finalizado completo'},
-        {label:'Liq. Pte. Cerrar',  value:liqPte,      color:'#F59E0B',   sub:'Falta acta de cierre'},
-        {label:'Pte. por Liquidar', value:liqTram,     color:'#EA580C',   sub:'En trámite activo'},
+        {label:'Liq. y Cerrado',    value:liqCerrado,  color:PDF_GREEN,  sub:'Finalizado completo'},
+        {label:'Liq. Pte. Cerrar',  value:liqPte,      color:'#F59E0B',  sub:'Falta acta de cierre'},
+        {label:'En Trámite',        value:liqTram,     color:'#EA580C',  sub:'Pendiente de gestión'},
       ])}
-      ${mkBarras(recsLiq).length?pdfTable(['Estado','Distribución','Cantidad','%'],mkBarras(recsLiq),['30%','40%','15%','10%']):'<p style="color:#9CA3AF;font-size:12px;">Sin datos de liquidaciones</p>'}
+      <div style="margin-top:8px;">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:#B45309;font-weight:700;margin-bottom:8px;">Desglose por Estado</div>
+        ${mkEstadoRow('Pendiente enviar proyecto', liqPendEnviarN, recsLiq.length)}
+        ${mkEstadoRow('En asesoría',               liqEnAsesoria,  recsLiq.length)}
+        ${mkEstadoRow('Observaciones en el área',  liqObsArea,     recsLiq.length)}
+        ${mkEstadoRow('Revisión Coord. GIT LyC',   liqRevCoord,    recsLiq.length)}
+        ${mkEstadoRow('Revisión Jefe L y C',       liqRevJefe,     recsLiq.length)}
+        ${mkEstadoRow('Aval para radicar',         liqAval,        recsLiq.length)}
+        ${mkEstadoRow('Radicado en GIT LyC',       liqRadGIT,      recsLiq.length)}
+        ${mkEstadoRow('Radicado en competente',    liqRadComp,     recsLiq.length)}
+        ${mkEstadoRow('Liquidado y Pte. cerrar',   liqPte,         recsLiq.length, false)}
+        ${mkEstadoRow('Liquidado y cerrado',       liqCerrado,     recsLiq.length, true)}
+      </div>
     </div>
 
     <!-- SECCIÓN CIERRES -->
@@ -7421,11 +7564,23 @@ function pdfLiq(){
         <span style="font-size:18px;">🔒</span> CIERRES — ${recsCie.length} expedientes
       </div>
       ${pdfKpiGrid([
-        {label:'Cierre Contractual', value:cierreCont,  color:PDF_TEAL,   sub:'Finalizado'},
-        {label:'Pte. por Cierre',    value:cieTram,     color:'#7C3AED',  sub:'En trámite activo'},
+        {label:'Cierre Contractual', value:cierreCont, color:PDF_TEAL,  sub:'Finalizado'},
+        {label:'En Trámite',         value:cieTram,    color:'#7C3AED', sub:'Pendiente de gestión'},
       ])}
-      ${mkBarras(recsCie).length?pdfTable(['Estado','Distribución','Cantidad','%'],mkBarras(recsCie),['30%','40%','15%','10%']):'<p style="color:#9CA3AF;font-size:12px;">Sin datos de cierres</p>'}
+      <div style="margin-top:8px;">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:#0E7490;font-weight:700;margin-bottom:8px;">Desglose por Estado</div>
+        ${mkEstadoRow('Pendiente enviar proyecto', ciePendEnviarN, recsCie.length)}
+        ${mkEstadoRow('En asesoría',               cieEnAsesoria,  recsCie.length)}
+        ${mkEstadoRow('Observaciones en el área',  cieObsArea,     recsCie.length)}
+        ${mkEstadoRow('Revisión Coord. GIT LyC',   cieRevCoord,    recsCie.length)}
+        ${mkEstadoRow('Revisión Jefe L y C',       cieRevJefe,     recsCie.length)}
+        ${mkEstadoRow('Aval para radicar',         cieAval,        recsCie.length)}
+        ${mkEstadoRow('Radicado en GIT LyC',       cieRadGIT,      recsCie.length)}
+        ${mkEstadoRow('Radicado en competente',    cieRadComp,     recsCie.length)}
+        ${mkEstadoRow('Cierre contractual',        cierreCont,     recsCie.length, true)}
+      </div>
     </div>
+
 
     ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
     ${pdfConclusions(puntos)}
