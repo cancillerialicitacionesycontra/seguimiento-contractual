@@ -4477,14 +4477,18 @@ function pdfWatermark(){
   return `<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);font-size:80px;font-weight:900;color:rgba(15,31,61,.04);letter-spacing:.1em;pointer-events:none;z-index:0;white-space:nowrap;font-family:'Inter',sans-serif;">USO INTERNO</div>`;
 }
 
-function pdfHeader(titulo, subtitulo=''){
+function pdfHeader(titulo, subtitulo='', excelData=null){
   const fecha=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  const excelBtn=excelData
+    ? `<button onclick="window.__downloadExcel()" style="background:#059669;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">⬇ Descargar Excel</button>`
+    : '';
   return `
   ${pdfPrintStyles()}
   ${pdfWatermark()}
-  <div class="no-print" style="display:flex;gap:10px;margin-bottom:24px;padding:16px;background:#F8FAFC;border-radius:10px;border:1px solid ${PDF_BORDER};align-items:center;">
+  <div class="no-print" style="display:flex;gap:10px;margin-bottom:24px;padding:16px;background:#F8FAFC;border-radius:10px;border:1px solid ${PDF_BORDER};align-items:center;flex-wrap:wrap;">
     <button onclick="window.print()" style="background:${PDF_NAVY};color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:.03em;">🖨️ Imprimir / Guardar PDF</button>
+    ${excelBtn}
     <button onclick="window.close()" style="background:white;color:${PDF_GRAY};border:1.5px solid ${PDF_BORDER};padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;">✕ Cerrar</button>
   </div>
   <div style="border:1px solid ${PDF_BORDER};border-radius:12px;overflow:hidden;margin-bottom:6px;box-shadow:0 4px 20px rgba(0,0,0,.08);">
@@ -4592,11 +4596,31 @@ function pdfFooter(){
 }
 
 /* ── Abrir ventana PDF ── */
-function abrirPdf(html, titulo='Informe'){
+function abrirPdf(html, titulo='Informe', excelData=null){
   _pdfSectionN=0;
   const win=window.open('','_blank');
   win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escHtml(titulo)} — MRE</title></head><body><div class="pdf-page">${html}</div></body></html>`);
   win.document.close();
+  // Inyectar Excel después del write para evitar conflictos con parser HTML
+  if(excelData){
+    const d=excelData;
+    // Cargar SheetJS dinámicamente en la ventana PDF
+    const s=win.document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=function(){
+      win.__excelData=d;
+      win.__downloadExcel=function(){
+        try{
+          const wb=win.XLSX.utils.book_new();
+          const ws=win.XLSX.utils.aoa_to_sheet([d.headers,...d.rows]);
+          ws['!cols']=d.headers.map(function(_,i){return{wch:i===2||i===5?40:i===6||i===14?30:14};});
+          win.XLSX.utils.book_append_sheet(wb,ws,'Liquidaciones');
+          win.XLSX.writeFile(wb,d.filename);
+        }catch(e){win.alert('Error al generar Excel: '+e.message);}
+      };
+    };
+    win.document.head.appendChild(s);
+  }
 }
 
 function pdfGeneral(records){
@@ -5332,6 +5356,28 @@ function pdfModIndividual(abogado){
 }
 
 /* ═══ INFORMES — LIQUIDACIONES ADICIONALES ═══ */
+/* ══ HELPER: Generar datos Excel para informes de liquidaciones ══ */
+function mkExcelData(records, filename){
+  const ESTADO_LABEL={
+    'pendiente-enviar':'Pendiente enviar proyecto','en-asesoria':'En asesoría',
+    'observaciones-area':'Observaciones en el área','revision-coord':'Revisión Coord. GIT LyC',
+    'revision-jefe':'Revisión Jefe L y C','aval-radicar':'Aval para radicar',
+    'radicado-git':'Radicado en GIT LyC','radicado-competente':'Radicado en competente',
+    'liquidado-pte-cerrar':'Liquidado y Pte. cerrar','liquidado-cerrado':'Liquidado y cerrado',
+    'cierre-contractual':'Cierre contractual',
+  };
+  const headers=['N° Contrato','N° Proceso','Unid. Admin','Trámite','Persona',
+    'Contratista / Proveedor','Abogado','GIT','Dependencia',
+    'F. Finalización','F. Máx para Liqu','F. Cierre','F. Liquidación','Estado','Observaciones'];
+  const rows=records.map(r=>[
+    r.ticket||'',r.numeroProceso||'',r.unidadAdmin||'',r.tramite||'',r.persona||'',
+    r.contratista||'',r.abogado||'',r.git||'',r.dependencia||'',
+    r.fechaInicio||'',r.fechaTerminacion||'',r.fechaCierre||'',r.fechaLiquidacion||'',
+    ESTADO_LABEL[r.estado]||r.estado||'',r.obs||'',
+  ]);
+  return{headers, rows, filename: filename+'.xlsx'};
+}
+
 /* ══ HELPER: Resumen de pendientes por trámite — detalle de contratos ══ */
 function pdfResumenTramite(records){
   const tramStates=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','revision-jefe','aval-radicar','radicado-git','radicado-competente'];
@@ -5470,7 +5516,7 @@ function pdfLiqPorAbogado(){
   });
 
   abrirPdf(`
-    ${pdfHeader('Liquidaciones y Cierres por Abogado','Distribución por abogado responsable · '+fechaHoy)}
+    ${pdfHeader('Liquidaciones y Cierres por Abogado','Distribución por abogado responsable · '+fechaHoy,mkExcelData(records,'Liquidaciones_Por_Abogado'))}
     ${pdfIntroBox('Liquidaciones y cierres contractuales agrupados por abogado responsable, con detalle de estados.')}
 
     ${pdfSectionTitle('💧','Resumen de Liquidaciones por Abogado')}
@@ -5490,7 +5536,7 @@ function pdfLiqPorAbogado(){
     ${pdfSectionTitle('📁','Detalle por Abogado')}
     ${detalles}
     ${pdfFooter()}
-  `,'Liquidaciones por Abogado');
+  `,'Liquidaciones por Abogado',mkExcelData(records,'Liquidaciones_Por_Abogado'));
 }
 
 function pdfLiqIndividual(abogado){
@@ -5559,7 +5605,7 @@ function pdfLiqIndividual(abogado){
   if(!puntos.length) puntos.push({tipo:'ok',txt:'Sin alertas activas para este abogado.'});
 
   abrirPdf(`
-    ${pdfHeader('Liquidaciones — '+escHtml(abogado),`Abogado responsable · ${fechaHoy}`)}
+    ${pdfHeader('Liquidaciones — '+escHtml(abogado),`Abogado responsable · ${fechaHoy}`,mkExcelData(all,'Liquidaciones_'+abogado))}
     ${pdfIntroBox(`Liquidaciones y cierres contractuales asignados a <strong>${escHtml(abogado)}</strong>. Total: <strong>${all.length} expedientes</strong> — <strong>${liqRecs.length} liquidaciones</strong> y <strong>${cieRecs.length} cierres</strong>.`)}
 
     ${pdfSectionTitle('📊','Indicadores')}
@@ -5599,7 +5645,7 @@ function pdfLiqIndividual(abogado){
     </div>`:''}
 
     ${pdfFooter()}
-  `,'Liquidaciones Individual');
+  `,'Liquidaciones Individual',mkExcelData(all,'Liquidaciones_'+abogado));
 }
 
 /* ═══ INFORME LIQUIDACIONES POR DEPENDENCIA ═══ */
@@ -5675,7 +5721,7 @@ function pdfLiqPorDependencia(){
   const pctFinTot=tot?Math.round(finTot/tot*100):0;
 
   abrirPdf(`
-    ${pdfHeader('Liquidaciones y Cierres — Por Dependencia','Agrupado por dependencia solicitante · '+fechaHoy)}
+    ${pdfHeader('Liquidaciones y Cierres — Por Dependencia','Agrupado por dependencia solicitante · '+fechaHoy),mkExcelData(allRecords,'Liquidaciones_Por_Dependencia')}
     ${pdfIntroBox(`Informe de liquidaciones y cierres agrupados por <strong>dependencia solicitante</strong>. Total: <strong>${tot} expedientes</strong> en <strong>${deps.length} dependencias</strong> — <strong>${liqTot} liquidaciones</strong> y <strong>${cieTot} cierres</strong>. Generado el ${fechaHoy} a las ${hora} horas.`)}
     ${pdfSectionTitle('📊','Indicadores Generales')}
     ${pdfKpiGrid([
@@ -5695,7 +5741,7 @@ function pdfLiqPorDependencia(){
     ${pdfSectionTitle('📁','Detalle por Dependencia')}
     ${detalles}
     ${pdfFooter()}
-  `,'Liquidaciones por Dependencia');
+  `,'Liquidaciones por Dependencia',mkExcelData(allRecords,'Liquidaciones_Por_Dependencia'));
 }
 
 /* ═══ INFORME LIQUIDACIONES POR GIT ═══ */
@@ -5774,7 +5820,7 @@ function pdfLiqPorGIT(){
   const pctFinTot=tot?Math.round(finTot/tot*100):0;
 
   abrirPdf(`
-    ${pdfHeader('Liquidaciones y Cierres — Por GIT','Agrupado por Grupo Interno de Trabajo · '+fechaHoy)}
+    ${pdfHeader('Liquidaciones y Cierres — Por GIT','Agrupado por Grupo Interno de Trabajo · '+fechaHoy),mkExcelData(allRecords,'Liquidaciones_Por_GIT')}
     ${pdfIntroBox(`Informe de liquidaciones y cierres agrupados por <strong>GIT</strong>. Total: <strong>${tot} expedientes</strong> en <strong>${gits.length} GITs</strong> — <strong>${liqTot} liquidaciones</strong> y <strong>${cieTot} cierres</strong>. Generado el ${fechaHoy} a las ${hora} horas.`)}
     ${pdfSectionTitle('📊','Indicadores Generales')}
     ${pdfKpiGrid([
@@ -5794,7 +5840,7 @@ function pdfLiqPorGIT(){
     ${pdfSectionTitle('📁','Detalle por GIT — separado por Trámite')}
     ${detalles}
     ${pdfFooter()}
-  `,'Liquidaciones por GIT');
+  `,'Liquidaciones por GIT',mkExcelData(allRecords,'Liquidaciones_Por_GIT'));
 }
 
 /* ═══ INFORME INDIVIDUAL POR DEPENDENCIA ═══ */
@@ -5835,7 +5881,7 @@ function pdfLiqDependenciaIndividual(dep){
   if(!puntos.length) puntos.push({tipo:'ok',txt:'Estado general de los expedientes de la dependencia es normal.'});
 
   abrirPdf(`
-    ${pdfHeader('Liquidaciones — '+dep.slice(0,55),(dep.length>55?'…':'')+' · '+fechaHoy)}
+    ${pdfHeader('Liquidaciones — '+dep.slice(0,55),(dep.length>55?'…':'')+' · '+fechaHoy,mkExcelData(allRecords,'Liquidaciones_Dep_'+dep))}
     ${pdfIntroBox(`Informe individual de la dependencia <strong>${escHtml(dep)}</strong>. Total: <strong>${allRecords.length} expedientes</strong> — <strong>${liqRecs.length} liquidaciones</strong> y <strong>${cieRecs.length} cierres</strong>. Generado el ${fechaHoy} a las ${hora} horas.`)}
 
     ${pdfSectionTitle('📊','Indicadores de la Dependencia')}
@@ -5872,7 +5918,7 @@ function pdfLiqDependenciaIndividual(dep){
     </div>
 
     ${pdfFooter()}
-  `,'Liq - '+dep.slice(0,40));
+  `,'Liq - '+dep.slice(0,40),mkExcelData(allRecords,'Liquidaciones_Dep_'+dep.slice(0,30)));
 }
 
 /* ═══ INFORME INDIVIDUAL POR GIT ═══ */
@@ -5944,7 +5990,7 @@ function pdfLiqGITIndividual(git){
   if(!puntos.length) puntos.push({tipo:'ok',txt:'Estado general del GIT es normal.'});
 
   abrirPdf(`
-    ${pdfHeader('Liquidaciones — '+git.slice(0,55),(git.length>55?'…':'')+' · '+fechaHoy)}
+    ${pdfHeader('Liquidaciones — '+git.slice(0,55),(git.length>55?'…':'')+' · '+fechaHoy,mkExcelData(allRecords,'Liquidaciones_GIT_'+git))}
     ${pdfIntroBox(`Informe individual del GIT <strong>${escHtml(git)}</strong>. Total: <strong>${allRecords.length} expedientes</strong> — <strong>${liqRecs.length} liquidaciones</strong> y <strong>${cieRecs.length} cierres</strong>. Dependencias asociadas: ${deps.map(d=>'<em>'+escHtml(d.slice(0,40))+'</em>').join(', ')||'ninguna'}. Generado el ${fechaHoy} a las ${hora} horas.`)}
 
     ${pdfSectionTitle('📊','Indicadores del GIT')}
@@ -5986,7 +6032,7 @@ function pdfLiqGITIndividual(git){
     ${pdfTable(['Abogado','Total','💧Liq.','Fin.Liq','Pte.Liq','🔒Cie.','Fin.Cie','Pte.Cie'],abogRows,['26%','6%','7%','8%','8%','7%','8%','8%'])}`:''}
 
     ${pdfFooter()}
-  `,'Liq - GIT '+git.slice(0,35));
+  `,'Liq - GIT '+git.slice(0,35),mkExcelData(allRecords,'Liquidaciones_GIT_'+git.slice(0,30)));
 }
 
 
@@ -7369,14 +7415,44 @@ function importarLiq(input){
       const toSave=parsed.map(rec=>{
         const{_id,_esNuevo,_clave,...data}=rec;
         const ex=_esNuevo?null:existing.find(r=>claveUnica(r.ticket,r.numeroProceso)===_clave);
-        return{
-          id:ex?ex.id:_id,
-          ...data,
-          bitacoraLiq:ex?.bitacoraLiq||[],
-          createdBy:ex?.createdBy||'Importación',
-          createdAt:ex?.createdAt||new Date().toISOString(),
-          updatedAt:new Date().toISOString(),
-        };
+        if(ex){
+          // Registro existente: preservar estado, abogado y bitácora de Firebase
+          // Solo actualizar GIT, Dependencia, y campos de estructura que vienen del Excel
+          return{
+            id:ex.id,
+            // Campos que SÍ se actualizan desde el Excel
+            ticket:       data.ticket||ex.ticket,
+            numeroProceso:data.numeroProceso||ex.numeroProceso,
+            unidadAdmin:  data.unidadAdmin||ex.unidadAdmin,
+            tramite:      data.tramite||ex.tramite,
+            persona:      data.persona||ex.persona,
+            contratista:  data.contratista||ex.contratista,
+            git:          data.git,          // siempre del Excel
+            dependencia:  data.dependencia,  // siempre del Excel
+            fechaInicio:  data.fechaInicio||ex.fechaInicio,
+            fechaTerminacion:data.fechaTerminacion||ex.fechaTerminacion,
+            fechaCierre:  data.fechaCierre||ex.fechaCierre,
+            fechaLiquidacion:data.fechaLiquidacion||ex.fechaLiquidacion,
+            obs:          data.obs||ex.obs,
+            // Campos que se PRESERVAN de Firebase (no se sobreescriben)
+            abogado:      ex.abogado||data.abogado,  // preserva el de Firebase si existe
+            estado:       ex.estado||data.estado,    // preserva el de Firebase si existe
+            bitacoraLiq:  ex.bitacoraLiq||[],
+            createdBy:    ex.createdBy||'Importación',
+            createdAt:    ex.createdAt||new Date().toISOString(),
+            updatedAt:    new Date().toISOString(),
+          };
+        } else {
+          // Registro nuevo
+          return{
+            id:_id,
+            ...data,
+            bitacoraLiq:[],
+            createdBy:'Importación',
+            createdAt:new Date().toISOString(),
+            updatedAt:new Date().toISOString(),
+          };
+        }
       });
       // Usar writeBatch para garantizar que todos queden guardados
       window._batchSaveLiq(toSave,(done,total)=>{
