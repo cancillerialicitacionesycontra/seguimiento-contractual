@@ -1630,6 +1630,13 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
               <div class="inf-card-desc">Liquidaciones agrupadas por Grupo Interno de Trabajo — general o uno específico.</div>
             </div>
           </div>
+          <div class="inf-card" onclick="pdfLiqCompetencia()">
+            <div class="inf-card-icon" style="background:#FEF3C7;">⏳</div>
+            <div class="inf-card-body">
+              <div class="inf-card-title">Pérdida de Competencia</div>
+              <div class="inf-card-desc">Liquidaciones pendientes cuya F. Máx. de Gestión vence entre hoy y los próximos 5 meses.</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2385,22 +2392,24 @@ function todayISO(){return new Date().toISOString().slice(0,10);}
 
 /* ── Lista de abogados (fuente única) ── */
 const ABOGADOS_LIST=[
-  {v:'JOHANNA AGUDELO',     l:'JOHANNA AGUDELO'},
-  {v:'YULY LEIVA',          l:'YULY LEIVA'},
-  {v:'OSCAR VICTORIA',      l:'OSCAR VICTORIA'},
-  {v:'NATALIA JIMENEZ',     l:'NATALIA JIMENEZ'},
-  {v:'ALEXANDRA PORTILLO',  l:'ALEXANDRA PORTILLO'},
-  {v:'JESSICA GUTIERREZ',   l:'JESSICA GUTIERREZ'},
-  {v:'BRIAM BRITO',         l:'BRIAM BRITO'},
-  {v:'TANIA HUMANEZ',       l:'TANIA HUMANEZ'},
-  {v:'KATIANA JIMENEZ',     l:'KATIANA JIMENEZ'},
-  {v:'JHOANA MEDINA',       l:'JHOANA MEDINA'},
-  {v:'MARIANA GARCIA MORALES',l:'MARIANA GARCIA MORALES'},
-  {v:'WILLIAM LEIVA',       l:'WILLIAM LEIVA'},
-  {v:'CAROLYN RODRIGUEZ',   l:'CAROLYN RODRIGUEZ'},
-  {v:'ERIKA HERNANDEZ',     l:'ERIKA HERNANDEZ'},
-  {v:'YUDDY SOCHA',         l:'YUDDY SOCHA'},
-  {v:'DIANA TORRES',        l:'DIANA TORRES'},
+  {v:'',                       l:'— Sin asignar —'},
+  {v:'JOHANNA AGUDELO',        l:'JOHANNA AGUDELO'},
+  {v:'YULY LEIVA',             l:'YULY LEIVA'},
+  {v:'OSCAR VICTORIA',         l:'OSCAR VICTORIA'},
+  {v:'NATALIA JIMENEZ',        l:'NATALIA JIMENEZ'},
+  {v:'ALEXANDRA PORTILLO',     l:'ALEXANDRA PORTILLO'},
+  {v:'JESSICA GUTIERREZ',      l:'JESSICA GUTIERREZ'},
+  {v:'BRIAM BRITO',            l:'BRIAM BRITO'},
+  {v:'JEAN BRITO',             l:'JEAN BRITO'},
+  {v:'TANIA HUMANEZ',          l:'TANIA HUMANEZ'},
+  {v:'KATIANA JIMENEZ',        l:'KATIANA JIMENEZ'},
+  {v:'JHOANA MEDINA',          l:'JHOANA MEDINA'},
+  {v:'MARIANA GARCIA MORALES', l:'MARIANA GARCIA MORALES'},
+  {v:'WILLIAM LEIVA',          l:'WILLIAM LEIVA'},
+  {v:'CAROLYN RODRIGUEZ',      l:'CAROLYN RODRIGUEZ'},
+  {v:'ERIKA HERNANDEZ',        l:'ERIKA HERNANDEZ'},
+  {v:'YUDDY SOCHA',            l:'YUDDY SOCHA'},
+  {v:'DIANA TORRES',           l:'DIANA TORRES'},
 ];
 function buildAbogadoOptions(selId,val=''){
   const sel=document.getElementById(selId);
@@ -5458,6 +5467,121 @@ function pdfResumenTramite(records){
   ${mkSection(ciePend,'🔒 CIERRES — Pendientes de Trámite','#0E7490','#F0FDFA','#99F6E4')}`;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   INFORME: LIQUIDACIONES QUE PIERDEN COMPETENCIA
+   Pendientes cuya F. Máx. Gestión cae entre hoy y +5 meses
+══════════════════════════════════════════════════════════════════ */
+function pdfLiqCompetencia(){
+  if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
+  const tramStates_comp=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','revision-jefe','aval-radicar','radicado-git','radicado-competente'];
+  const all=(window._liqRecords||[]).filter(r=>tramStates_comp.includes(r.estado));
+
+  // Rango: hoy (00:00) hasta hoy + 5 meses (23:59)
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  const limite=new Date(hoy); limite.setMonth(limite.getMonth()+5); limite.setHours(23,59,59,999);
+
+  // Filtrar por fechaTerminacion (F. Máx. Gestión) dentro del rango
+  const recs=all.filter(r=>{
+    if(!r.fechaTerminacion) return false;
+    const d=new Date(r.fechaTerminacion+'T00:00:00');
+    return d>=hoy && d<=limite;
+  }).sort((a,b)=>new Date(a.fechaTerminacion)-new Date(b.fechaTerminacion));
+
+  if(!recs.length){alert('No hay liquidaciones que pierdan competencia en los próximos 5 meses.');return;}
+
+  const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+
+  // Agrupar por mes
+  const porMes={};
+  recs.forEach(r=>{
+    const d=new Date(r.fechaTerminacion+'T00:00:00');
+    const key=d.toLocaleDateString('es-CO',{year:'numeric',month:'long'});
+    if(!porMes[key]) porMes[key]=[];
+    porMes[key].push(r);
+  });
+
+  const HDRS=['N° Contrato','N° Proceso','Contratista','Abogado','Trámite','F. Máx. Gestión','Días restantes','Estado','Último Avance'];
+  const WIDTHS=['10%','9%','18%','12%','7%','10%','8%','12%','14%'];
+
+  const mkRowComp=r=>{
+    const d=new Date(r.fechaTerminacion+'T00:00:00');
+    const dias=Math.round((d-hoy)/(1000*60*60*24));
+    const colorDias=dias<=30?'#DC2626':dias<=60?'#D97706':'#059669';
+    const tramiteLabel=r.tramite==='Liquidacion'?'💧 Liqu.':'🔒 Cierre';
+    return [
+      `<b style="font-family:monospace;font-size:10px;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
+      `<span style="font-size:9px;font-family:monospace;">${escHtml(r.numeroProceso||'—')}</span>`,
+      `<span style="font-size:9px;">${escHtml((r.contratista||'—').slice(0,28))}${(r.contratista||'').length>28?'…':''}</span>`,
+      `<span style="font-size:9px;">${escHtml(r.abogado||'—')}</span>`,
+      `<span style="font-size:9px;padding:2px 4px;border-radius:4px;background:${r.tramite==='Liquidacion'?'#FEF3C7':'#CCFBF1'};color:${r.tramite==='Liquidacion'?'#92400E':'#065F46'};">${tramiteLabel}</span>`,
+      `<span style="font-family:monospace;font-size:10px;font-weight:700;">${escHtml(r.fechaTerminacion||'—')}</span>`,
+      `<span style="font-family:monospace;font-size:10px;font-weight:700;color:${colorDias};">${dias}d</span>`,
+      `<span style="font-size:9px;padding:2px 5px;border-radius:5px;background:#F1F5F9;">${escHtml(getEstadoLiq(r.estado).label||r.estado||'—')}</span>`,
+      pdfAvanceLiq(r),
+    ];
+  };
+
+  // Bloques por mes
+  let bloquesMes='';
+  for(const [mes, recsM] of Object.entries(porMes)){
+    const liqM=recsM.filter(r=>r.tramite==='Liquidacion').length;
+    const cieM=recsM.filter(r=>r.tramite==='Cierre').length;
+    bloquesMes+=`
+    <div style="margin-bottom:24px;">
+      <div style="font-size:11px;font-weight:700;color:${PDF_NAVY};background:#FEF3C7;border-left:4px solid #F59E0B;padding:8px 14px;border-radius:0 8px 8px 0;margin-bottom:10px;">
+        📅 ${mes.toUpperCase()} — ${recsM.length} expediente${recsM.length!==1?'s':''} (${liqM} liquidación${liqM!==1?'es':''}, ${cieM} cierre${cieM!==1?'s':''})
+      </div>
+      ${pdfTable(HDRS, recsM.map(r=>mkRowComp(r)), WIDTHS)}
+    </div>`;
+  }
+
+  // KPIs resumen
+  const liqTotal=recs.filter(r=>r.tramite==='Liquidacion').length;
+  const cieTotal=recs.filter(r=>r.tramite==='Cierre').length;
+  const en30=recs.filter(r=>Math.round((new Date(r.fechaTerminacion+'T00:00:00')-hoy)/(1000*60*60*24))<=30).length;
+  const en60=recs.filter(r=>{const d=Math.round((new Date(r.fechaTerminacion+'T00:00:00')-hoy)/(1000*60*60*24));return d>30&&d<=60;}).length;
+
+  // Abogados con más competencias próximas
+  const byAbog={};
+  recs.forEach(r=>{const k=r.abogado||'Sin asignar';byAbog[k]=(byAbog[k]||0)+1;});
+  const abogRows=Object.entries(byAbog).sort((a,b)=>b[1]-a[1]).map(([n,cnt])=>[
+    `<b style="color:${PDF_NAVY};">${escHtml(n)}</b>`,
+    `<span style="font-family:monospace;font-weight:700;color:${PDF_RED};">${cnt}</span>`,
+    pdfProgressBar(Math.round(cnt/recs.length*100),PDF_RED,'5px'),
+  ]);
+
+  const puntos=[];
+  puntos.push({tipo:'warn',txt:`<strong>${recs.length} expedientes</strong> perderán competencia en los próximos 5 meses: ${liqTotal} liquidación${liqTotal!==1?'es':''} y ${cieTotal} cierre${cieTotal!==1?'s':''} contractual${cieTotal!==1?'es':''}.`});
+  if(en30>0) puntos.push({tipo:'alert',txt:`<strong>${en30} expediente${en30!==1?'s':''} vence${en30===1?'':'n'} en los próximos 30 días</strong> — requieren atención inmediata.`});
+  if(en60>0) puntos.push({tipo:'warn',txt:`${en60} expediente${en60!==1?'s':''} vence${en60===1?'':'n'} entre 31 y 60 días.`});
+  puntos.push({tipo:'info',txt:`El abogado con más vencimientos próximos es <strong>${Object.entries(byAbog).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—'}</strong> con ${Object.entries(byAbog).sort((a,b)=>b[1]-a[1])[0]?.[1]||0} expediente(s).`});
+
+  abrirPdf(`
+    ${pdfHeader('Liquidaciones — Pérdida de Competencia',`Vencimientos F. Máx. Gestión entre hoy y +5 meses · ${fechaHoy} · ${hora}`)}
+    ${pdfIntroBox(`Expedientes pendientes por tramitar cuya <strong>Fecha Máxima de Gestión</strong> vence entre <strong>hoy</strong> y los próximos <strong>5 meses</strong>. Total: <strong>${recs.length} expediente${recs.length!==1?'s':''}</strong> en riesgo de pérdida de competencia.`)}
+
+    ${pdfSectionTitle('📊','Resumen por Rango')}
+    ${pdfKpiGrid([
+      {label:'Total en riesgo',     value:recs.length,  color:PDF_RED,    sub:`${liqTotal} liq · ${cieTotal} cierres`},
+      {label:'Vencen ≤ 30 días',   value:en30,          color:'#DC2626',  sub:'Atención inmediata'},
+      {label:'Vencen 31–60 días',   value:en60,          color:'#D97706',  sub:'Próximos urgentes'},
+      {label:'Vencen 61–150 días',  value:recs.length-en30-en60, color:PDF_SKY, sub:'Próximos 5 meses'},
+    ])}
+
+    ${pdfSectionTitle('👤','Expedientes por Abogado')}
+    ${pdfTable(['Abogado','Expedientes en riesgo','Proporción'],abogRows,['40%','20%','40%'])}
+
+    ${pdfSectionTitle('📅','Detalle por Mes de Vencimiento')}
+    ${bloquesMes}
+
+    ${pdfSectionTitle('💡','Alertas')}
+    ${pdfConclusions(puntos)}
+
+    ${pdfFooter()}
+  `,'Pérdida de Competencia — Liquidaciones');
+}
+
 function pdfLiqPorAbogado(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
   const records=window._liqRecords||[];
@@ -6224,7 +6348,42 @@ function pdfConsolidadoGeneral(){
       ${pdfMetricCard('Finalizados Totales',procFin.length+modFin.length+liqFin.length,'Completos los 3 módulos',PDF_GREEN,'✅')}
     </div>
 
-    ${pdfSectionTitle('💡','Análisis y Alertas para el Comité')}
+    
+    <!-- ══ INDICADORES GENERALES ══════════════════════════════════ -->
+    ${pdfSectionTitle('📈','Indicadores Generales')}
+    ${pdfKpiGrid([
+      {label:'Expedientes pendientes', value:total,             color:PDF_NAVY,   sub:`de ${totalProc+totalMod+totalLiq} totales`},
+      {label:'Procesos activos',       value:procActivos.length,color:PDF_SKY,    sub:`${pctFinProc}% finalizados`},
+      {label:'Modificaciones activas', value:modActivos.length, color:PDF_PURPLE, sub:`${pctFinMod}% finalizadas`},
+      {label:'Liq. en trámite',        value:liqTram.length,    color:PDF_GREEN,  sub:`${pctFinLiq}% finalizadas`},
+    ])}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">
+      ${pdfMetricCard('Alertas Procesos',    procVenc.length+procHoy.length, 'Vencidos o vencen hoy',procVenc.length+procHoy.length>0?PDF_RED:PDF_GREEN,procVenc.length+procHoy.length>0?'🔴':'✅')}
+      ${pdfMetricCard('Alertas Modif.',      modVenc.length+modHoy.length,  'Vencidos o vencen hoy',modVenc.length+modHoy.length>0?PDF_RED:PDF_GREEN,modVenc.length+modHoy.length>0?'🔴':'✅')}
+      ${pdfMetricCard('Sin F. Máx. Gestión', proc.filter(r=>!getFechaAlerta(r)).length+mod.filter(r=>!getFechaAlerta(r)).length,'Sin fecha de control',PDF_ORANGE,'⚠️')}
+    </div>
+
+    <!-- ══ NIVEL DE RIESGO CONTRACTUAL ════════════════════════════ -->
+    ${(()=>{
+      const _alertasG=(procVenc.length+procHoy.length+modVenc.length+modHoy.length);
+      const _sinFecha=proc.filter(r=>!getFechaAlerta(r)).length+mod.filter(r=>!getFechaAlerta(r)).length;
+      const _pct=total?((_alertasG+_sinFecha)/total*100):0;
+      const _nivel=_pct>30||_alertasG>15?'CRÍTICO':_pct>15||_alertasG>7?'ALTO':_pct>5||_alertasG>2?'MODERADO':'BAJO';
+      const _color={'CRÍTICO':PDF_RED,'ALTO':PDF_ORANGE,'MODERADO':'#D97706','BAJO':PDF_GREEN}[_nivel];
+      const _icon={'CRÍTICO':'🔴','ALTO':'🟠','MODERADO':'⚠️','BAJO':'✅'}[_nivel];
+      const _desc={'CRÍTICO':'Requiere intervención inmediata del Comité Directivo.','ALTO':'Se recomienda revisión prioritaria de expedientes en alerta.','MODERADO':'Seguimiento reforzado recomendado en próximas semanas.','BAJO':'Gestión contractual dentro de parámetros normales.'}[_nivel];
+      return `${pdfSectionTitle('🚦','Nivel de Riesgo Contractual')}
+      <div style="background:${_color}12;border:2px solid ${_color};border-radius:12px;padding:18px 24px;margin-bottom:20px;display:flex;align-items:center;gap:20px;">
+        <div style="width:60px;height:60px;border-radius:50%;background:${_color};display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">${_icon}</div>
+        <div>
+          <div style="font-size:18px;font-weight:800;color:${_color};letter-spacing:.04em;">RIESGO ${_nivel}</div>
+          <div style="font-size:11px;color:#475569;margin-top:4px;">${_desc}</div>
+          <div style="font-size:10px;color:#64748B;margin-top:6px;">${_alertasG} alerta${_alertasG!==1?'s':''} activas · ${_sinFecha} sin fecha de control · ${Math.round(_pct)}% del total en situación de riesgo</div>
+        </div>
+      </div>`;
+    })()}
+
+    ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
     ${pdfConclusions(puntos)}
 
     <!-- ══════════════ MÓDULO 1: PROCESOS ══════════════ -->
@@ -6360,7 +6519,40 @@ function pdfConsolidadoAbogado(){
     ${pdfSectionTitle('⚖️','Distribución de Carga por Abogado')}
     ${pdfTable(['Abogado Responsable','Total','Procesos','Modif.','Liquidaciones','Liqu. Final.','Alertas','% Carga'],rows,['22%','7%','9%','8%','11%','10%','10%','8%'])}
 
-    ${pdfSectionTitle('💡','Análisis para el Comité')}
+    
+    <!-- ══ INDICADORES GENERALES ══════════════════════════════════ -->
+    ${pdfSectionTitle('📈','Indicadores Generales')}
+    ${pdfKpiGrid([
+      {label:'Abogados con carga',   value:abogados.length,                       color:PDF_NAVY,   sub:'Con expedientes asignados'},
+      {label:'Total expedientes',    value:granTotal,                             color:PDF_SKY,    sub:'Entre los 3 módulos'},
+      {label:'Promedio por abogado', value:Math.round(granTotal/abogados.length), color:PDF_PURPLE, sub:'Expedientes / abogado'},
+      {label:'Con alertas activas',  value:totalVenc,                             color:totalVenc>0?PDF_RED:PDF_GREEN, sub:'Venc. Proc.+Mod.'},
+    ])}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">
+      ${(()=>{const _max=rows.reduce((m,r)=>{const v=parseInt(r[1].replace(/<[^>]+>/g,''))||0;return v>m.v?{v,n:r[0].replace(/<[^>]+>/g,'')}:m;},{v:0,n:'—'});return pdfMetricCard('Mayor carga',_max.v,_max.n,PDF_ORANGE,'⚠️');})()}
+      ${(()=>{const _lf=rows.reduce((s,r)=>s+(parseInt(r[5].replace(/<[^>]+>/g,''))||0),0);return pdfMetricCard('Liqu. finalizadas',_lf,'Total del grupo',PDF_GREEN,'✅');})()}
+      ${(()=>{const _va=rows.filter(r=>(parseInt(r[6].replace(/<[^>]+>/g,''))||0)>0).length;return pdfMetricCard('Abogados con alerta',_va,'Tienen vencidos',_va>0?PDF_RED:PDF_GREEN,_va>0?'🔴':'✅');})()}
+    </div>
+
+    <!-- ══ NIVEL DE RIESGO CONTRACTUAL ════════════════════════════ -->
+    ${(()=>{
+      const _pctAlerta=granTotal?(totalVenc/granTotal*100):0;
+      const _nivel=_pctAlerta>30||totalVenc>15?'CRÍTICO':_pctAlerta>15||totalVenc>7?'ALTO':_pctAlerta>5||totalVenc>2?'MODERADO':'BAJO';
+      const _color={'CRÍTICO':PDF_RED,'ALTO':PDF_ORANGE,'MODERADO':'#D97706','BAJO':PDF_GREEN}[_nivel];
+      const _icon={'CRÍTICO':'🔴','ALTO':'🟠','MODERADO':'⚠️','BAJO':'✅'}[_nivel];
+      const _desc={'CRÍTICO':'Desequilibrio crítico en la distribución de carga — redistribución inmediata.','ALTO':'Varios abogados con vencimientos — revisión de asignaciones recomendada.','MODERADO':'Distribución aceptable con algunos focos de atención.','BAJO':'Distribución de carga equilibrada y sin alertas significativas.'}[_nivel];
+      return `${pdfSectionTitle('🚦','Nivel de Riesgo Contractual')}
+      <div style="background:${_color}12;border:2px solid ${_color};border-radius:12px;padding:18px 24px;margin-bottom:20px;display:flex;align-items:center;gap:20px;">
+        <div style="width:60px;height:60px;border-radius:50%;background:${_color};display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">${_icon}</div>
+        <div>
+          <div style="font-size:18px;font-weight:800;color:${_color};letter-spacing:.04em;">RIESGO ${_nivel}</div>
+          <div style="font-size:11px;color:#475569;margin-top:4px;">${_desc}</div>
+          <div style="font-size:10px;color:#64748B;margin-top:6px;">${totalVenc} alerta${totalVenc!==1?'s':''} activas · ${Math.round(_pctAlerta)}% del total en situación de riesgo</div>
+        </div>
+      </div>`;
+    })()}
+
+    ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
     ${pdfConclusions(puntos)}
 
     ${pdfFooter()}
