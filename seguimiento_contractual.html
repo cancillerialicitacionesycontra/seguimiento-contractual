@@ -3556,7 +3556,7 @@ function openBitacoraLiq(id){
   document.getElementById('bitacora-liq-overlay').classList.add('open');
 }
 function renderLiqEntries(r){
-  const entries=[...(r.bitacoraLiq||[])].sort((a,b)=>(b.date||b.ts||b.fecha||"").localeCompare(a.date||a.ts||a.fecha||""));
+  const entries=[...(r.bitacoraLiq||[])].sort((a,b)=>String(b.date||b.fecha||b.ts||"").localeCompare(String(a.date||a.fecha||a.ts||"")));
   document.getElementById('liq-entries-count').textContent=entries.length;
   const list=document.getElementById('liq-entries-list');
   if(!entries.length){list.innerHTML=`<div class="no-entries">📭 Sin avances registrados aún.</div>`;return;}
@@ -4158,7 +4158,7 @@ function renderBitacoraGeneralLiq(){
 
   body.innerHTML=data.map((r,i)=>{
     const est=getEstadoLiq(r.estado);
-    const entries=[...(r.bitacoraLiq||[])].sort((a,b)=>(b.date||b.ts||b.fecha||"").localeCompare(a.date||a.ts||a.fecha||""));
+    const entries=[...(r.bitacoraLiq||[])].sort((a,b)=>String(b.date||b.fecha||b.ts||"").localeCompare(String(a.date||a.fecha||a.ts||"")));
     const nE=entries.length;
     const cardId='blq-'+r.id;
     const entriesHtml=nE>0
@@ -7685,7 +7685,7 @@ function exportLiqXLSX(){
   const _getFecha=e=>fmtDate(e.date||e.fecha)||e.date||e.fecha||'';
   const _getAutor=e=>e.author||e.fuente||'';
   const _getTexto=e=>e.text||e.texto||'';
-  const _getSort=e=>e.date||e.ts||e.fecha||'';
+  const _getSort=e=>String(e.date||e.fecha||e.ts||'');
   const bitHdrs=['N° Contrato','Trámite','Contratista / Proveedor','Abogado','Estado','Fecha Avance','Registrado por','Descripción del avance'];
   const bitData=[bitHdrs];
   data.forEach(r=>{
@@ -7795,12 +7795,16 @@ function importarLiq(input){
         let curTicket='';
         bitRows.slice(1).forEach((row,ri)=>{
           const rawT=bIdx.ticket>=0?String(row[bIdx.ticket]||'').trim():'';
-          if(rawT) curTicket=rawT; // ticket vacío → misma liq que la fila anterior
+          if(rawT&&rawT.toUpperCase()!=='N/A') curTicket=rawT; // ignorar N/A como ticket
           if(!curTicket) return;
           const fecha=bIdx.fecha>=0?String(row[bIdx.fecha]||'').trim():'';
           const texto=bIdx.texto>=0?String(row[bIdx.texto]||'').trim():'';
           const autor=bIdx.autor>=0?String(row[bIdx.autor]||'').trim():'';
           if(!fecha&&!texto) return; // fila separadora vacía
+          if(!fecha) return; // sin fecha → no es avance datado
+          if(texto.toLowerCase()==='sin entradas'||texto.toLowerCase()==='sin avances') return;
+          if(!fecha) return; // sin fecha → no es un avance datado (ej: "Sin entradas")
+          if(texto.toLowerCase()==='sin entradas'||texto.toLowerCase()==='sin avances') return;
           if(!_bitacoraXLS[curTicket]) _bitacoraXLS[curTicket]=[];
           _bitacoraXLS[curTicket].push({
             id:'excel_'+Date.now()+'_'+ri+'_'+Math.random().toString(36).slice(2,5),
