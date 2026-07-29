@@ -1657,6 +1657,13 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
               <div class="inf-card-desc">Carga total por abogado incluyendo procesos, modificaciones y liquidaciones.</div>
             </div>
           </div>
+          <div class="inf-card" onclick="abrirSelectorAbogado('pendientes-global')">
+            <div class="inf-card-icon" style="background:#FFFBEB;">👤</div>
+            <div class="inf-card-body">
+              <div class="inf-card-title">Individual por Abogado — Global</div>
+              <div class="inf-card-desc">Pendientes por tramitar de un abogado en Procesos, Modificaciones y Liquidaciones.</div>
+            </div>
+          </div>
           <div class="inf-card" onclick="pdfConsolidadoVencimiento()">
             <div class="inf-card-icon" style="background:#FEF2F2;">🚦</div>
             <div class="inf-card-body">
@@ -5205,9 +5212,18 @@ function abrirSelectorAbogado(modulo){
   if(!isAdmin()){alert('Solo los administradores pueden generar informes individuales.');return;}
   _infModulo=modulo;
   const sel=document.getElementById('inf-abogado-sel');
-  const recs=modulo==='modificaciones'?(window._modRecords||[]):
-              modulo==='liquidaciones'?(window._liqRecords||[]):
-              (window._records||[]);
+  let recs;
+  if(modulo==='pendientes-global'){
+    const tramStates_sel=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','revision-jefe','aval-radicar','radicado-git','radicado-competente'];
+    const p=(window._records||[]).filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+    const m=(window._modRecords||[]).filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+    const l=(window._liqRecords||[]).filter(r=>tramStates_sel.includes(r.estado));
+    recs=[...p,...m,...l];
+  } else {
+    recs=modulo==='modificaciones'?(window._modRecords||[]):
+         modulo==='liquidaciones'?(window._liqRecords||[]):
+         (window._records||[]);
+  }
   const abogados=[...new Set(recs.map(r=>r.abogado).filter(Boolean))].sort();
   sel.innerHTML='<option value="">— Seleccionar —</option>'+
     abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
@@ -5279,6 +5295,8 @@ function generarInformeIndividual(){
     pdfModIndividual(abogado);
   } else if(_infModulo==='liquidaciones'){
     pdfLiqIndividual(abogado);
+  } else if(_infModulo==='pendientes-global'){
+    _generarPdfPendientesAbogado(abogado);
   }
 }
 
@@ -5378,6 +5396,15 @@ function mkExcelData(records, filename){
   return{headers, rows, filename: filename+'.xlsx'};
 }
 
+/* ── Helper: celda Último Avance (sin backticks anidados) ── */
+function pdfAvanceLiq(r){
+  var b=r.bitacoraLiq||[];
+  var u=b.length?b[b.length-1]:null;
+  var t=u?(u.texto||u.msg||u.text||'').slice(0,55):'Sin avance';
+  var f=u?(u.fecha||u.ts||u.date||''):'';
+  var fd=f?('<span style="font-size:8px;color:#64748B;display:block;">'+escHtml(String(f).slice(0,10))+'</span>'):'';
+  return fd+'<span style="font-size:9px;color:#475569;">'+escHtml(t)+(t.length>=55?'…':'')+'</span>';
+}
 /* ══ HELPER: Resumen de pendientes por trámite — detalle de contratos ══ */
 function pdfResumenTramite(records){
   const tramStates=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','revision-jefe','aval-radicar','radicado-git','radicado-competente'];
@@ -5410,6 +5437,7 @@ function pdfResumenTramite(records){
     `<span style="font-size:10px;font-family:monospace;">${escHtml(r.fechaInicio||'—')}</span>`,
     `<span style="font-size:10px;font-family:monospace;">${escHtml(r.fechaTerminacion||'—')}</span>`,
     `<span style="font-size:9px;color:#475569;">${escHtml((r.obs||'—').slice(0,50))}${(r.obs||'').length>50?'…':''}</span>`,
+    pdfAvanceLiq(r),
   ]);
 
   const mkSection=(recs, titulo, color, bg, border)=>{
@@ -5418,7 +5446,7 @@ function pdfResumenTramite(records){
     <div style="background:${bg};border:2px solid ${border};border-radius:10px;padding:14px 16px;margin-bottom:20px;">
       <div style="font-size:12px;font-weight:700;color:${color};margin-bottom:10px;">${titulo} — ${recs.length} contratos pendientes</div>
       ${pdfTable(
-        ['N° Contrato','N° Proceso','Contratista / Proveedor','Estado','F. Finalización','F. Máx. Liqu','Observaciones'],
+        ['N° Contrato','N° Proceso','Contratista / Proveedor','Estado','F. Finalización','F. Máx. Liqu','Observaciones','Último Avance'],
         mkRows(recs),
         ['8%','9%','22%','16%','9%','9%','25%']
       )}
@@ -5495,6 +5523,7 @@ function pdfLiqPorAbogado(){
       `<span style="font-size:9px;padding:2px 5px;border-radius:5px;background:#F1F5F9;">${getEstadoLiq(r.estado).label}</span>`,
       `<span style="font-size:10px;">${fmtDate(r.fechaInicio)||'—'}</span>`,
       `<span style="font-size:10px;">${fmtDate(r.fechaTerminacion)||'—'}</span>`,
+      pdfAvanceLiq(r),
     ]);
     detalles+=`
     <div style="margin-bottom:24px;page-break-inside:avoid;">
@@ -5505,12 +5534,12 @@ function pdfLiqPorAbogado(){
       ${liqRecs.length?`
       <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:8px 12px;margin-bottom:8px;">
         <div style="font-size:11px;font-weight:700;color:#B45309;margin-bottom:6px;">💧 LIQUIDACIONES — ${liqRecs.length} expedientes · ${liqFin} finalizadas</div>
-        ${pdfTable(['N° Contrato','Contratista','Estado','F. Finalización','F. Máx Liqu'],mkRows(liqRecs),['10%','34%','24%','14%','14%'])}
+        ${pdfTable(['N° Contrato','Contratista','Estado','F. Finalización','F. Máx Liqu','Último Avance'],mkRows(liqRecs),['10%','34%','24%','14%','14%'])}
       </div>`:''}
       ${cieRecs.length?`
       <div style="background:#F0FDFA;border:1px solid #99F6E4;border-radius:8px;padding:8px 12px;">
         <div style="font-size:11px;font-weight:700;color:#0E7490;margin-bottom:6px;">🔒 CIERRES — ${cieRecs.length} expedientes · ${cieFin} finalizados</div>
-        ${pdfTable(['N° Contrato','Contratista','Estado','F. Finalización','F. Máx Liqu'],mkRows(cieRecs),['10%','34%','24%','14%','14%'])}
+        ${pdfTable(['N° Contrato','Contratista','Estado','F. Finalización','F. Máx Liqu','Último Avance'],mkRows(cieRecs),['10%','34%','24%','14%','14%'])}
       </div>`:''}
     </div>`;
   });
@@ -5594,6 +5623,7 @@ function pdfLiqIndividual(abogado){
     `<span style="font-size:10px;">${fmtDate(r.fechaInicio)||'—'}</span>`,
     `<span style="font-size:10px;">${fmtDate(r.fechaTerminacion)||'—'}</span>`,
     r.obs?`<span style="font-size:9px;color:${PDF_GRAY};">${escHtml(r.obs.slice(0,35))}${r.obs.length>35?'…':''}</span>`:'—',
+    pdfAvanceLiq(r),
   ]);
 
   // Conclusiones
@@ -5630,7 +5660,7 @@ function pdfLiqIndividual(abogado){
     )}
     <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;margin-bottom:20px;">
       <div style="font-size:11px;font-weight:700;color:#B45309;margin-bottom:8px;">💧 LIQUIDACIONES — ${liqRecs.length} expedientes · ${liqFin} finalizadas</div>
-      ${pdfTable(['N° Contrato','N° Proceso','Contratista','Estado','F. Finalización','F. Máx Liqu','Observaciones'],mkRows(liqRecs),['8%','8%','24%','16%','10%','10%','22%'])}
+      ${pdfTable(['N° Contrato','N° Proceso','Contratista','Estado','F. Finalización','F. Máx Liqu','Observaciones','Último Avance'],mkRows(liqRecs),['8%','8%','24%','16%','10%','10%','22%'])}
     </div>`:''}
 
     ${cieRecs.length?`
@@ -5641,7 +5671,7 @@ function pdfLiqIndividual(abogado){
     )}
     <div style="background:#F0FDFA;border:1px solid #99F6E4;border-radius:8px;padding:10px 14px;margin-bottom:20px;">
       <div style="font-size:11px;font-weight:700;color:#0E7490;margin-bottom:8px;">🔒 CIERRES — ${cieRecs.length} expedientes · ${cieFin} finalizados</div>
-      ${pdfTable(['N° Contrato','N° Proceso','Contratista','Estado','F. Finalización','F. Máx Liqu','Observaciones'],mkRows(cieRecs),['8%','8%','24%','16%','10%','10%','22%'])}
+      ${pdfTable(['N° Contrato','N° Proceso','Contratista','Estado','F. Finalización','F. Máx Liqu','Observaciones','Último Avance'],mkRows(cieRecs),['8%','8%','24%','16%','10%','10%','22%'])}
     </div>`:''}
 
     ${pdfFooter()}
@@ -5695,6 +5725,7 @@ function pdfLiqPorDependencia(){
       `<span style="font-size:10px;">${escHtml(r.abogado||'—')}</span>`,
       `<span style="font-size:9px;padding:2px 5px;border-radius:5px;background:#F1F5F9;">${getEstadoLiq(r.estado).label}</span>`,
       `<span style="font-size:10px;">${fmtDate(r.fechaTerminacion)||'—'}</span>`,
+      pdfAvanceLiq(r),
     ]);
     detalles+=`
     <div style="margin-bottom:28px;page-break-inside:avoid;">
@@ -5705,12 +5736,12 @@ function pdfLiqPorDependencia(){
       ${liqRecs.length?`
       <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
         <div style="font-size:11px;font-weight:700;color:#B45309;margin-bottom:8px;">💧 LIQUIDACIONES — ${liqRecs.length} expedientes · ${liqFin} finalizadas</div>
-        ${pdfTable(['N° Contrato','Contratista','Abogado','Estado','F. Máx Liqu'],mkRows(liqRecs),['11%','30%','22%','22%','13%'])}
+        ${pdfTable(['N° Contrato','Contratista','Abogado','Estado','F. Máx Liqu','Último Avance'],mkRows(liqRecs),['11%','30%','22%','22%','13%'])}
       </div>`:''}
       ${cieRecs.length?`
       <div style="background:#F0FDFA;border:1px solid #99F6E4;border-radius:8px;padding:10px 14px;">
         <div style="font-size:11px;font-weight:700;color:#0E7490;margin-bottom:8px;">🔒 CIERRES — ${cieRecs.length} expedientes · ${cieFin} finalizados</div>
-        ${pdfTable(['N° Contrato','Contratista','Abogado','Estado','F. Máx Liqu'],mkRows(cieRecs),['11%','30%','22%','22%','13%'])}
+        ${pdfTable(['N° Contrato','Contratista','Abogado','Estado','F. Máx Liqu','Último Avance'],mkRows(cieRecs),['11%','30%','22%','22%','13%'])}
       </div>`:''}
     </div>`;
   });
@@ -5793,6 +5824,7 @@ function pdfLiqPorGIT(){
       `<span style="font-size:10px;">${escHtml(r.abogado||'—')}</span>`,
       `<span style="font-size:9px;padding:2px 5px;border-radius:5px;background:#F1F5F9;">${getEstadoLiq(r.estado).label}</span>`,
       `<span style="font-size:10px;">${fmtDate(r.fechaTerminacion)||'—'}</span>`,
+      pdfAvanceLiq(r),
     ]);
 
     detalles+=`
@@ -5804,12 +5836,12 @@ function pdfLiqPorGIT(){
       ${liqRecs.length?`
       <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
         <div style="font-size:11px;font-weight:700;color:#B45309;margin-bottom:8px;">💧 LIQUIDACIONES — ${liqRecs.length} expedientes · ${liqFin} finalizadas</div>
-        ${pdfTable(['N° Contrato','Dependencia','Contratista','Abogado','Estado','F. Máx Liqu'],mkRows(liqRecs),['9%','22%','20%','18%','18%','11%'])}
+        ${pdfTable(['N° Contrato','Dependencia','Contratista','Abogado','Estado','F. Máx Liqu','Último Avance'],mkRows(liqRecs),['9%','22%','20%','18%','18%','11%'])}
       </div>`:''}
       ${cieRecs.length?`
       <div style="background:#F0FDFA;border:1px solid #99F6E4;border-radius:8px;padding:10px 14px;">
         <div style="font-size:11px;font-weight:700;color:#0E7490;margin-bottom:8px;">🔒 CIERRES — ${cieRecs.length} expedientes · ${cieFin} finalizados</div>
-        ${pdfTable(['N° Contrato','Dependencia','Contratista','Abogado','Estado','F. Máx Liqu'],mkRows(cieRecs),['9%','22%','20%','18%','18%','11%'])}
+        ${pdfTable(['N° Contrato','Dependencia','Contratista','Abogado','Estado','F. Máx Liqu','Último Avance'],mkRows(cieRecs),['9%','22%','20%','18%','18%','11%'])}
       </div>`:''}
     </div>`;
   });
@@ -5871,6 +5903,7 @@ function pdfLiqDependenciaIndividual(dep){
     `<span style="font-size:10px;">${escHtml(r.abogado||'—')}</span>`,
     `<span style="font-size:9px;padding:2px 5px;border-radius:5px;background:#F1F5F9;">${getEstadoLiq(r.estado).label}</span>`,
     `<span style="font-size:10px;">${fmtDate(r.fechaTerminacion)||'—'}</span>`,
+    pdfAvanceLiq(r),
   ]);
 
   const puntos=[];
@@ -5905,7 +5938,7 @@ function pdfLiqDependenciaIndividual(dep){
         {label:'Liq. Pte. Cerrar',  value:liqPte,     color:'#F59E0B', sub:'Falta acta de cierre'},
         {label:'Pte. por Liquidar', value:liqTram,    color:'#EA580C', sub:'En trámite activo'},
       ])}
-      ${liqRecs.length?pdfTable(['N° Contrato','Contratista','Abogado','Estado','F. Máx Liqu'],mkRows(liqRecs),['11%','30%','22%','22%','13%']):'<p style="color:#9CA3AF;font-size:12px;text-align:center;">Sin liquidaciones</p>'}
+      ${liqRecs.length?pdfTable(['N° Contrato','Contratista','Abogado','Estado','F. Máx Liqu','Último Avance'],mkRows(liqRecs),['11%','30%','22%','22%','13%']):'<p style="color:#9CA3AF;font-size:12px;text-align:center;">Sin liquidaciones</p>'}
     </div>
 
     <div style="background:#F0FDFA;border:2px solid #99F6E4;border-radius:12px;padding:16px 20px;margin-bottom:20px;">
@@ -5914,7 +5947,7 @@ function pdfLiqDependenciaIndividual(dep){
         {label:'Cierre Contractual', value:cierreCont, color:PDF_TEAL,  sub:'Finalizado'},
         {label:'Pte. por Cierre',    value:cieTram,    color:'#7C3AED', sub:'En trámite activo'},
       ])}
-      ${cieRecs.length?pdfTable(['N° Contrato','Contratista','Abogado','Estado','F. Máx Liqu'],mkRows(cieRecs),['11%','30%','22%','22%','13%']):'<p style="color:#9CA3AF;font-size:12px;text-align:center;">Sin cierres</p>'}
+      ${cieRecs.length?pdfTable(['N° Contrato','Contratista','Abogado','Estado','F. Máx Liqu','Último Avance'],mkRows(cieRecs),['11%','30%','22%','22%','13%']):'<p style="color:#9CA3AF;font-size:12px;text-align:center;">Sin cierres</p>'}
     </div>
 
     ${pdfFooter()}
@@ -5980,6 +6013,7 @@ function pdfLiqGITIndividual(git){
     `<span style="font-size:10px;">${escHtml(r.abogado||'—')}</span>`,
     `<span style="font-size:9px;padding:2px 5px;border-radius:5px;background:#F1F5F9;">${getEstadoLiq(r.estado).label}</span>`,
     `<span style="font-size:10px;">${fmtDate(r.fechaTerminacion)||'—'}</span>`,
+    pdfAvanceLiq(r),
   ]);
 
   const puntos=[];
@@ -6015,7 +6049,7 @@ function pdfLiqGITIndividual(git){
         {label:'Liq. Pte. Cerrar',  value:liqPte,     color:'#F59E0B',  sub:'Falta acta de cierre'},
         {label:'Pte. por Liquidar', value:liqTram,    color:'#EA580C',  sub:'En trámite activo'},
       ])}
-      ${liqRecs.length?pdfTable(['N° Contrato','Dependencia','Contratista','Abogado','Estado','F. Máx Liqu'],mkRows(liqRecs),['9%','22%','20%','18%','18%','11%']):'<p style="color:#9CA3AF;font-size:12px;text-align:center;">Sin liquidaciones</p>'}
+      ${liqRecs.length?pdfTable(['N° Contrato','Dependencia','Contratista','Abogado','Estado','F. Máx Liqu','Último Avance'],mkRows(liqRecs),['9%','22%','20%','18%','18%','11%']):'<p style="color:#9CA3AF;font-size:12px;text-align:center;">Sin liquidaciones</p>'}
     </div>
 
     <!-- SECCIÓN CIERRES -->
@@ -6025,7 +6059,7 @@ function pdfLiqGITIndividual(git){
         {label:'Cierre Contractual', value:cierreCont, color:PDF_TEAL,  sub:'Finalizado'},
         {label:'Pte. por Cierre',    value:cieTram,    color:'#7C3AED', sub:'En trámite activo'},
       ])}
-      ${cieRecs.length?pdfTable(['N° Contrato','Dependencia','Contratista','Abogado','Estado','F. Máx Liqu'],mkRows(cieRecs),['9%','22%','20%','18%','18%','11%']):'<p style="color:#9CA3AF;font-size:12px;text-align:center;">Sin cierres</p>'}
+      ${cieRecs.length?pdfTable(['N° Contrato','Dependencia','Contratista','Abogado','Estado','F. Máx Liqu','Último Avance'],mkRows(cieRecs),['9%','22%','20%','18%','18%','11%']):'<p style="color:#9CA3AF;font-size:12px;text-align:center;">Sin cierres</p>'}
     </div>
 
     ${Object.keys(byAbog).length>1?`${pdfSectionTitle('⚖️','Carga por Abogado')}
@@ -6039,9 +6073,16 @@ function pdfLiqGITIndividual(git){
 /* ═══ INFORMES CONSOLIDADOS ═══ */
 function pdfConsolidadoGeneral(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
-  const proc=window._records||[];
-  const mod=window._modRecords||[];
-  const liq=window._liqRecords||[];
+  const _proc=window._records||[];
+  const _mod=window._modRecords||[];
+  const _liq=window._liqRecords||[];
+  // ── FILTRAR SOLO PENDIENTES ──────────────────────────────────────────────
+  const tramStates_g=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','revision-jefe','aval-radicar','radicado-git','radicado-competente'];
+  const proc=_proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+  const mod=_mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+  const liq=_liq.filter(r=>tramStates_g.includes(r.estado));
+  // ── Totales base para referencia ─────────────────────────────────────────
+  const totalProc=_proc.length, totalMod=_mod.length, totalLiq=_liq.length;
   const total=proc.length+mod.length+liq.length;
   if(!total){alert('No hay datos para generar el informe.');return;}
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -6160,7 +6201,7 @@ function pdfConsolidadoGeneral(){
       {value:mod.length,  label:'Modificaciones',      color:PDF_PURPLE},
       {value:liq.length,  label:'Liquidaciones',       color:PDF_GREEN},
     ])}
-    ${pdfHeader('Resumen Ejecutivo Global — Gestión Contractual','Consolidado de Procesos · Modificaciones · Liquidaciones y Cierres · '+fechaHoy)}
+    ${pdfHeader('Resumen Ejecutivo Global — Pendientes por Tramitar','Procesos · Modificaciones · Liquidaciones y Cierres · '+fechaHoy)}
     ${pdfTOC([
       {titulo:'Resumen Ejecutivo — Los Tres Módulos', desc:`${total} expedientes totales`},
       {titulo:'Análisis y Alertas para el Comité',   desc:`${totalAlertas} alertas identificadas`},
@@ -6168,14 +6209,14 @@ function pdfConsolidadoGeneral(){
       {titulo:'Módulo 2 — Modificaciones',           desc:`${mod.length} expedientes`},
       {titulo:'Módulo 3 — Liquidaciones y Cierres',  desc:`${liq.length} expedientes`},
     ])}
-    ${pdfIntroBox(`Informe ejecutivo integral de la gestión contractual del Ministerio de Relaciones Exteriores. Consolida <strong>${total} registros</strong> en tres módulos: <strong>Procesos (${proc.length})</strong>, <strong>Modificaciones (${mod.length})</strong> y <strong>Liquidaciones y Cierres (${liq.length})</strong>. Preparado el ${fechaHoy} a las ${hora} horas para presentación en comité directivo.`)}
+    ${pdfIntroBox(`Informe ejecutivo de <strong>expedientes pendientes por tramitar</strong> en el Ministerio de Relaciones Exteriores. Muestra únicamente los registros activos: <strong>Procesos (${proc.length} de ${totalProc})</strong>, <strong>Modificaciones (${mod.length} de ${totalMod})</strong> y <strong>Liquidaciones y Cierres (${liq.length})</strong>. Preparado el ${fechaHoy} a las ${hora} horas para presentación en comité directivo.`)}
 
     ${pdfSectionTitle('📊','Resumen Ejecutivo — Los Tres Módulos',true)}
     ${pdfKpiGrid([
-      {label:'Total General',     value:total,         color:PDF_NAVY,   sub:'Suma de los 3 módulos'},
-      {label:'📋 Procesos',       value:proc.length,   color:PDF_SKY,    sub:`${procFin.length} finalizados · ${pctFinProc}%`},
-      {label:'✏️ Modificaciones', value:mod.length,    color:PDF_PURPLE, sub:`${modFin.length} finalizadas · ${pctFinMod}%`},
-      {label:'🔒 Liquidaciones',  value:liq.length,    color:PDF_GREEN,  sub:`${liqFin.length} finalizadas · ${pctFinLiq}%`},
+      {label:'Total Pendientes',   value:total,         color:PDF_NAVY,   sub:`de ${totalProc+totalMod+totalLiq} expedientes totales`},
+      {label:'📋 Procesos',       value:proc.length,   color:PDF_SKY,    sub:`de ${totalProc} totales`},
+      {label:'✏️ Modificaciones', value:mod.length,    color:PDF_PURPLE, sub:`de ${totalMod} totales`},
+      {label:'🔒 Liquidaciones',  value:liq.length,    color:PDF_GREEN,  sub:`de ${totalLiq} totales`},
     ])}
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;">
       ${pdfMetricCard('Alertas Proc.+Mod.',totalAlertas,totalAlertas>0?'Vencidos o hoy':'Sin alertas',totalAlertas>0?PDF_RED:PDF_GREEN,totalAlertas>0?'🔴':'✅')}
@@ -6189,7 +6230,7 @@ function pdfConsolidadoGeneral(){
     <!-- ══════════════ MÓDULO 1: PROCESOS ══════════════ -->
     ${pdfSectionTitle('📋','Módulo 1 — Procesos')}
     <div style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
-      <div style="font-size:11px;font-weight:700;color:#1E40AF;margin-bottom:14px;">📋 PROCESOS — ${proc.length} expedientes · ${procFin.length} finalizados (${pctFinProc}%)</div>
+      <div style="font-size:11px;font-weight:700;color:#1E40AF;margin-bottom:14px;">📋 PROCESOS — ${proc.length} pendientes por tramitar (de ${totalProc} totales)</div>
       ${pdfKpiGrid([
         {label:'Asesorías Previas',    value:procAses.length,  color:PDF_SKY,    sub:`${procAses.filter(r=>r.estado==='aprobado').length} aprobadas`},
         {label:'Proc. Contractuales',  value:procCont.length,  color:PDF_TEAL,   sub:`${procCont.filter(r=>r.estado==='contratado').length} contratados`},
@@ -6213,7 +6254,7 @@ function pdfConsolidadoGeneral(){
     <!-- ══════════════ MÓDULO 2: MODIFICACIONES ══════════════ -->
     ${pdfSectionTitle('✏️','Módulo 2 — Modificaciones')}
     <div style="background:#F5F3FF;border:1.5px solid #DDD6FE;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
-      <div style="font-size:11px;font-weight:700;color:#5B21B6;margin-bottom:14px;">✏️ MODIFICACIONES — ${mod.length} expedientes · ${modFin.length} finalizadas (${pctFinMod}%)</div>
+      <div style="font-size:11px;font-weight:700;color:#5B21B6;margin-bottom:14px;">✏️ MODIFICACIONES — ${mod.length} pendientes por tramitar (de ${totalMod} totales)</div>
       ${pdfKpiGrid([
         {label:'Asesorías',          value:modAses.length,    color:PDF_SKY,    sub:`${modAses.filter(r=>estadoIsTerminal(r.tipo,r.estado)).length} finalizadas`},
         {label:'Contractuales',      value:modCont.length,    color:PDF_TEAL,   sub:`${modCont.filter(r=>estadoIsTerminal(r.tipo,r.estado)).length} finalizadas`},
@@ -6227,7 +6268,7 @@ function pdfConsolidadoGeneral(){
     <!-- ══════════════ MÓDULO 3: LIQUIDACIONES ══════════════ -->
     ${pdfSectionTitle('🔒','Módulo 3 — Liquidaciones y Cierres')}
     <div style="background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
-      <div style="font-size:11px;font-weight:700;color:#065F46;margin-bottom:14px;">🔒 LIQUIDACIONES Y CIERRES — ${liq.length} expedientes · ${liqFin.length} finalizados (${pctFinLiq}%)</div>
+      <div style="font-size:11px;font-weight:700;color:#065F46;margin-bottom:14px;">🔒 LIQUIDACIONES Y CIERRES — ${liq.length} pendientes por tramitar (de ${totalLiq} totales)</div>
       ${pdfKpiGrid([
         {label:'💧 Liquidaciones',    value:liqLiq.length,    color:'#F59E0B',  sub:`${pctFinLiqLiq}% finalizadas`},
         {label:'🔒 Cierres',          value:liqCie.length,    color:PDF_TEAL,   sub:`${pctFinLiqCie}% finalizados`},
@@ -6326,6 +6367,122 @@ function pdfConsolidadoAbogado(){
   `,'Carga Global por Abogado');
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   INFORME INDIVIDUAL POR ABOGADO — PENDIENTES GLOBALES
+   Muestra los pendientes de un abogado en los 3 módulos
+══════════════════════════════════════════════════════════════════ */
+function pdfConsolidadoPendientesAbogado(){
+  if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
+  const _proc=window._records||[];
+  const _mod=window._modRecords||[];
+  const _liq=window._liqRecords||[];
+
+  // Listas de abogados que tienen pendientes
+  const tramStates_pa=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','revision-jefe','aval-radicar','radicado-git','radicado-competente'];
+  const procPend=_proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+  const modPend=_mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+  const liqPend=_liq.filter(r=>tramStates_pa.includes(r.estado));
+
+  const abogados=[...new Set([...procPend,...modPend,...liqPend].map(r=>r.abogado).filter(Boolean))].sort();
+  if(!abogados.length){alert('No hay expedientes pendientes registrados.');return;}
+
+  const sel=document.getElementById('inf-abogado-sel');
+  if(!sel){alert('Selector de abogado no encontrado.');return;}
+  sel.innerHTML='<option value="">-- Seleccione abogado --</option>'+
+    abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
+
+  // Usar el overlay existente con módulo personalizado
+  sel.dataset.module='pendientes-global';
+  document.getElementById('inf-abogado-overlay').classList.add('open');
+}
+
+function _generarPdfPendientesAbogado(abogado){
+  const _proc=window._records||[];
+  const _mod=window._modRecords||[];
+  const _liq=window._liqRecords||[];
+  const tramStates_pa=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','revision-jefe','aval-radicar','radicado-git','radicado-competente'];
+
+  const proc=_proc.filter(r=>r.abogado===abogado&&!estadoIsTerminal(r.tipo,r.estado));
+  const mod=_mod.filter(r=>r.abogado===abogado&&!estadoIsTerminal(r.tipo,r.estado));
+  const liq=_liq.filter(r=>r.abogado===abogado&&tramStates_pa.includes(r.estado));
+
+  const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  const total=proc.length+mod.length+liq.length;
+
+  if(!total){alert(`No hay expedientes pendientes para ${abogado}.`);return;}
+
+  // ── Tablas de procesos ──────────────────────────────────────────
+  const mkRowProc=r=>[
+    `<b style="font-family:monospace;font-size:10px;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
+    `<span style="font-size:9px;padding:2px 5px;border-radius:5px;background:#EFF6FF;color:#1D4ED8;">${escHtml(r.tipo==='asesoria'?'Asesoría':'Contractual')}</span>`,
+    `<span style="font-size:10px;">${escHtml((r.objeto||'—').slice(0,45))}${(r.objeto||'').length>45?'…':''}</span>`,
+    `<span style="font-size:9px;padding:2px 5px;border-radius:5px;background:#F1F5F9;">${escHtml(getEstado(r.tipo,r.estado).label||r.estado||'—')}</span>`,
+    `<span style="font-size:10px;font-family:monospace;">${escHtml(getFechaAlerta(r)||'—')}</span>`,
+  ];
+
+  // ── Tablas de modificaciones ────────────────────────────────────
+  const mkRowMod=r=>[
+    `<b style="font-family:monospace;font-size:10px;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
+    `<span style="font-size:9px;padding:2px 5px;border-radius:5px;background:#F5F3FF;color:#5B21B6;">${escHtml(r.tipo==='asesoria'?'Asesoría':'Contractual')}</span>`,
+    `<span style="font-size:10px;">${escHtml((r.objeto||'—').slice(0,45))}${(r.objeto||'').length>45?'…':''}</span>`,
+    `<span style="font-size:9px;padding:2px 5px;border-radius:5px;background:#F1F5F9;">${escHtml(getEstado(r.tipo,r.estado).label||r.estado||'—')}</span>`,
+    `<span style="font-size:10px;font-family:monospace;">${escHtml(getFechaAlerta(r)||'—')}</span>`,
+  ];
+
+  // ── Tablas de liquidaciones ─────────────────────────────────────
+  const mkRowLiq=r=>[
+    `<b style="font-family:monospace;font-size:10px;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
+    `<span style="font-size:9px;padding:2px 5px;border-radius:5px;background:#F0FDF4;color:#065F46;">${escHtml(r.tramite||'—')}</span>`,
+    `<span style="font-size:10px;">${escHtml((r.contratista||'—').slice(0,35))}${(r.contratista||'').length>35?'…':''}</span>`,
+    `<span style="font-size:9px;padding:2px 5px;border-radius:5px;background:#F1F5F9;">${escHtml(getEstadoLiq(r.estado).label||r.estado||'—')}</span>`,
+    `<span style="font-size:10px;font-family:monospace;">${fmtDate(r.fechaTerminacion)||'—'}</span>`,
+    pdfAvanceLiq(r),
+  ];
+
+  const HDRS_PROC=['N° Expediente','Tipo','Objeto','Estado','F. Alerta'];
+  const HDRS_LIQ=['N° Contrato','Trámite','Contratista','Estado','F. Máx. Liqu','Último Avance'];
+  const W_PROC=['12%','10%','40%','22%','16%'];
+  const W_LIQ=['11%','8%','26%','18%','12%','25%'];
+
+  // ── Análisis / conclusiones ─────────────────────────────────────
+  const liqLiq=liq.filter(r=>r.tramite==='Liquidacion').length;
+  const liqCie=liq.filter(r=>r.tramite==='Cierre').length;
+  const puntos=[];
+  puntos.push({tipo:'info',txt:`<strong>${abogado}</strong> tiene <strong>${total} expedientes pendientes</strong>: ${proc.length} proceso${proc.length!==1?'s':''}, ${mod.length} modificación${mod.length!==1?'es':''}, ${liqLiq} liquidación${liqLiq!==1?'es':''} y ${liqCie} cierre${liqCie!==1?'s':''} contractual${liqCie!==1?'es':''}.`});
+  if(liqLiq>0) puntos.push({tipo:'warn',txt:`${liqLiq} liquidación${liqLiq!==1?'es':''} pendiente${liqLiq!==1?'s':''} de tramitar.`});
+  if(liqCie>0) puntos.push({tipo:'warn',txt:`${liqCie} cierre${liqCie!==1?'s':''} contractual${liqCie!==1?'es':''} pendiente${liqCie!==1?'s':''}.`});
+  if(!proc.length&&!mod.length) puntos.push({tipo:'ok',txt:'No tiene procesos ni modificaciones pendientes.'});
+  if(!liq.length) puntos.push({tipo:'ok',txt:'No tiene liquidaciones ni cierres pendientes.'});
+
+  abrirPdf(`
+    ${pdfHeader(`Pendientes — ${escHtml(abogado)}`,`Informe individual de expedientes por tramitar · ${fechaHoy} · ${hora}`)}
+    ${pdfIntroBox(`Expedientes <strong>pendientes por tramitar</strong> del abogado <strong>${escHtml(abogado)}</strong>. Total: <strong>${total} pendientes</strong> en los tres módulos.`)}
+
+    ${pdfSectionTitle('📋','Procesos Pendientes')}
+    ${proc.length
+      ? pdfTable(HDRS_PROC, proc.map(r=>mkRowProc(r)), W_PROC)
+      : `<div style="color:${PDF_GRAY};font-size:11px;padding:12px;background:#F8FAFC;border-radius:8px;text-align:center;">Sin procesos pendientes</div>`
+    }
+
+    ${pdfSectionTitle('✏️','Modificaciones Pendientes')}
+    ${mod.length
+      ? pdfTable(HDRS_PROC, mod.map(r=>mkRowMod(r)), W_PROC)
+      : `<div style="color:${PDF_GRAY};font-size:11px;padding:12px;background:#F8FAFC;border-radius:8px;text-align:center;">Sin modificaciones pendientes</div>`
+    }
+
+    ${pdfSectionTitle('💧','Liquidaciones Pendientes')}
+    ${(()=>{const r=liq.filter(x=>x.tramite==='Liquidacion');return r.length?pdfTable(HDRS_LIQ,r.map(x=>mkRowLiq(x)),W_LIQ):`<div style="color:${PDF_GRAY};font-size:11px;padding:12px;background:#F8FAFC;border-radius:8px;text-align:center;">Sin liquidaciones pendientes</div>`;})()}
+
+    ${pdfSectionTitle('🔒','Cierres Contractuales Pendientes')}
+    ${(()=>{const r=liq.filter(x=>x.tramite==='Cierre');return r.length?pdfTable(HDRS_LIQ,r.map(x=>mkRowLiq(x)),W_LIQ):`<div style="color:${PDF_GRAY};font-size:11px;padding:12px;background:#F8FAFC;border-radius:8px;text-align:center;">Sin cierres contractuales pendientes</div>`;})()}
+
+    ${pdfSectionTitle('💡','Resumen')}
+    ${pdfConclusions(puntos)}
+
+    ${pdfFooter()}
+  `,`Pendientes — ${abogado}`);
+}
 
 function pdfConsolidadoVencimiento(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
