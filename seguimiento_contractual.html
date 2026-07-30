@@ -70,6 +70,28 @@ header{background:var(--navy);color:white;padding:0 32px;display:flex;align-item
 header h1{font-size:16px;font-weight:600;}
 header .sub{font-size:12px;color:#94A3B8;font-weight:300;}
 .header-right{display:flex;align-items:center;gap:10px;}
+/* ── Campana de notificaciones ── */
+.notif-bell-wrap{position:relative;}
+.notif-bell-btn{position:relative;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:white;width:38px;height:38px;border-radius:10px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;}
+.notif-bell-btn:hover{background:rgba(255,255,255,.2);}
+.notif-count{position:absolute;top:-5px;right:-5px;background:#DC2626;color:white;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid var(--navy);}
+.notif-panel{position:absolute;top:46px;right:0;width:340px;background:white;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);z-index:999;overflow:hidden;}
+.notif-panel-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;font-size:13px;font-weight:700;color:#0F1F3D;}
+.notif-list{max-height:360px;overflow-y:auto;}
+.notif-empty{padding:24px;text-align:center;color:#94A3B8;font-size:13px;}
+.notif-item{padding:12px 16px;border-bottom:1px solid #F1F5F9;display:flex;gap:10px;align-items:flex-start;cursor:pointer;transition:background .15s;}
+.notif-item:hover{background:#F8FAFC;}
+.notif-item.unread{background:#FFFBEB;border-left:3px solid #F59E0B;}
+.notif-item.alert{background:#FEF2F2;border-left:3px solid #DC2626;}
+.notif-item.ok{background:#F0FDF4;border-left:3px solid #059669;}
+.notif-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.notif-body{flex:1;min-width:0;}
+.notif-title{font-size:12px;font-weight:600;color:#1E293B;margin-bottom:2px;}
+.notif-desc{font-size:11px;color:#64748B;line-height:1.4;}
+.notif-time{font-size:10px;color:#94A3B8;margin-top:3px;font-family:var(--mono);}
+/* ── Botón PDF por fila ── */
+.btn-pdf-row{background:none;border:1px solid #BFDBFE;color:#1D4ED8;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;white-space:nowrap;transition:background .15s;}
+.btn-pdf-row:hover{background:#DBEAFE;}
 #total-badge{background:var(--navy-mid);border:1px solid #334155;color:#CBD5E1;font-family:var(--mono);font-size:12px;padding:4px 12px;border-radius:20px;}
 .user-pill{display:flex;align-items:center;gap:8px;background:var(--navy-mid);border:1px solid #334155;border-radius:20px;padding:4px 12px 4px 6px;}
 .user-avatar{width:22px;height:22px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--navy);}
@@ -630,6 +652,22 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
     </div>
     <div class="header-right">
       <span id="total-badge">0 registros</span>
+      <!-- 🔔 Campana de notificaciones -->
+      <div class="notif-bell-wrap" id="notif-bell-wrap">
+        <button class="notif-bell-btn" id="notif-bell-btn" onclick="toggleNotifPanel()" title="Notificaciones">
+          🔔
+          <span class="notif-count" id="notif-count" style="display:none;">0</span>
+        </button>
+        <div class="notif-panel" id="notif-panel" style="display:none;">
+          <div class="notif-panel-header">
+            <span>🔔 Notificaciones</span>
+            <button onclick="clearNotifs()" style="font-size:11px;background:none;border:none;color:#94A3B8;cursor:pointer;">Limpiar</button>
+          </div>
+          <div class="notif-list" id="notif-list">
+            <div class="notif-empty">Sin notificaciones nuevas</div>
+          </div>
+        </div>
+      </div>
       <div class="user-pill">
         <div class="user-avatar" id="header-avatar">?</div>
         <span class="user-name" id="header-username">—</span>
@@ -732,6 +770,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           <th onclick="sortBy('fechaAsignacion')">F. Asignación</th>
           <th onclick="sortBy('fechaAdjudicacion')">F. Adjudicación</th>
           <th onclick="sortBy('fechaMaxGestion')" style="white-space:nowrap;">⏰ F. Máx. Gestión</th>
+          <th style="white-space:nowrap;">📝 Último Avance</th>
           <th onclick="sortBy('estado')">Estado</th>
           <th>Avance</th>
           <th>Acciones</th>
@@ -1100,7 +1139,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
             </div>
             <table class="dash-table">
               <thead><tr>
-                <th>N° Contrato</th><th>Contratista</th><th>Abogado</th><th>Fecha Avance</th><th>Registrado por</th><th>Descripción</th>
+                <th>N° Contrato</th><th>N° Proceso</th><th>Contratista</th><th>Abogado</th><th>Fecha Avance</th><th>Registrado por</th><th>Descripción</th>
               </tr></thead>
               <tbody id="dl-avances-body"></tbody>
             </table>
@@ -2330,7 +2369,11 @@ onSnapshot(collection(db,'usuarios'),snap=>{
 
 window._saveRecord=async(data)=>{const{id,...r}=data;await setDoc(doc(db,'registros',id),r);};
 window._deleteRecord=async(id)=>{await deleteDoc(doc(db,'registros',id));};
-window._updateEstado=async(id,estado)=>{await updateDoc(doc(db,'registros',id),{estado});};
+window._updateEstado=async(id,estado,historialEstados)=>{
+  const upd={estado};
+  if(historialEstados) upd.historialEstados=historialEstados;
+  await updateDoc(doc(db,'registros',id),upd);
+};
 window._saveBitacora=async(id,bitacora)=>{await updateDoc(doc(db,'registros',id),{bitacora});};
 window._saveUser=async(u)=>{const{id,...r}=u;await setDoc(doc(db,'usuarios',id),r);};
 window._deleteUser=async(id)=>{await deleteDoc(doc(db,'usuarios',id));};
@@ -2596,6 +2639,9 @@ function launchApp(){
   setTimeout(()=>{ if(window._appReady) renderTable(); }, 800);
   setTimeout(()=>{ if(window._appReady) renderTable(); }, 2000);
   setTimeout(()=>{ if(window._appReady) renderTable(); }, 5000);
+  // ── Notificaciones al iniciar y cada 10 minutos ──────────────
+  setTimeout(checkNotificaciones, 3000);
+  setInterval(checkNotificaciones, 10*60*1000);
 }
 
 function startSessionTimer(){
@@ -2668,6 +2714,8 @@ function applyUserUI(){
     }
   }
   if(window._appReady&&window.renderTable) window.renderTable();
+  // ── Verificar notificaciones al cargar ──────────────────────
+  if(window._appReady) setTimeout(checkNotificaciones, 2000);
 }function isAdmin(){return currentUser?.role==='admin';}
 function isViewer(){return currentUser?.role==='viewer';}
 function normStr(s){return(s||'').toUpperCase().replace(/\s+/g,' ').trim();}
@@ -2744,6 +2792,238 @@ function sortByLiq(f){if(sortFieldLiq===f)sortDirLiq=sortDirLiq==='asc'?'desc':'
 /* ═══ TABLA ═══ */
 function sortBy(f){if(sortField===f)sortDir=sortDir==='asc'?'desc':'asc';else{sortField=f;sortDir='asc';}renderTable();}
 
+
+/* ═══════════════════════════════════════════════════════════════════
+   🔔 SISTEMA DE NOTIFICACIONES EN TIEMPO REAL
+   ════════════════════════════════════════════════════════════════════ */
+let _notifs=[];
+let _notifPanelOpen=false;
+let _notifLastCheck=Date.now();
+
+function toggleNotifPanel(){
+  _notifPanelOpen=!_notifPanelOpen;
+  const panel=document.getElementById('notif-panel');
+  if(panel) panel.style.display=_notifPanelOpen?'block':'none';
+  if(_notifPanelOpen){
+    // Marcar todas como leídas visualmente
+    document.querySelectorAll('.notif-item.unread').forEach(el=>el.classList.remove('unread'));
+  }
+}
+
+function clearNotifs(){
+  _notifs=[];
+  renderNotifs();
+}
+
+function addNotif(tipo, titulo, desc, icono='ℹ️'){
+  _notifs.unshift({tipo,titulo,desc,icono,ts:Date.now(),unread:!_notifPanelOpen});
+  if(_notifs.length>50) _notifs=_notifs.slice(0,50);
+  renderNotifs();
+}
+
+function renderNotifs(){
+  const list=document.getElementById('notif-list');
+  const countEl=document.getElementById('notif-count');
+  if(!list||!countEl) return;
+  const unread=_notifs.filter(n=>n.unread).length;
+  if(unread>0){
+    countEl.style.display='flex';
+    countEl.textContent=unread>9?'9+':unread;
+  } else {
+    countEl.style.display='none';
+  }
+  if(!_notifs.length){
+    list.innerHTML='<div class="notif-empty">Sin notificaciones nuevas</div>';
+    return;
+  }
+  const fmtTs=ts=>{
+    const diff=Math.round((Date.now()-ts)/60000);
+    if(diff<1) return 'Ahora mismo';
+    if(diff<60) return 'Hace '+diff+' min';
+    if(diff<1440) return 'Hace '+Math.round(diff/60)+' h';
+    return 'Hace '+Math.round(diff/1440)+' día(s)';
+  };
+  list.innerHTML=_notifs.map(n=>`
+    <div class="notif-item ${n.unread?'unread':''} ${n.tipo}">
+      <div class="notif-icon">${n.icono}</div>
+      <div class="notif-body">
+        <div class="notif-title">${escHtml(n.titulo)}</div>
+        <div class="notif-desc">${escHtml(n.desc)}</div>
+        <div class="notif-time">${fmtTs(n.ts)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function checkNotificaciones(){
+  if(!currentUser||!window._appReady) return;
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+
+  // ── Procesos vencidos hoy ──────────────────────────────────────
+  const vencHoy=(window._records||[]).filter(r=>{
+    if(estadoIsTerminal(r.tipo,r.estado)) return false;
+    const fa=getFechaAlerta(r);
+    if(!fa) return false;
+    return diasHasta(fa)===0;
+  });
+  if(vencHoy.length>0){
+    addNotif('alert',
+      vencHoy.length===1?'1 proceso vence hoy':vencHoy.length+' procesos vencen hoy',
+      'Expedientes: '+vencHoy.slice(0,3).map(r=>r.ticket).join(', ')+(vencHoy.length>3?'…':''),
+      '⏰');
+  }
+
+  // ── Procesos vencidos (sin acción) ────────────────────────────
+  const vencidos=(window._records||[]).filter(r=>{
+    if(estadoIsTerminal(r.tipo,r.estado)) return false;
+    const fa=getFechaAlerta(r);
+    return fa&&diasHasta(fa)<0;
+  });
+  if(vencidos.length>0){
+    addNotif('alert',
+      vencidos.length+' proceso'+( vencidos.length!==1?'s':'')+' vencido'+(vencidos.length!==1?'s':''),
+      'Superaron la fecha máxima de gestión sin finalizar.',
+      '🔴');
+  }
+
+  // ── Procesos sin avance > 30 días ─────────────────────────────
+  const dormidos=(window._records||[]).filter(r=>{
+    if(estadoIsTerminal(r.tipo,r.estado)) return false;
+    const bit=(r.bitacora||[]);
+    if(!bit.length) return true;
+    const ult=bit.slice().sort((a,b)=>String(b.date||b.ts||'').localeCompare(String(a.date||a.ts||'')))[0];
+    const ultFecha=ult?.date||'';
+    if(!ultFecha) return true;
+    return Math.abs(diasHasta(ultFecha))>30;
+  });
+  if(dormidos.length>0){
+    addNotif('unread',
+      dormidos.length+' expediente'+(dormidos.length!==1?'s':'')+' sin avance (+30 días)',
+      'Sin actividad registrada en más de 30 días.',
+      '😴');
+  }
+
+  // ── Modificaciones vencidas ────────────────────────────────────
+  const modVenc=(window._modRecords||[]).filter(r=>{
+    if(estadoIsTerminal(r.tipo,r.estado)) return false;
+    const fa=getFechaAlerta(r);
+    return fa&&diasHasta(fa)<0;
+  });
+  if(modVenc.length>0){
+    addNotif('alert',
+      modVenc.length+' modificación'+(modVenc.length!==1?'es':'')+' vencida'+(modVenc.length!==1?'s':''),
+      'Modificaciones que superaron la fecha máxima.',
+      '✏️');
+  }
+}
+
+// Cerrar panel al hacer clic fuera
+document.addEventListener('click',e=>{
+  if(_notifPanelOpen&&!document.getElementById('notif-bell-wrap')?.contains(e.target)){
+    _notifPanelOpen=false;
+    const panel=document.getElementById('notif-panel');
+    if(panel) panel.style.display='none';
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   📄 PDF INDIVIDUAL POR EXPEDIENTE
+   ════════════════════════════════════════════════════════════════════ */
+function pdfExpediente(id){
+  const r=(window._records||[]).find(x=>x.id===id);
+  if(!r){alert('Expediente no encontrado.');return;}
+  const est=getEstado(r.tipo,r.estado);
+  const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  const terminal=estadoIsTerminal(r.tipo,r.estado);
+  const fa=getFechaAlerta(r);
+  const diasAlert=fa&&!terminal?diasHasta(fa):null;
+  const semColor=diasAlert===null?PDF_GRAY:diasAlert<0?PDF_RED:diasAlert===0?PDF_RED:diasAlert<=3?PDF_ORANGE:diasAlert<=7?'#D97706':PDF_GREEN;
+  const semLabel=diasAlert===null?'Sin fecha':diasAlert<0?'Vencido hace '+Math.abs(diasAlert)+' día'+(Math.abs(diasAlert)!==1?'s':''):diasAlert===0?'Vence HOY':diasAlert<=3?'Vence en '+diasAlert+' día'+(diasAlert!==1?'s':''):'En plazo';
+  // Bitácora
+  const bit=(r.bitacora||[]).slice().sort((a,b)=>String(b.date||b.ts||'').localeCompare(String(a.date||a.ts||'')));
+  const bitHTML=bit.length
+    ? bit.map(e=>`<tr>
+        <td style="font-family:var(--mono,monospace);font-size:9px;white-space:nowrap;padding:6px 8px;border-bottom:1px solid #F1F5F9;color:#64748B;">${fmtDate(e.date||e.fecha)||'—'}</td>
+        <td style="font-size:9px;padding:6px 8px;border-bottom:1px solid #F1F5F9;color:#475569;">${escHtml(e.author||e.fuente||'—')}</td>
+        <td style="font-size:10px;padding:6px 8px;border-bottom:1px solid #F1F5F9;color:#1E293B;">${escHtml(e.text||e.texto||'—')}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="3" style="padding:16px;text-align:center;color:#94A3B8;font-style:italic;font-size:11px;">Sin avances registrados</td></tr>`;
+  // Historial estados
+  const histHTML=(r.historialEstados||[]).length
+    ? (r.historialEstados||[]).slice().reverse().map(h=>`<div style="display:flex;align-items:center;gap:8px;font-size:10px;padding:4px 0;border-bottom:1px solid #F8FAFC;">
+        <span style="color:#64748B;font-family:monospace;min-width:80px;">${h.fecha||''}</span>
+        <span style="background:#FEF3C7;color:#92400E;padding:1px 7px;border-radius:10px;">${escHtml(h.de||'')}</span>
+        <span style="color:#94A3B8;">→</span>
+        <span style="background:#DBEAFE;color:#1E40AF;padding:1px 7px;border-radius:10px;">${escHtml(h.a||'')}</span>
+        <span style="color:#64748B;">por ${escHtml(h.por||'—')}</span>
+      </div>`).join('')
+    : '<div style="color:#94A3B8;font-size:11px;font-style:italic;padding:8px 0;">Sin cambios de estado registrados</div>';
+
+  abrirPdf(`
+    ${pdfHeader(`Expediente #${escHtml(r.ticket||'—')} — ${r.tipo==='contractual'?'Proceso Contractual':'Asesoría Previa'}`,`Ficha individual · ${fechaHoy} · ${hora}`)}
+
+    <!-- ── Info general ── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+      <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:16px;">
+        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:#64748B;font-weight:600;margin-bottom:10px;">Información del Expediente</div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:11px;">
+          <span style="color:#64748B;font-weight:600;">N° Expediente</span><span style="font-weight:700;color:#0F1F3D;">${escHtml(r.ticket||'—')}</span>
+          <span style="color:#64748B;font-weight:600;">Tipo</span><span>${r.tipo==='contractual'?'Proceso Contractual':'Asesoría Previa'}</span>
+          <span style="color:#64748B;font-weight:600;">Abogado</span><span style="font-weight:600;color:#0F1F3D;">${escHtml(r.abogado||'—')}</span>
+          <span style="color:#64748B;font-weight:600;">GIT / Unidad</span><span>${escHtml(r.git||'—')}</span>
+          <span style="color:#64748B;font-weight:600;">Dependencia</span><span>${escHtml(r.dependencia||'—')}</span>
+          <span style="color:#64748B;font-weight:600;">SECOP</span><span style="font-family:monospace;">${escHtml(r.secop||'—')}</span>
+        </div>
+      </div>
+      <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:16px;">
+        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:#64748B;font-weight:600;margin-bottom:10px;">Fechas y Estado</div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:11px;">
+          <span style="color:#64748B;font-weight:600;">F. Asignación</span><span style="font-family:monospace;">${fmtDate(r.fechaAsignacion)||'—'}</span>
+          <span style="color:#64748B;font-weight:600;">F. Adjudicación</span><span style="font-family:monospace;">${fmtDate(r.fechaAdjudicacion)||'—'}</span>
+          <span style="color:#64748B;font-weight:600;">F. Docs. Def.</span><span style="font-family:monospace;">${fmtDate(r.fechaDocumentos)||'—'}</span>
+          <span style="color:#64748B;font-weight:600;">F. Máx. Gestión</span><span style="font-family:monospace;color:${semColor};font-weight:700;">${fmtDate(r.fechaMaxGestion)||'—'}</span>
+          <span style="color:#64748B;font-weight:600;">Estado actual</span>
+          <span style="background:${semColor}20;color:${semColor};padding:2px 10px;border-radius:10px;font-weight:700;font-size:10px;">${est.label}</span>
+          <span style="color:#64748B;font-weight:600;">Alerta</span>
+          <span style="color:${semColor};font-weight:600;font-size:10px;">${semLabel}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Objeto ── -->
+    <div style="background:#EFF6FF;border-left:4px solid #3B82F6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;">
+      <div style="font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:#1D4ED8;font-weight:700;margin-bottom:5px;">📋 Objeto</div>
+      <div style="font-size:11px;color:#1E293B;line-height:1.7;">${escHtml(r.objeto||'Sin objeto definido.')}</div>
+    </div>
+
+    ${r.obs?`<div style="background:#FFFBEB;border-left:4px solid #F59E0B;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;">
+      <div style="font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:#D97706;font-weight:700;margin-bottom:5px;">💬 Observaciones</div>
+      <div style="font-size:11px;color:#92400E;line-height:1.7;">${escHtml(r.obs)}</div>
+    </div>`:''}
+
+    <!-- ── Historial de estados ── -->
+    ${pdfSectionTitle('🔄','Historial de Cambios de Estado',true)}
+    <div style="background:white;border:1px solid #E2E8F0;border-radius:8px;padding:14px 16px;margin-bottom:20px;">
+      ${histHTML}
+    </div>
+
+    <!-- ── Bitácora ── -->
+    ${pdfSectionTitle('📓','Bitácora de Avances')}
+    <div style="border-radius:8px;overflow:hidden;border:1px solid #E2E8F0;margin-bottom:16px;">
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+        <thead><tr style="background:#0F1F3D;">
+          <th style="padding:8px;color:white;font-size:8px;text-transform:uppercase;letter-spacing:.08em;width:12%;text-align:left;">Fecha</th>
+          <th style="padding:8px;color:white;font-size:8px;text-transform:uppercase;letter-spacing:.08em;width:18%;text-align:left;">Registrado por</th>
+          <th style="padding:8px;color:white;font-size:8px;text-transform:uppercase;letter-spacing:.08em;width:70%;text-align:left;">Descripción del avance</th>
+        </tr></thead>
+        <tbody>${bitHTML}</tbody>
+      </table>
+    </div>
+
+    ${pdfFooter()}
+  `,`Expediente ${r.ticket||'—'}`);
+}
+
 function renderTable(){
   const records=window._records||[];
   const q=(document.getElementById('search-input')?.value||'').toLowerCase();
@@ -2791,6 +3071,19 @@ function renderTable(){
       const maxCell=r.fechaMaxGestion
         ? `<span style="font-family:var(--mono);font-size:11px;">${fmtDate(r.fechaMaxGestion)}</span>${semBadge}`
         : `<span style="color:#CBD5E1;font-size:11px;">—</span>`;
+      // ── #3: Fecha del último avance ──────────────────────────────
+      const bitOrd=(r.bitacora||[]).slice().sort((a,b)=>String(b.date||b.ts||'').localeCompare(String(a.date||a.ts||'')));
+      const ultAv=bitOrd[0];
+      const ultAvFecha=ultAv?(ultAv.date||''):'';
+      const diasSinAv=ultAvFecha?diasHasta(ultAvFecha):null;
+      const ultAvCell=ultAvFecha
+        ? (()=>{
+            const abs=Math.abs(diasSinAv);
+            const color=abs>30?'#DC2626':abs>14?'#D97706':'#059669';
+            return `<div style="font-family:var(--mono);font-size:10px;">${fmtDate(ultAvFecha)}</div>`
+                  +`<div style="font-size:9px;color:${color};">${abs===0?'Hoy':abs===1?'Hace 1 día':'Hace '+abs+' días'}</div>`;
+          })()
+        : `<span style="color:#CBD5E1;font-size:11px;">Sin avances</span>`;
       return `<tr class="main-row" onclick="toggleAccordion('${rowId}')">
         <td style="white-space:nowrap"><span class="expand-arrow" id="arr-${rowId}">▶</span><span class="ticket-badge">${escHtml(r.ticket||'—')}</span></td>
         <td><span class="tipo-badge ${r.tipo||'asesoria'}">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span></td>
@@ -2802,6 +3095,7 @@ function renderTable(){
         <td class="date-cell ${r.fechaAsignacion?'':'empty'}">${fmtDate(r.fechaAsignacion)||'—'}</td>
         <td class="date-cell ${r.fechaAdjudicacion?'':'empty'}">${fmtDate(r.fechaAdjudicacion)||'—'}</td>
         <td style="white-space:nowrap;">${maxCell}</td>
+        <td style="min-width:90px;">${ultAvCell}</td>
         <td onclick="event.stopPropagation()">
           <select class="status-badge ${est.css}" style="border:none;cursor:pointer;font-size:11px;font-weight:600;border-radius:20px;padding:3px 8px;outline:none;" onchange="changeEstado('${r.id}','${r.tipo||'asesoria'}',this)" ${adm?'':'disabled'}>
             ${(ESTADOS[r.tipo||'asesoria']||[]).map(e=>`<option value="${e.value}" ${r.estado===e.value?'selected':''}>${e.label}</option>`).join('')}
@@ -2810,12 +3104,13 @@ function renderTable(){
         <td>${avB}</td>
         <td onclick="event.stopPropagation()"><div class="actions-cell">
           <button class="icon-btn" onclick="openBitacora('${r.id}')" title="${!terminal?'Avance':'Ver'}">${!terminal?'📝':'📖'}</button>
+          <button class="icon-btn" onclick="pdfExpediente('${r.id}')" title="PDF del expediente">📄</button>
           <button class="icon-btn" onclick="editRecord('${r.id}')" ${adm?'':'disabled'}>✏️</button>
           <button class="icon-btn del" onclick="deleteRecord('${r.id}')" ${adm?'':'disabled'}>🗑️</button>
         </div></td>
       </tr>
       <tr class="accordion-row" id="${rowId}">
-        <td colspan="13">
+        <td colspan="14">
           <div class="accordion-inner">
             <div class="accordion-section full">
               <span class="accordion-label">📋 Objeto</span>
@@ -2829,6 +3124,7 @@ function renderTable(){
             <div class="accordion-section"><span class="accordion-label">📅 F. Adjudicación</span><span class="accordion-value">${fmtDate(r.fechaAdjudicacion)||'—'}</span></div>
             <div class="accordion-section"><span class="accordion-label" style="color:var(--red);">⏰ F. Máx. Gestión</span><span class="accordion-value">${r.fechaMaxGestion?fmtDate(r.fechaMaxGestion)+'&nbsp;'+semBadge:'<span style="color:#CBD5E1;">Sin fecha</span>'}</span></div>
             ${r.obs?`<div class="accordion-section full"><span class="accordion-label">💬 Observaciones</span><span class="accordion-value" style="color:var(--muted);font-style:italic;">${escHtml(r.obs)}</span></div>`:''}
+            ${(r.historialEstados||[]).length>0?`<div class="accordion-section full"><span class="accordion-label">🔄 Historial de Estados</span><div class="accordion-value"><div style="display:flex;flex-direction:column;gap:4px;margin-top:4px;">${(r.historialEstados||[]).slice().reverse().map(h=>`<div style="display:flex;align-items:center;gap:8px;font-size:11px;"><span style="color:#64748B;font-family:var(--mono);min-width:80px;">${h.fecha||''}</span><span style="background:#FEF3C7;color:#92400E;padding:1px 7px;border-radius:10px;font-size:10px;">${escHtml(h.de||'')}</span><span style="color:#94A3B8;">→</span><span style="background:#DBEAFE;color:#1E40AF;padding:1px 7px;border-radius:10px;font-size:10px;">${escHtml(h.a||'')}</span><span style="color:#64748B;margin-left:4px;">por ${escHtml(h.por||'—')}</span></div>`).join('')}</div></div></div>`:''}
           </div>
         </td>
       </tr>`;
@@ -3036,13 +3332,25 @@ async function changeEstado(id,tipo,sel){
   sel.style.cssText='border:none;cursor:pointer;font-size:11px;font-weight:600;border-radius:20px;padding:3px 8px;outline:none;';
   const r=(window._records||[]).find(x=>x.id===id);
   const estadoAnterior=r?.estado;
-  if(r) r.estado=nuevoEstado;
+  if(!estadoAnterior||estadoAnterior===nuevoEstado) return; // sin cambio real
+  // ── Registrar en historial de estados ──────────────────────────
+  const entradaHistorial={
+    de:estadoAnterior,
+    a:nuevoEstado,
+    por:currentUser?.name||'—',
+    fecha:new Date().toISOString().slice(0,10),
+    ts:Date.now(),
+  };
+  if(r){
+    r.estado=nuevoEstado;
+    r.historialEstados=[...(r.historialEstados||[]),entradaHistorial];
+  }
   showSyncToast('Guardando estado...');
   try{
-    await window._updateEstado(id,nuevoEstado);
+    await window._updateEstado(id,nuevoEstado,r.historialEstados);
     showSyncToast('✅ Estado actualizado');
   } catch(err){
-    if(r&&estadoAnterior) r.estado=estadoAnterior;
+    if(r&&estadoAnterior){r.estado=estadoAnterior;r.historialEstados=(r.historialEstados||[]).slice(0,-1);}
     renderTable();
     showSyncToast('❌ Error al actualizar',3000);
   }
@@ -3976,13 +4284,14 @@ function renderDashLiq(){
   }).join(''):`<tr><td colspan="7" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">Sin datos</td></tr>`;
 
   const avances=[];
-  records.forEach(r=>(r.bitacoraLiq||[]).forEach(e=>avances.push({...e,ticket:r.ticket,contratista:r.contratista,abogado:r.abogado})));
+  records.forEach(r=>(r.bitacoraLiq||[]).forEach(e=>avances.push({...e,ticket:r.ticket,proceso:r.numeroProceso||'',contratista:r.contratista,abogado:r.abogado})));
   avances.sort((a,b)=>(b.ts||0)-(a.ts||0));
   const top15=avances.slice(0,15);
   document.getElementById('dl-dtc-avances').textContent=avances.length;
   const avBody=document.getElementById('dl-avances-body');
   if(avBody) avBody.innerHTML=top15.length?top15.map(e=>`<tr>
     <td><span class="ticket-badge" style="font-size:10px;">${escHtml(e.ticket||'—')}</span></td>
+    <td style="font-size:11px;color:var(--muted);white-space:nowrap;">${escHtml(e.proceso||'—')}</td>
     <td style="font-size:11px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(e.contratista||'—')}</td>
     <td style="font-size:11px;color:var(--navy);font-weight:500;">${escHtml(e.abogado||'—')}</td>
     <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;">${fmtDate(e.date||e.fecha)||e.date||e.fecha||'—'}</td>
@@ -4878,8 +5187,8 @@ function pdfPorEstado(records){
   const contractuales=records.filter(r=>r.tipo==='contractual');
   const statsA=ESTADOS.asesoria.map(e=>({...e,count:asesorias.filter(r=>r.estado===e.value).length}));
   const statsC=ESTADOS.contractual.map(e=>({...e,count:contractuales.filter(r=>r.estado===e.value).length}));
-  const resRowsA=statsA.map(e=>[`<span style="font-weight:600;color:${PDF_NAVY};">${e.label}</span>`,e.count,asesorias.length?Math.round(e.count/asesorias.length*100)+'%':'0%',e.count>0?'●'.repeat(Math.min(e.count,15)):'–']);
-  const resRowsC=statsC.map(e=>[`<span style="font-weight:600;color:${PDF_NAVY};">${e.label}</span>`,e.count,contractuales.length?Math.round(e.count/contractuales.length*100)+'%':'0%',e.count>0?'●'.repeat(Math.min(e.count,15)):'–']);
+  const resRowsA=statsA.map(e=>{const pct=asesorias.length?Math.round(e.count/asesorias.length*100):0;return[`<span style="font-weight:600;color:${PDF_NAVY};">${e.label}</span>`,e.count,pct+'%',e.count>0?`<div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;background:#E2E8F0;border-radius:4px;height:8px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${PDF_SKY};border-radius:4px;"></div></div><span style="font-size:9px;color:${PDF_GRAY};min-width:28px;">${pct}%</span></div>`:'—'];});
+  const resRowsC=statsC.map(e=>{const pct=contractuales.length?Math.round(e.count/contractuales.length*100):0;return[`<span style="font-weight:600;color:${PDF_NAVY};">${e.label}</span>`,e.count,pct+'%',e.count>0?`<div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;background:#E2E8F0;border-radius:4px;height:8px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${PDF_PURPLE};border-radius:4px;"></div></div><span style="font-size:9px;color:${PDF_GRAY};min-width:28px;">${pct}%</span></div>`:'—'];});
   const estadoMayorA=[...statsA].sort((a,b)=>b.count-a.count)[0];
   const estadoMayorC=[...statsC].sort((a,b)=>b.count-a.count)[0];
   const aprobados=asesorias.filter(r=>r.estado==='aprobado').length;
@@ -4902,7 +5211,7 @@ function pdfPorEstado(records){
       detalles+=`<div style="margin-bottom:16px;page-break-inside:avoid;"><div style="padding:7px 12px;background:white;border:1px solid ${PDF_BORDER};border-left:4px solid ${grupo.cols[ei]||grupo.color};border-radius:0 6px 6px 0;margin-bottom:8px;display:flex;align-items:center;gap:10px;"><span style="font-size:12px;font-weight:700;color:${PDF_NAVY};">${est.label}</span><span style="background:${PDF_NAVY};color:white;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700;">${proc.length}</span></div>${pdfTable(['Ticket','Objeto','Abogado','GIT / Dependencia','F. Asignación','F. Adjudicación'],rows,['8%','30%','16%','20%','12%','12%'])}</div>`;
     });
   });
-  abrirPdf(`${pdfHeader('Informe por Estado de los Procesos','Distribución y detalle de procesos según su estado actual de gestión')}${pdfIntroBox('Este informe agrupa todos los procesos registrados según su estado actual de avance, diferenciando entre asesorías previas y procesos contractuales. Permite identificar en qué etapa se concentra la mayor carga, detectar estados que representen cuellos de botella, y hacer seguimiento al progreso general de la actividad contractual del Ministerio.')}${pdfSectionTitle('📊','Distribución de Asesorías Previas por Estado')}${pdfTable(['Estado','Procesos','Porcentaje','Representación'],resRowsA,['35%','15%','15%','35%'])}${pdfSectionTitle('📊','Distribución de Procesos Contractuales por Estado')}${pdfTable(['Estado','Procesos','Porcentaje','Representación'],resRowsC,['35%','15%','15%','35%'])}${pdfSectionTitle('📋','Análisis y Conclusiones')}${conclusiones}${pdfSectionTitle('📁','Detalle de Procesos por Estado')}${detalles}${pdfFooter()}`,'Informe por Estado');
+  abrirPdf(`${pdfHeader('Informe por Estado de los Procesos','Distribución y detalle de procesos según su estado actual de gestión')}${pdfIntroBox('Este informe agrupa todos los procesos registrados según su estado actual de avance, diferenciando entre asesorías previas y procesos contractuales. Permite identificar en qué etapa se concentra la mayor carga, detectar estados que representen cuellos de botella, y hacer seguimiento al progreso general de la actividad contractual del Ministerio.')}${pdfSectionTitle('📊','Distribución de Asesorías Previas por Estado')}${pdfTable(['Estado','N° Procesos','% del Total','Distribución'],resRowsA,['35%','15%','12%','38%'])}${pdfSectionTitle('📊','Distribución de Procesos Contractuales por Estado')}${pdfTable(['Estado','N° Procesos','% del Total','Distribución'],resRowsC,['35%','15%','12%','38%'])}${pdfSectionTitle('📋','Análisis y Conclusiones')}${conclusiones}${pdfSectionTitle('📁','Detalle de Procesos por Estado')}${detalles}${pdfFooter()}`,'Informe por Estado');
 }
 
 function pdfVencimiento(records){
@@ -5419,7 +5728,7 @@ function pdfModEstado(){
       detalles+=`<div style="margin-bottom:14px;"><div style="padding:6px 12px;background:white;border-left:4px solid ${g.color};margin-bottom:6px;"><b>${est.label}</b> <span style="background:${PDF_NAVY};color:white;padding:1px 7px;border-radius:10px;font-size:10px;">${proc.length}</span></div>${pdfTable(['Ticket','Objeto','Abogado','F. Límite'],rows,['8%','44%','28%','18%'])}</div>`;
     });
   });
-  abrirPdf(`${pdfHeader('Modificaciones por Estado','Distribución de modificaciones por estado actual · '+fechaHoy)}${pdfIntroBox('Modificaciones contractuales agrupadas por estado de tramitación.')}${pdfSectionTitle('📊','Distribución por Estado — Asesorías')}${pdfTable(['Estado','Cant.','%','Barras'],statsA.map(e=>[`<b>${e.label}</b>`,e.count,asesorias.length?Math.round(e.count/asesorias.length*100)+'%':'0%',e.count?'●'.repeat(Math.min(e.count,20)):'—']),['38%','10%','12%','40%'])}${pdfSectionTitle('📊','Distribución por Estado — Contractuales')}${pdfTable(['Estado','Cant.','%','Barras'],statsC.map(e=>[`<b>${e.label}</b>`,e.count,contractuales.length?Math.round(e.count/contractuales.length*100)+'%':'0%',e.count?'●'.repeat(Math.min(e.count,20)):'—']),['38%','10%','12%','40%'])}${pdfSectionTitle('📁','Detalle por Estado')}${detalles}${pdfFooter()}`,'Modificaciones por Estado');
+  abrirPdf(`${pdfHeader('Modificaciones por Estado','Distribución de modificaciones por estado actual · '+fechaHoy)}${pdfIntroBox('Modificaciones contractuales agrupadas por estado de tramitación.')}${pdfSectionTitle('📊','Distribución por Estado — Asesorías')}${pdfTable(['Estado','Cant.','%','Barras'],statsA.map(e=>[`<b>${e.label}</b>`,e.count,asesorias.length?Math.round(e.count/asesorias.length*100)+'%':'0%',e.count>0?`<div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;background:#E2E8F0;border-radius:3px;height:7px;"><div style="width:${Math.min(e.count*5,100)}%;height:100%;background:${PDF_NAVY};border-radius:3px;"></div></div><span style="font-size:9px;color:${PDF_GRAY};">${e.count}</span></div>`:'—']),['38%','10%','12%','40%'])}${pdfSectionTitle('📊','Distribución por Estado — Contractuales')}${pdfTable(['Estado','Cant.','%','Barras'],statsC.map(e=>[`<b>${e.label}</b>`,e.count,contractuales.length?Math.round(e.count/contractuales.length*100)+'%':'0%',e.count>0?`<div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;background:#E2E8F0;border-radius:3px;height:7px;"><div style="width:${Math.min(e.count*5,100)}%;height:100%;background:${PDF_NAVY};border-radius:3px;"></div></div><span style="font-size:9px;color:${PDF_GRAY};">${e.count}</span></div>`:'—']),['38%','10%','12%','40%'])}${pdfSectionTitle('📁','Detalle por Estado')}${detalles}${pdfFooter()}`,'Modificaciones por Estado');
 }
 
 function pdfModIndividual(abogado){
