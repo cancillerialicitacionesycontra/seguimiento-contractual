@@ -1318,8 +1318,8 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
     <div class="tipo-bar">
       <span class="tipo-bar-label">Filtrar por:</span>
       <button class="tipo-chip active-all" id="liq-chip-all" onclick="setLiqTramite('all')">🔒 Todos</button>
-      <button class="tipo-chip" id="liq-chip-liq" onclick="setLiqTramite('Liquidacion')">💧 Liquidaciones</button>
-      <button class="tipo-chip" id="liq-chip-cie" onclick="setLiqTramite('Cierre')">🔒 Cierres</button>
+      <button class="tipo-chip" id="liq-chip-liq" onclick="setLiqTramite('liq')">💧 Liquidaciones</button>
+      <button class="tipo-chip" id="liq-chip-cie" onclick="setLiqTramite('cie')">🔒 Cierres</button>
     </div>
 
     <div class="stats-bar">
@@ -2731,7 +2731,10 @@ function setLiqTramite(t){
   activeLiqTramite=t;
   ['all','liq','cie'].forEach(v=>{
     const el=document.getElementById('liq-chip-'+v);
-    if(el){el.className='tipo-chip';if(v===t)el.classList.add('active-all');}
+    if(el){
+      el.className='tipo-chip';
+      if(v===t) el.classList.add(t==='all'?'active-all':'active-contractual');
+    }
   });
   _liqPage=0;renderLiq();
 }
@@ -6496,27 +6499,39 @@ function pdfConsolidadoAbogado(){
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const abogados=[...new Set([...proc,...mod,...liq].map(r=>r.abogado).filter(Boolean))].sort();
   if(!abogados.length){alert('No hay datos para generar el informe.');return;}
-  const granTotal=proc.length+mod.length+liq.length;
+  // granTotal basado en pendientes (proc + mod + liq + cierres pendientes)
+  const liqEstPend_tot=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','revision-jefe','aval-radicar','radicado-git','radicado-competente'];
+  const granTotal=(proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)).length)
+    +(mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado)).length)
+    +(liq.filter(r=>liqEstPend_tot.includes(r.estado)).length);
   const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
 
+  const finStates2=['finalizado','liquidado','cerrado','archivado'];
+  const liqEstadosPend=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','revision-jefe','aval-radicar','radicado-git','radicado-competente'];
+  const cierreEstadosPend=liqEstadosPend; // mismos estados aplican a cierres
+
   const rows=abogados.map(ab=>{
-    const p=proc.filter(r=>r.abogado===ab);
-    const m=mod.filter(r=>r.abogado===ab);
-    const l=liq.filter(r=>r.abogado===ab);
-    const tot=p.length+m.length+l.length;
-    const vp=p.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
-    const vm=m.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
+    // Procesos pendientes (no terminales)
+    const p=proc.filter(r=>r.abogado===ab&&!estadoIsTerminal(r.tipo,r.estado));
+    // Modificaciones pendientes (no terminales)
+    const m=mod.filter(r=>r.abogado===ab&&!estadoIsTerminal(r.tipo,r.estado));
+    // Liquidaciones pendientes (tramite=Liquidacion, estado pendiente)
+    const liqP=liq.filter(r=>r.abogado===ab&&(r.tramite==='Liquidacion'||!r.tramite)&&liqEstadosPend.includes(r.estado));
+    // Cierres pendientes (tramite=Cierre, estado pendiente)
+    const cieP=liq.filter(r=>r.abogado===ab&&r.tramite==='Cierre'&&cierreEstadosPend.includes(r.estado));
+    const tot=p.length+m.length+liqP.length+cieP.length;
+    const vp=p.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
+    const vm=m.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
     const vencidos=vp+vm;
-    const liqFin=l.filter(r=>finStates.includes(r.estado)).length;
     const pctCarga=granTotal?Math.round(tot/granTotal*100):0;
     return [
       `<b style="color:${PDF_NAVY};">${escHtml(ab)}</b>
        <div style="margin-top:3px;background:#F1F5F9;border-radius:2px;height:4px;overflow:hidden;"><div style="width:${pctCarga}%;height:100%;background:${PDF_SKY};border-radius:2px;"></div></div>`,
       `<span style="font-family:monospace;font-weight:700;">${tot}</span>`,
-      `<span style="color:${PDF_SKY};">${p.length}</span>`,
-      `<span style="color:${PDF_PURPLE};">${m.length}</span>`,
-      `<span style="color:${PDF_GREEN};">${l.length}</span>`,
-      liqFin>0?`<span style="background:#D1FAE5;color:#065F46;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;">${liqFin}</span>`:`<span style="color:#CBD5E1;">0</span>`,
+      p.length>0?`<span style="color:${PDF_SKY};font-weight:600;">${p.length}</span>`:`<span style="color:#CBD5E1;">0</span>`,
+      m.length>0?`<span style="color:${PDF_PURPLE};font-weight:600;">${m.length}</span>`:`<span style="color:#CBD5E1;">0</span>`,
+      liqP.length>0?`<span style="color:${PDF_GREEN};font-weight:600;">${liqP.length}</span>`:`<span style="color:#CBD5E1;">0</span>`,
+      cieP.length>0?`<span style="color:${PDF_TEAL};font-weight:600;">${cieP.length}</span>`:`<span style="color:#CBD5E1;">0</span>`,
       vencidos>0?`<span style="background:#FEF2F2;color:#991B1B;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;">⚠️ ${vencidos}</span>`:`<span style="color:${PDF_GREEN};">✅ 0</span>`,
       `<span style="font-size:10px;color:${PDF_GRAY};">${pctCarga}%</span>`,
     ];
@@ -6526,14 +6541,18 @@ function pdfConsolidadoAbogado(){
     + mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
   const totalLiqFin=liq.filter(r=>finStates.includes(r.estado)).length;
 
-  // Fila totales
+  // Fila totales — también pendientes
+  const totP  =proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)).length;
+  const totM  =mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado)).length;
+  const totLiq=liq.filter(r=>(r.tramite==='Liquidacion'||!r.tramite)&&liqEstadosPend.includes(r.estado)).length;
+  const totCie=liq.filter(r=>r.tramite==='Cierre'&&cierreEstadosPend.includes(r.estado)).length;
   rows.push([
-    `<b style="color:${PDF_GOLD};">TOTALES</b>`,
-    `<span style="font-family:monospace;font-weight:800;font-size:13px;">${granTotal}</span>`,
-    `<span style="color:${PDF_SKY};font-weight:700;">${proc.length}</span>`,
-    `<span style="color:${PDF_PURPLE};font-weight:700;">${mod.length}</span>`,
-    `<span style="color:${PDF_GREEN};font-weight:700;">${liq.length}</span>`,
-    `<span style="font-weight:700;">${totalLiqFin}</span>`,
+    `<b style="color:${PDF_GOLD};">TOTALES PENDIENTES</b>`,
+    `<span style="font-family:monospace;font-weight:800;font-size:13px;">${totP+totM+totLiq+totCie}</span>`,
+    `<span style="color:${PDF_SKY};font-weight:700;">${totP}</span>`,
+    `<span style="color:${PDF_PURPLE};font-weight:700;">${totM}</span>`,
+    `<span style="color:${PDF_GREEN};font-weight:700;">${totLiq}</span>`,
+    `<span style="color:${PDF_TEAL};font-weight:700;">${totCie}</span>`,
     totalVenc>0?`<span style="color:#991B1B;font-weight:700;">⚠️ ${totalVenc}</span>`:`<span style="color:${PDF_GREEN};font-weight:700;">✅ 0</span>`,
     '100%',
   ]);
@@ -6581,8 +6600,8 @@ function pdfConsolidadoAbogado(){
     ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
     ${pdfConclusions(puntos)}
 
-    ${pdfSectionTitle('⚖️','Distribución de Carga por Abogado')}
-    ${pdfTable(['Abogado Responsable','Total','Procesos','Modif.','Liquidaciones','Liqu. Final.','Alertas','% Carga'],rows,['22%','7%','9%','8%','11%','10%','10%','8%'])}
+    ${pdfSectionTitle('⚖️','Distribución de Carga por Abogado — Trámites Pendientes')}
+    ${pdfTable(['Abogado Responsable','Total Pend.','Procesos','Modif.','Liquidaciones','Cierres','Alertas','% Carga'],rows,['22%','8%','9%','8%','11%','9%','10%','7%'])}
 
     ${pdfFooter()}
   `,'Carga Global por Abogado');
