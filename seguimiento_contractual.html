@@ -2578,7 +2578,7 @@ function launchApp(){
   document.getElementById('app-screen').style.display='block';
   window.renderTable=renderTable;
   applyUserUI();
-  sessionExpiry=Date.now()+30*60*1000;
+  sessionExpiry=Date.now()+120*60*1000;
   startSessionTimer();
   resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>
@@ -2613,7 +2613,7 @@ function resetInactivity(){
     inactCountdown=30;document.getElementById('inact-count').textContent=30;
     document.getElementById('inactivity-overlay').classList.add('open');
     inactivityWarning=setInterval(()=>{inactCountdown--;document.getElementById('inact-count').textContent=inactCountdown;if(inactCountdown<=0)logout(true);},1000);
-  },15*60*1000);
+  },120*60*1000);
 }
 
 function logout(auto=false){
@@ -6386,22 +6386,8 @@ function pdfConsolidadoGeneral(){
     ])}
     ${pdfIntroBox(`Informe ejecutivo de <strong>expedientes pendientes por tramitar</strong> en el Ministerio de Relaciones Exteriores. Muestra únicamente los registros activos: <strong>Procesos (${proc.length} de ${totalProc})</strong>, <strong>Modificaciones (${mod.length} de ${totalMod})</strong> y <strong>Liquidaciones y Cierres (${liq.length})</strong>. Preparado el ${fechaHoy} a las ${hora} horas para presentación en comité directivo.`)}
 
-    ${pdfSectionTitle('📊','Resumen Ejecutivo — Los Tres Módulos',true)}
-    ${pdfKpiGrid([
-      {label:'Total Pendientes',   value:total,         color:PDF_NAVY,   sub:`de ${totalProc+totalMod+totalLiq} expedientes totales`},
-      {label:'📋 Procesos',       value:proc.length,   color:PDF_SKY,    sub:`de ${totalProc} totales`},
-      {label:'✏️ Modificaciones', value:mod.length,    color:PDF_PURPLE, sub:`de ${totalMod} totales`},
-      {label:'🔒 Liquidaciones',  value:liq.length,    color:PDF_GREEN,  sub:`de ${totalLiq} totales`},
-    ])}
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;">
-      ${pdfMetricCard('Alertas Proc.+Mod.',totalAlertas,totalAlertas>0?'Vencidos o hoy':'Sin alertas',totalAlertas>0?PDF_RED:PDF_GREEN,totalAlertas>0?'🔴':'✅')}
-      ${pdfMetricCard('Activos Totales',procActivos.length+modActivos.length+liqTram.length,'En trámite activo',PDF_SKY,'🔄')}
-      ${pdfMetricCard('Finalizados Totales',procFin.length+modFin.length+liqFin.length,'Completos los 3 módulos',PDF_GREEN,'✅')}
-    </div>
-
-    
-    <!-- ══ INDICADORES GENERALES ══════════════════════════════════ -->
-    ${pdfSectionTitle('📈','Indicadores Generales')}
+        <!-- ══ INDICADORES GENERALES ══════════════════════════════════ -->
+    ${pdfSectionTitle('📊','Indicadores Generales — Los Tres Módulos',true)}
     ${pdfKpiGrid([
       {label:'Expedientes pendientes', value:total,             color:PDF_NAVY,   sub:`de ${totalProc+totalMod+totalLiq} totales`},
       {label:'Procesos activos',       value:procActivos.length,color:PDF_SKY,    sub:`${pctFinProc}% finalizados`},
