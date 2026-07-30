@@ -1749,7 +1749,13 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
           <div id="new-liq-entry-locked" class="locked-note" style="display:none;">🔒 Solo los administradores pueden agregar avances.</div>
         </div>
-        <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px;">Historial (<span id="liq-entries-count">0</span> entradas)</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0;">Historial (<span id="liq-entries-count">0</span> entradas)</p>
+          <button id="btn-del-all-liq" onclick="deleteAllLiqEntries()"
+            style="display:none;font-size:11px;font-weight:600;padding:4px 12px;border-radius:7px;border:1.5px solid #FECACA;background:#FEF2F2;color:#991B1B;cursor:pointer;">
+            🗑️ Eliminar todos los avances
+          </button>
+        </div>
         <div class="entries-list" id="liq-entries-list"></div>
       </div>
       <div class="modal-footer">
@@ -3559,6 +3565,8 @@ function renderLiqEntries(r){
   const entries=[...(r.bitacoraLiq||[])].sort((a,b)=>String(b.date||b.fecha||b.ts||"").localeCompare(String(a.date||a.fecha||a.ts||"")));
   document.getElementById('liq-entries-count').textContent=entries.length;
   const list=document.getElementById('liq-entries-list');
+  const btnDel=document.getElementById('btn-del-all-liq');
+  if(btnDel) btnDel.style.display=(isAdmin()&&entries.length>0)?'block':'none';
   if(!entries.length){list.innerHTML=`<div class="no-entries">📭 Sin avances registrados aún.</div>`;return;}
   const canDel=isAdmin();
   list.innerHTML=entries.map(e=>`<div class="entry-item">
@@ -3566,6 +3574,19 @@ function renderLiqEntries(r){
     <div class="entry-text">${escHtml(e.text||e.texto)}</div>
     ${canDel?`<button class="entry-del" onclick="deleteLiqEntry('${r.id}','${e.id}')">✕</button>`:''}
   </div>`).join('');
+}
+async function deleteAllLiqEntries(){
+  const r=(window._liqRecords||[]).find(x=>x.id===bitacoraLiqId);
+  if(!r) return;
+  if(!isAdmin()) return;
+  const n=(r.bitacoraLiq||[]).length;
+  if(!n) return;
+  if(!confirm(`¿Eliminar los ${n} avance${n!==1?'s':''} registrados para este contrato?\nEsta acción no se puede deshacer.`)) return;
+  showSyncToast('Eliminando avances...',3000);
+  await window._saveBitacoraLiq(r.id,[]);
+  showSyncToast('✅ Avances eliminados');
+  const updated=(window._liqRecords||[]).find(x=>x.id===r.id);
+  if(updated) renderLiqEntries(updated);
 }
 async function addLiqEntry(){
   const r=(window._liqRecords||[]).find(x=>x.id===bitacoraLiqId);if(!r)return;
@@ -7323,6 +7344,49 @@ async function limpiarLiquidaciones(){
     alert('Error al eliminar: '+e.message);
   }
 }
+async function limpiarBitacoraLiq(){
+  if(!isAdmin()) return;
+  const recs=(window._liqRecords||[]).filter(r=>r.bitacoraLiq&&r.bitacoraLiq.length>0);
+  const total=recs.length;
+  const totalEntradas=recs.reduce((s,r)=>s+r.bitacoraLiq.length,0);
+  if(total===0){alert('No hay avances de bitácora registrados en liquidaciones.');return;}
+  const conf1=confirm(
+    `⚠️ ATENCIÓN — ACCIÓN IRREVERSIBLE\n\n`+
+    `Estás a punto de eliminar PERMANENTEMENTE ${totalEntradas} avance${totalEntradas!==1?'s':''} de bitácora en ${total} contrato${total!==1?'s':''}.\n\n`+
+    `Esta acción NO SE PUEDE DESHACER.\n\n`+
+    `¿Confirmas que deseas continuar?`
+  );
+  if(!conf1) return;
+  const conf2=confirm(
+    `🔴 SEGUNDA CONFIRMACIÓN\n\n`+
+    `¿Estás completamente seguro de eliminar los ${totalEntradas} avances de bitácora?\n\n`+
+    `Escribe OK en el siguiente paso para confirmar.`
+  );
+  if(!conf2) return;
+  const codigo=prompt(`Escribe ELIMINAR para confirmar:`);
+  if((codigo||'').trim().toUpperCase()!=='ELIMINAR'){
+    alert('Operación cancelada. El código ingresado no es correcto.');return;
+  }
+  const statusEl=document.getElementById('bit-liq-clean-status');
+  if(statusEl) statusEl.textContent='Eliminando avances…';
+  showSyncToast('Eliminando todos los avances de bitácora…',30000);
+  try{
+    let procesados=0;
+    for(const r of recs){
+      await window._saveBitacoraLiq(r.id,[]);
+      procesados++;
+      if(statusEl) statusEl.textContent=`Eliminando… ${procesados}/${total}`;
+    }
+    showSyncToast(`✅ ${totalEntradas} avances eliminados en ${total} contratos`);
+    if(statusEl) statusEl.textContent=`✅ ${totalEntradas} avances eliminados — ${new Date().toLocaleString('es-CO')}`;
+    alert(`✅ Se eliminaron ${totalEntradas} avances de bitácora en ${total} contratos.`);
+  }catch(e){
+    console.error(e);
+    showSyncToast('❌ Error al eliminar',4000);
+    if(statusEl) statusEl.textContent='❌ Error: '+e.message;
+    alert('Error al eliminar: '+e.message);
+  }
+}
 async function saveLiqRecord(){
   if(!isAdmin())return;
   const ticket=sanitize(document.getElementById('liq-f-ticket').value.trim(),50);
@@ -7686,7 +7750,7 @@ function exportLiqXLSX(){
   const _getAutor=e=>e.author||e.fuente||'';
   const _getTexto=e=>e.text||e.texto||'';
   const _getSort=e=>String(e.date||e.fecha||e.ts||'');
-  const bitHdrs=['N° Contrato','Trámite','Contratista / Proveedor','Abogado','Estado','Fecha Avance','Registrado por','Descripción del avance'];
+  const bitHdrs=['N° Contrato','N° Proceso','Trámite','Contratista / Proveedor','Abogado','Estado','Fecha Avance','Registrado por','Descripción del avance'];
   const bitData=[bitHdrs];
   data.forEach(r=>{
     const ent=(r.bitacoraLiq||[]).slice().sort((a,b)=>_getSort(a).localeCompare(_getSort(b)));
@@ -7694,6 +7758,7 @@ function exportLiqXLSX(){
     ent.forEach((e,i)=>{
       bitData.push([
         i===0?r.ticket:'',
+        i===0?(r.numeroProceso||''):'',
         i===0?(r.tramite||''):'',
         i===0?(r.contratista||''):'',
         i===0?(r.abogado||''):'',
@@ -7706,7 +7771,7 @@ function exportLiqXLSX(){
     bitData.push(Array(8).fill('')); // fila vacía separadora
   });
   const wsBit=XLSX.utils.aoa_to_sheet(bitData);
-  wsBit['!cols']=[{wch:14},{wch:12},{wch:32},{wch:22},{wch:26},{wch:13},{wch:20},{wch:55}];
+  wsBit['!cols']=[{wch:14},{wch:14},{wch:12},{wch:32},{wch:22},{wch:26},{wch:13},{wch:20},{wch:55}];
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Liquidaciones');
   XLSX.utils.book_append_sheet(wb,wsBit,'Bitácora');
@@ -7777,7 +7842,7 @@ function importarLiq(input){
       // ── Leer hoja Bitácora si existe ────────────────────────────
       // Estructura: N° Contrato | Trámite | Contratista | Abogado | Estado | Fecha Avance | Registrado por | Descripción
       const _toISO_bit=f=>{if(!f)return'';const s=String(f).trim();const p=s.split(/[\/\-]/);if(p.length!==3)return s;let[d,m,y]=p;if(y.length===2)y='20'+y;return`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;};
-      const _bitacoraXLS={}; // {ticket: [{id,date,text,author,ts},...]}
+      const _bitacoraXLS={}; // clave: normStr(ticket)+'||'+normStr(proceso) → [{id,date,text,author,ts},...]
       const wsBitName=wb.SheetNames.find(n=>n.toLowerCase().includes('bit'));
       if(wsBitName){
         const wsBit=wb.Sheets[wsBitName];
@@ -7785,34 +7850,47 @@ function importarLiq(input){
         const bitH=bitRows[0]?bitRows[0].map(h=>String(h).toLowerCase().trim()):[];
         const bIdx={
           ticket:  bitH.findIndex(h=>h.includes('contrato')||h.includes('ticket')),
+          proceso: bitH.findIndex(h=>h.includes('proceso')||h.includes('n°p')||h.includes('num')),
           fecha:   bitH.findIndex(h=>h.includes('fecha')),
           autor:   bitH.findIndex(h=>h.includes('registrado')||h.includes('autor')||h.includes('author')),
-          texto:   bitH.findIndex(h=>h.includes('descripci')||h.includes('texto')||h.includes('avance')&&h.includes('desc')),
+          texto:   bitH.findIndex(h=>h.includes('descripci')||h.includes('texto')),
+          obs:     bitH.findIndex(h=>h.includes('observaci')),
         };
-        // Si no encontró descripción por nombre compuesto, tomar la última col con 'avance'
-        if(bIdx.texto<0) bIdx.texto=bitH.findIndex(h=>h.includes('descripci')||h.includes('texto'));
         if(bIdx.texto<0) bIdx.texto=bitRows[0]?bitRows[0].length-1:7;
-        let curTicket='';
+        let curTicket='', curProceso='';
         bitRows.slice(1).forEach((row,ri)=>{
+          // Hereda ticket y proceso; N/A → mantiene el anterior
           const rawT=bIdx.ticket>=0?String(row[bIdx.ticket]||'').trim():'';
-          if(rawT&&rawT.toUpperCase()!=='N/A') curTicket=rawT; // ignorar N/A como ticket
-          if(!curTicket) return;
-          const fecha=bIdx.fecha>=0?String(row[bIdx.fecha]||'').trim():'';
-          const texto=bIdx.texto>=0?String(row[bIdx.texto]||'').trim():'';
-          const autor=bIdx.autor>=0?String(row[bIdx.autor]||'').trim():'';
-          if(!fecha&&!texto) return; // fila separadora vacía
-          if(!fecha) return; // sin fecha → no es avance datado
-          if(texto.toLowerCase()==='sin entradas'||texto.toLowerCase()==='sin avances') return;
-          if(!fecha) return; // sin fecha → no es un avance datado (ej: "Sin entradas")
-          if(texto.toLowerCase()==='sin entradas'||texto.toLowerCase()==='sin avances') return;
-          if(!_bitacoraXLS[curTicket]) _bitacoraXLS[curTicket]=[];
-          _bitacoraXLS[curTicket].push({
-            id:'excel_'+Date.now()+'_'+ri+'_'+Math.random().toString(36).slice(2,5),
-            date:_toISO_bit(fecha),
-            text:texto,
-            author:autor||'Importación Excel',
-            ts:Date.now(),
-          });
+          const rawP=bIdx.proceso>=0?String(row[bIdx.proceso]||'').trim():'';
+          if(rawT&&rawT.toUpperCase()!=='N/A') curTicket=rawT;
+          if(rawP&&rawP.toUpperCase()!=='N/A') curProceso=rawP;
+          // Sin ticket NI proceso → no hay cómo identificar el contrato
+          if(!curTicket&&!curProceso) return;
+
+          const fecha =bIdx.fecha>=0?String(row[bIdx.fecha] ||'').trim():'';
+          const autor =bIdx.autor>=0?String(row[bIdx.autor] ||'').trim():'';
+          const texto =bIdx.texto>=0?String(row[bIdx.texto]||'').trim():'';
+
+          // Filtros
+          if(!fecha&&!texto&&!autor) return;
+          if(!fecha) return;
+          if(!texto) return;
+          const textoL=texto.toLowerCase();
+          if(textoL.startsWith('sin entrada')||textoL==='sin avances'||textoL==='sin avance') return;
+          if(!autor) return;
+
+          const entrada={
+            id:    'excel_'+Date.now()+'_'+ri+'_'+Math.random().toString(36).slice(2,5),
+            date:  _toISO_bit(fecha),
+            text:  texto,
+            author:autor,
+            ts:    Date.now(),
+          };
+          // ── Clave compuesta ticket||proceso (igual que claveUnica) ──────────
+          // Garantiza que mismo N° Contrato con diferente N° Proceso = contratos distintos
+          const _claveBit=normStr(curTicket)+'||'+normStr(curProceso);
+          if(!_bitacoraXLS[_claveBit]) _bitacoraXLS[_claveBit]=[];
+          _bitacoraXLS[_claveBit].push(entrada);
         });
       }
       const existing=window._liqRecords||[];
@@ -7844,23 +7922,10 @@ function importarLiq(input){
         const _rawObs=String(row[colIdx['obs']]||'').trim();
         const _abogadoRow=normAbogadoLiq(String(row[colIdx['abogado']]||''));
         const _obsAvances=(()=>{
-          // ── Prioridad 1: avances de la hoja Bitácora (tienen autor real) ──
-          const _bitEntries=_bitacoraXLS[rawTicket]||[];
-          // ── Prioridad 2: avances parseados de la columna Observaciones ──
-          if(!_rawObs&&!_bitEntries.length) return [];
-          const _toISO=f=>{if(!f)return'';const p=f.split(/[\/\-]/);if(p.length!==3)return f;let[d,m,y]=p;if(y.length===2)y='20'+y;return`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;};
-          const DATE_RE=/^\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})\s*[:.]?\s*(.+)/;
-          let _obsEntries=[];
-          if(_rawObs){
-            const lines=_rawObs.replace(/_x000D_/g,'\n').replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').map(l=>l.trim()).filter(Boolean);
-            const avances=[];let curFecha='',curTexto=[];
-            lines.forEach(line=>{const m=DATE_RE.exec(line);if(m){if(curFecha&&curTexto.length)avances.push({curFecha,curTexto:[...curTexto]});curFecha=m[1].trim();curTexto=[m[2].trim()];}else{if(curFecha)curTexto.push(line);}});
-            if(curFecha&&curTexto.length)avances.push({curFecha,curTexto:[...curTexto]});
-            _obsEntries=avances.map((a,i)=>({id:'excel_'+Date.now()+'_obs_'+i+'_'+Math.random().toString(36).slice(2,5),date:_toISO(a.curFecha),text:a.curTexto.join(' '),author:_abogadoRow||'Importación Excel',ts:Date.now()}));
-          }
-          // Si hay hoja Bitácora con datos para este ticket → usar solo esos (más completos)
-          // Si no → usar los de la columna Observaciones
-          return _bitEntries.length?_bitEntries:_obsEntries;
+          // Clave compuesta ticket||proceso — igual que claveUnica en Firebase
+          // Garantiza que mismo N° Contrato con diferente N° Proceso no se mezclen
+          const _claveBusq=normStr(rawTicket)+'||'+normStr(String(row[colIdx['proceso']]||'').trim());
+          return _bitacoraXLS[_claveBusq]||[];
         })();
 
         parsed.push({
