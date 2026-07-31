@@ -1359,6 +1359,15 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       <button class="tipo-chip active-all" id="liq-chip-all" onclick="setLiqTramite('all')">🔒 Todos</button>
       <button class="tipo-chip" id="liq-chip-liq" onclick="setLiqTramite('liq')">💧 Liquidaciones</button>
       <button class="tipo-chip" id="liq-chip-cie" onclick="setLiqTramite('cie')">🔒 Cierres</button>
+      <select id="liq-filter-dep" onchange="setLiqDep(this.value)"
+        style="margin-left:10px;font-size:12px;padding:4px 10px;border-radius:8px;border:1px solid #E2E8F0;background:white;color:#1E293B;cursor:pointer;max-width:200px;">
+        <option value="">🏛️ Todas las dependencias</option>
+      </select>
+      <select id="liq-filter-git" onchange="setLiqGit(this.value)"
+        style="font-size:12px;padding:4px 10px;border-radius:8px;border:1px solid #E2E8F0;background:white;color:#1E293B;cursor:pointer;max-width:180px;">
+        <option value="">👥 Todos los GIT</option>
+      </select>
+      <button onclick="resetLiqFiltros()" id="btn-reset-liq-filtros" style="display:none;font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid #FECACA;background:#FEF2F2;color:#991B1B;cursor:pointer;">✕ Limpiar filtros</button>
     </div>
 
     <div class="stats-bar">
@@ -2492,7 +2501,12 @@ function getEstado(tipo,value){
 }
 
 function estadoIsTerminal(tipo,value){
-  return tipo==='asesoria'?value==='aprobado':['contratado','cancelado'].includes(value);
+  // REQ 2: "Aprobado en asesoría previa" = ACTIVO (no terminal)
+  // El proceso solo cierra cuando pasa a "Contratado" en la fase contractual
+  // Para asesoría: ningún estado es terminal — siempre sigue activo hasta contratarse
+  // Para contractual: contratado y cancelado son terminales
+  if(tipo==='asesoria') return false; // aprobado ≠ cerrado — sigue activo
+  return ['contratado','cancelado'].includes(value);
 }
 
 function updateEstadoOptions(){
@@ -2546,8 +2560,10 @@ const BUILTIN_USERS=[
 ];
 function loadUsers(){
   const fb=window._fbUsers||[];
-  const bi=BUILTIN_USERS.filter(b=>!fb.find(f=>f.id===b.id));
-  return[...bi,...fb];
+  const builtinUsernames=new Set(BUILTIN_USERS.map(b=>b.username));
+  // BUILTIN_USERS siempre con prioridad — Firebase solo agrega usuarios que NO estén en BUILTIN
+  const fbExtra=fb.filter(f=>!builtinUsernames.has(f.username));
+  return[...BUILTIN_USERS,...fbExtra];
 }
 
 /* ═══ BLOQUEO ═══ */
@@ -2719,6 +2735,17 @@ function applyUserUI(){
 }function isAdmin(){return currentUser?.role==='admin';}
 function isViewer(){return currentUser?.role==='viewer';}
 function normStr(s){return(s||'').toUpperCase().replace(/\s+/g,' ').trim();}
+
+/* ── Solo abogados registrados en el sistema (REQ 3b) ── */
+function getAbogadosRegistrados(){
+  const users=loadUsers();
+  return new Set(users.filter(u=>u.abogado).map(u=>normStr(u.abogado)));
+}
+function filtrarAbogadosRegistrados(lista){
+  const registrados=getAbogadosRegistrados();
+  if(!registrados.size) return lista; // si no hay usuarios cargados, no filtrar
+  return lista.filter(ab=>registrados.has(normStr(ab)));
+}
 function getAbogadoFiltro(){
   if(!currentUser||currentUser.role==='admin') return null;
   return currentUser.abogado||null;
@@ -2737,6 +2764,7 @@ window._records=[];
 let editingId=null,sortField='ticket',sortDir='asc',activeTipo='all';
 let activeModTipo='all',sortFieldMod='ticket',sortDirMod='asc';
 let activeLiqTramite='all',sortFieldLiq='ticket',sortDirLiq='asc';
+let activeLiqDep='',activeLiqGit='';
 
 function showSyncToast(msg,d=2000){
   const t=document.getElementById('sync-toast');
@@ -2774,6 +2802,20 @@ function setModTipo(t){
     if(el){el.className='tipo-chip';if(v===t)el.classList.add(v==='all'?'active-all':v==='asesoria'?'active-asesoria':'active-contractual');}
   });
   renderMod();
+}
+function setLiqDep(v){ activeLiqDep=v; activeLiqGit=''; _liqPage=0; renderLiq(); }
+function setLiqGit(v){ activeLiqGit=v; _liqPage=0; renderLiq(); }
+function resetLiqFiltros(){
+  activeLiqDep=''; activeLiqGit=''; activeLiqTramite='all';
+  const dep=document.getElementById('liq-filter-dep');
+  const git=document.getElementById('liq-filter-git');
+  if(dep) dep.value='';
+  if(git) git.value='';
+  ['all','liq','cie'].forEach(v=>{
+    const el=document.getElementById('liq-chip-'+v);
+    if(el){el.className='tipo-chip'; if(v==='all')el.classList.add('active-all');}
+  });
+  _liqPage=0; renderLiq();
 }
 function setLiqTramite(t){
   activeLiqTramite=t;
@@ -4359,7 +4401,7 @@ function openBitacoraGeneral(){
     sel.parentElement.style.display='none';
   } else {
     sel.parentElement.style.display='';
-    const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+    const abogados=filtrarAbogadosRegistrados([...new Set(records.map(r=>r.abogado).filter(Boolean))].sort());
     sel.innerHTML='<option value="">Todos los abogados</option>'+
       abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
   }
@@ -4450,7 +4492,7 @@ function openBitacoraGeneralLiq(){
     sel.parentElement.style.display='none';
   } else {
     sel.parentElement.style.display='';
-    const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+    const abogados=filtrarAbogadosRegistrados([...new Set(records.map(r=>r.abogado).filter(Boolean))].sort());
     sel.innerHTML='<option value="">Todos los abogados</option>'+
       abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
   }
@@ -4548,7 +4590,7 @@ function openPdfModal(){
       if(el) el.style.display='none';
     });
   } else {
-    const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+    const abogados=filtrarAbogadosRegistrados([...new Set(records.map(r=>r.abogado).filter(Boolean))].sort());
     sel.innerHTML='<option value="">— Seleccionar abogado —</option>'+
       abogados.map(a=>`<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
     ['pdf-opt-general','pdf-opt-todos','pdf-opt-estado','pdf-opt-vencimiento'].forEach(id=>{
@@ -4993,9 +5035,49 @@ function abrirPdf(html, titulo='Informe', excelData=null){
       win.__downloadExcel=function(){
         try{
           const wb=win.XLSX.utils.book_new();
+          // ── Hoja principal ────────────────────────────────────────
           const ws=win.XLSX.utils.aoa_to_sheet([d.headers,...d.rows]);
           ws['!cols']=d.headers.map(function(_,i){return{wch:i===2||i===5?40:i===6||i===14?30:14};});
           win.XLSX.utils.book_append_sheet(wb,ws,'Liquidaciones');
+          // ── Hoja Bitácora con avances ─────────────────────────────
+          const recs=d.records||[];
+          if(recs.length){
+            const _getSort=e=>String(e.date||e.fecha||e.ts||'');
+            const _getFecha=e=>{
+              const f=e.date||e.fecha||'';
+              if(!f) return '';
+              const p=f.split('-');
+              if(p.length===3) return p[2]+'/'+p[1]+'/'+p[0];
+              return f;
+            };
+            const _getTexto=e=>e.text||e.texto||'';
+            const _getAutor=e=>e.author||e.fuente||'';
+            const bitHdrs=['N° Contrato','N° Proceso','Trámite','Contratista','Abogado','Estado','Fecha Avance','Registrado por','Descripción del avance'];
+            const bitData=[bitHdrs];
+            recs.forEach(function(r){
+              const ent=(r.bitacoraLiq||[]).slice().sort(function(a,b){return _getSort(a).localeCompare(_getSort(b));});
+              if(!ent.length) return;
+              ent.forEach(function(e,i){
+                bitData.push([
+                  i===0?(r.ticket||''):'',
+                  i===0?(r.numeroProceso||''):'',
+                  i===0?(r.tramite||''):'',
+                  i===0?(r.contratista||''):'',
+                  i===0?(r.abogado||''):'',
+                  i===0?(r.estado||''):'',
+                  _getFecha(e),
+                  _getAutor(e),
+                  _getTexto(e),
+                ]);
+              });
+              bitData.push(new Array(9).fill(''));
+            });
+            if(bitData.length>1){
+              const wsBit=win.XLSX.utils.aoa_to_sheet(bitData);
+              wsBit['!cols']=[{wch:14},{wch:14},{wch:12},{wch:32},{wch:22},{wch:26},{wch:13},{wch:20},{wch:55}];
+              win.XLSX.utils.book_append_sheet(wb,wsBit,'Bitácora');
+            }
+          }
           win.XLSX.writeFile(wb,d.filename);
         }catch(e){win.alert('Error al generar Excel: '+e.message);}
       };
@@ -5147,7 +5229,7 @@ function pdfGeneral(records){
 }
 
 function pdfPorAbogado(records){
-  const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+  const abogados=filtrarAbogadosRegistrados([...new Set(records.map(r=>r.abogado).filter(Boolean))].sort());
   if(!abogados.length){alert('No hay procesos con abogado asignado.');return;}
   const metricas=abogados.map(ab=>{
     const proc=records.filter(r=>r.abogado===ab);
@@ -5680,7 +5762,7 @@ function pdfModPorAbogado(){
   const records=window._modRecords||[];
   if(!records.length){alert('No hay modificaciones para generar el informe.');return;}
   const fechaHoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
-  const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+  const abogados=filtrarAbogadosRegistrados([...new Set(records.map(r=>r.abogado).filter(Boolean))].sort());
   const metricas=abogados.map(ab=>{
     const proc=records.filter(r=>r.abogado===ab);
     const fin=proc.filter(r=>estadoIsTerminal(r.tipo,r.estado));
@@ -5767,17 +5849,18 @@ function mkExcelData(records, filename){
     r.fechaInicio||'',r.fechaTerminacion||'',r.fechaCierre||'',r.fechaLiquidacion||'',
     ESTADO_LABEL[r.estado]||r.estado||'',r.obs||'',
   ]);
-  return{headers, rows, filename: filename+'.xlsx'};
+  return{headers, rows, filename: filename+'.xlsx', records};
 }
 
 /* ── Helper: celda Último Avance (sin backticks anidados) ── */
 function pdfAvanceLiq(r){
   var b=r.bitacoraLiq||[];
-  var u=b.length?b[b.length-1]:null;
-  var t=u?(u.texto||u.msg||u.text||'').slice(0,55):'Sin avance';
-  var f=u?(u.fecha||u.ts||u.date||''):'';
-  var fd=f?('<span style="font-size:8px;color:#64748B;display:block;">'+escHtml(String(f).slice(0,10))+'</span>'):'';
-  return fd+'<span style="font-size:9px;color:#475569;">'+escHtml(t)+(t.length>=55?'…':'')+'</span>';
+  if(!b.length) return '<span style="font-size:9px;color:#CBD5E1;font-style:italic;">Sin avance</span>';
+  var u=b.slice().sort(function(a,b2){return String(b2.date||b2.fecha||b2.ts||'').localeCompare(String(a.date||a.fecha||a.ts||''));})[0];
+  var t=(u.text||u.texto||u.msg||'').slice(0,50);
+  var f=u.date||u.fecha||'';
+  var fd=f?escHtml(String(f).slice(0,10))+' · ':'';
+  return '<span style="font-size:9px;color:#475569;white-space:normal;word-break:break-word;">'+fd+escHtml(t)+(t.length>=50?'…':'')+'</span>';
 }
 /* ══ HELPER: Resumen de pendientes por trámite — detalle de contratos ══ */
 function pdfResumenTramite(records){
@@ -5803,16 +5886,17 @@ function pdfResumenTramite(records){
     'cierre-contractual':'Cierre contractual',
   };
 
-  const mkRows=recs=>recs.map(r=>[
-    `<b style="font-family:monospace;font-size:10px;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
-    `<span style="font-size:10px;">${escHtml(r.numeroProceso||'—')}</span>`,
-    `<span style="font-size:10px;">${escHtml((r.contratista||'—').slice(0,35))}${(r.contratista||'').length>35?'…':''}</span>`,
-    `<span style="background:#F1F5F9;color:${PDF_NAVY};padding:2px 7px;border-radius:8px;font-size:9px;font-weight:600;">${escHtml(ESTADO_LIQ_LABEL[r.estado]||r.estado||'—')}</span>`,
-    `<span style="font-size:10px;font-family:monospace;">${escHtml(r.fechaInicio||'—')}</span>`,
-    `<span style="font-size:10px;font-family:monospace;">${escHtml(r.fechaTerminacion||'—')}</span>`,
-    `<span style="font-size:9px;color:#475569;">${escHtml((r.obs||'—').slice(0,50))}${(r.obs||'').length>50?'…':''}</span>`,
-    pdfAvanceLiq(r),
-  ]);
+  const mkRows=recs=>recs.map(r=>{
+    return[
+      `<b style="font-family:monospace;font-size:10px;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
+      `<span style="font-size:10px;">${escHtml(r.numeroProceso||'—')}</span>`,
+      `<span style="font-size:10px;">${escHtml((r.contratista||'—').slice(0,35))}${(r.contratista||'').length>35?'…':''}</span>`,
+      `<span style="background:#F1F5F9;color:${PDF_NAVY};padding:2px 7px;border-radius:8px;font-size:9px;font-weight:600;">${escHtml(ESTADO_LIQ_LABEL[r.estado]||r.estado||'—')}</span>`,
+      `<span style="font-size:10px;font-family:monospace;">${escHtml(r.fechaInicio||'—')}</span>`,
+      `<span style="font-size:10px;font-family:monospace;">${escHtml(r.fechaTerminacion||'—')}</span>`,
+      pdfAvanceLiq(r),
+    ];
+  });
 
   const mkSection=(recs, titulo, color, bg, border)=>{
     if(!recs.length) return `<div style="background:${bg};border:1px solid ${border};border-radius:8px;padding:10px 14px;margin-bottom:20px;"><div style="font-size:11px;font-weight:700;color:${color};">${titulo} — Sin contratos pendientes</div></div>`;
@@ -5820,9 +5904,9 @@ function pdfResumenTramite(records){
     <div style="background:${bg};border:2px solid ${border};border-radius:10px;padding:14px 16px;margin-bottom:20px;">
       <div style="font-size:12px;font-weight:700;color:${color};margin-bottom:10px;">${titulo} — ${recs.length} contratos pendientes</div>
       ${pdfTable(
-        ['N° Contrato','N° Proceso','Contratista / Proveedor','Estado','F. Finalización','F. Máx. Liqu','Observaciones','Último Avance'],
+        ['N° Contrato','N° Proceso','Contratista / Proveedor','Estado','F. Finalización','F. Máx. Liqu','Último Avance'],
         mkRows(recs),
-        ['8%','9%','22%','16%','9%','9%','25%']
+        ['8%','9%','22%','16%','10%','10%','25%']
       )}
     </div>`;
   };
@@ -5954,7 +6038,7 @@ function pdfLiqPorAbogado(){
   const fechaHoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
   const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
   const tramStates=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','revision-jefe','aval-radicar','radicado-git','radicado-competente'];
-  const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
+  const abogados=filtrarAbogadosRegistrados([...new Set(records.map(r=>r.abogado).filter(Boolean))].sort());
 
   // ── Tabla resumen LIQUIDACIONES con cada estado como columna ──
   const liqRecords=records.filter(r=>r.tramite==='Liquidacion');
@@ -6149,7 +6233,7 @@ function pdfLiqIndividual(abogado){
     )}
     <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;margin-bottom:20px;">
       <div style="font-size:11px;font-weight:700;color:#B45309;margin-bottom:8px;">💧 LIQUIDACIONES — ${liqRecs.length} expedientes · ${liqFin} finalizadas</div>
-      ${pdfTable(['N° Contrato','N° Proceso','Contratista','Estado','F. Finalización','F. Máx Liqu','Observaciones','Último Avance'],mkRows(liqRecs),['8%','8%','24%','16%','10%','10%','22%'])}
+      ${pdfTable(['N° Contrato','N° Proceso','Contratista','Estado','F. Finalización','F. Máx Liqu','Último Avance'],mkRows(liqRecs),['8%','8%','22%','14%','10%','10%','28%'])}
     </div>`:''}
 
     ${cieRecs.length?`
@@ -6160,9 +6244,34 @@ function pdfLiqIndividual(abogado){
     )}
     <div style="background:#F0FDFA;border:1px solid #99F6E4;border-radius:8px;padding:10px 14px;margin-bottom:20px;">
       <div style="font-size:11px;font-weight:700;color:#0E7490;margin-bottom:8px;">🔒 CIERRES — ${cieRecs.length} expedientes · ${cieFin} finalizados</div>
-      ${pdfTable(['N° Contrato','N° Proceso','Contratista','Estado','F. Finalización','F. Máx Liqu','Observaciones','Último Avance'],mkRows(cieRecs),['8%','8%','24%','16%','10%','10%','22%'])}
+      ${pdfTable(['N° Contrato','N° Proceso','Contratista','Estado','F. Finalización','F. Máx Liqu','Último Avance'],mkRows(cieRecs),['8%','8%','22%','14%','10%','10%','28%'])}
     </div>`:''}
 
+    <!-- ══ AVANCES DE BITÁCORA ════════════════════════════════════════ -->
+    ${(()=>{
+      const conBit=all.filter(r=>(r.bitacoraLiq||[]).length>0);
+      if(!conBit.length) return '';
+      const rows=[];
+      conBit.forEach(r=>{
+        const bit=(r.bitacoraLiq||[]).slice().sort((a,b)=>String(b.date||b.fecha||b.ts||'').localeCompare(String(a.date||a.fecha||a.ts||'')));
+        bit.forEach((e,i)=>{
+          rows.push([
+            i===0?`<b style="color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`:'',
+            i===0?(r.tramite||'—'):'',
+            i===0?escHtml(r.contratista||'—'):'',
+            `<span style="font-family:monospace;">${fmtDate(e.date||e.fecha)||e.date||e.fecha||'—'}</span>`,
+            escHtml(e.author||e.fuente||'—'),
+            escHtml(e.text||e.texto||'—'),
+          ]);
+        });
+        rows.push(['','','','','','']);
+      });
+      return pdfSectionTitle('📓','Avances Registrados en Bitácora')
+        + pdfTable(['N° Contrato','Trámite','Contratista','Fecha Avance','Registrado por','Descripción del avance'],
+            rows,['10%','9%','20%','11%','16%','34%']);
+    })()}
+
+    
     ${pdfFooter()}
   `,'Liquidaciones Individual',mkExcelData(all,'Liquidaciones_'+abogado));
 }
@@ -6471,14 +6580,17 @@ function pdfLiqGITIndividual(git){
   const cieTram=cieRecs.filter(r=>tramStates.includes(r.estado)).length;
   const pctCieFin=cieRecs.length?Math.round(cierreCont/cieRecs.length*100):0;
 
-  // Tabla por abogado dentro del GIT
+  // Tabla por abogado dentro del GIT (solo abogados registrados)
+  const _abRegistrados=getAbogadosRegistrados();
   const byAbog={};
   allRecords.forEach(r=>{
-    const k=r.abogado||'Sin asignar';
-    if(!byAbog[k]) byAbog[k]={liq:0,cie:0,liqFin:0,cieFin:0,tram:0};
-    if(r.tramite==='Liquidacion'){byAbog[k].liq++;if(finStates.includes(r.estado))byAbog[k].liqFin++;}
-    else {byAbog[k].cie++;if(r.estado==='cierre-contractual')byAbog[k].cieFin++;}
-    if(tramStates.includes(r.estado)) byAbog[k].tram++;
+    const k=r.abogado||'';
+    if(k&&!_abRegistrados.has(normStr(k))) return; // omitir no registrados del resumen
+    const kLabel=k||'Sin asignar';
+    if(!byAbog[kLabel]) byAbog[kLabel]={liq:0,cie:0,liqFin:0,cieFin:0,tram:0};
+    if(r.tramite==='Liquidacion'){byAbog[kLabel].liq++;if(finStates.includes(r.estado))byAbog[kLabel].liqFin++;}
+    else {byAbog[kLabel].cie++;if(r.estado==='cierre-contractual')byAbog[kLabel].cieFin++;}
+    if(tramStates.includes(r.estado)) byAbog[kLabel].tram++;
   });
   const abogRows=Object.keys(byAbog).sort().map(n=>{
     const d=byAbog[n];
@@ -6806,7 +6918,7 @@ function pdfConsolidadoAbogado(){
   const liq=window._liqRecords||[];
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
-  const abogados=[...new Set([...proc,...mod,...liq].map(r=>r.abogado).filter(Boolean))].sort();
+  const abogados=filtrarAbogadosRegistrados([...new Set([...proc,...mod,...liq].map(r=>r.abogado).filter(Boolean))].sort());
   if(!abogados.length){alert('No hay datos para generar el informe.');return;}
   // granTotal basado en pendientes (proc + mod + liq + cierres pendientes)
   const liqEstPend_tot=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','revision-jefe','aval-radicar','radicado-git','radicado-competente'];
@@ -6932,7 +7044,7 @@ function pdfConsolidadoPendientesAbogado(){
   const modPend=_mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
   const liqPend=_liq.filter(r=>tramStates_pa.includes(r.estado));
 
-  const abogados=[...new Set([...procPend,...modPend,...liqPend].map(r=>r.abogado).filter(Boolean))].sort();
+  const abogados=filtrarAbogadosRegistrados([...new Set([...procPend,...modPend,...liqPend].map(r=>r.abogado).filter(Boolean))].sort());
   if(!abogados.length){alert('No hay expedientes pendientes registrados.');return;}
 
   const sel=document.getElementById('inf-abogado-sel');
@@ -6950,10 +7062,11 @@ function _generarPdfPendientesAbogado(abogado){
   const _mod=window._modRecords||[];
   const _liq=window._liqRecords||[];
   const tramStates_pa=['pendiente-enviar','en-asesoria','observaciones-area','revision-coord','revision-jefe','aval-radicar','radicado-git','radicado-competente'];
+  const _abNorm=normStr(abogado); // normalizar para comparación robusta
 
-  const proc=_proc.filter(r=>r.abogado===abogado&&!estadoIsTerminal(r.tipo,r.estado));
-  const mod=_mod.filter(r=>r.abogado===abogado&&!estadoIsTerminal(r.tipo,r.estado));
-  const liq=_liq.filter(r=>r.abogado===abogado&&tramStates_pa.includes(r.estado));
+  const proc=_proc.filter(r=>normStr(r.abogado)===_abNorm&&!estadoIsTerminal(r.tipo,r.estado));
+  const mod=_mod.filter(r=>normStr(r.abogado)===_abNorm&&!estadoIsTerminal(r.tipo,r.estado));
+  const liq=_liq.filter(r=>normStr(r.abogado)===_abNorm&&tramStates_pa.includes(r.estado));
 
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
@@ -7782,11 +7895,45 @@ function renderLiq(){
   const liqBannerName=document.getElementById('liq-abogado-banner-name');
   if(liqBanner){if(abogadoFiltro){liqBanner.style.display='flex';if(liqBannerName)liqBannerName.textContent=abogadoFiltro;}else{liqBanner.style.display='none';}}
 
+  // ── Poblar selectores de Dependencia y GIT dinámicamente ──────
+  const deps=[...new Set(records.map(r=>r.dependencia||'').filter(Boolean))].sort();
+  // GITs: si hay dependencia seleccionada, solo los GIT de esa dependencia
+  const gitsBase=activeLiqDep
+    ? records.filter(r=>(r.dependencia||'')===activeLiqDep)
+    : records;
+  const gits=[...new Set(gitsBase.map(r=>r.git||'').filter(Boolean))].sort();
+  const depSel=document.getElementById('liq-filter-dep');
+  const gitSel=document.getElementById('liq-filter-git');
+  if(depSel){
+    const curDep=activeLiqDep;
+    depSel.innerHTML='<option value="">🏛️ Todas las dependencias</option>'+
+      deps.map(d=>`<option value="${escHtml(d)}" ${d===curDep?'selected':''}>${escHtml(d)}</option>`).join('');
+  }
+  if(gitSel){
+    const curGit=activeLiqGit;
+    // Si el GIT activo ya no está disponible para la nueva dependencia → resetear
+    if(curGit&&curGit!=='__sin_git__'&&!gits.includes(curGit)) activeLiqGit='';
+    const hasSinGit=gitsBase.some(r=>!(r.git||'').trim());
+    gitSel.innerHTML='<option value="">👥 Todos los GIT</option>'+
+      gits.map(g=>`<option value="${escHtml(g)}" ${g===activeLiqGit?'selected':''}>${escHtml(g)}</option>`).join('')+
+      (hasSinGit?`<option value="__sin_git__" ${'__sin_git__'===activeLiqGit?'selected':''}>⚠️ Sin GIT diligenciado</option>`:'');
+    gitSel.disabled=gits.length===0&&!hasSinGit;
+  }
+  // Mostrar/ocultar botón de limpiar filtros
+  const hayFiltros=activeLiqDep||activeLiqGit||activeLiqTramite!=='all';
+  const btnReset=document.getElementById('btn-reset-liq-filtros');
+  if(btnReset) btnReset.style.display=hayFiltros?'inline-block':'none';
+
   let data=records.filter(r=>{
     if(abogadoFiltro&&normStr(r.abogado)!==normStr(abogadoFiltro))return false;
     if(activeLiqTramite&&activeLiqTramite!=='all'){
       if(activeLiqTramite==='liq'&&r.tramite!=='Liquidacion')return false;
       if(activeLiqTramite==='cie'&&r.tramite!=='Cierre')return false;
+    }
+    if(activeLiqDep&&(r.dependencia||'')!==activeLiqDep)return false;
+    if(activeLiqGit){
+      if(activeLiqGit==='__sin_git__'){if((r.git||'').trim())return false;}
+      else{if((r.git||'')!==activeLiqGit)return false;}
     }
     if(q&&!((r.ticket||'').toLowerCase().includes(q)||(r.contratista||'').toLowerCase().includes(q)||(r.abogado||'').toLowerCase().includes(q)||(r.git||'').toLowerCase().includes(q)||(r.dependencia||'').toLowerCase().includes(q)))return false;
     return true;
