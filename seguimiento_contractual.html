@@ -2568,10 +2568,24 @@ const BUILTIN_USERS=[
 ];
 function loadUsers(){
   const fb=window._fbUsers||[];
+  // Construir mapa de Firebase por username para acceder rápido al rol guardado
+  const fbByUsername=Object.fromEntries(fb.map(f=>[f.username, f]));
   const builtinUsernames=new Set(BUILTIN_USERS.map(b=>b.username));
-  // BUILTIN_USERS siempre con prioridad — Firebase solo agrega usuarios que NO estén en BUILTIN
-  const fbExtra=fb.filter(f=>!builtinUsernames.has(f.username));
-  return[...BUILTIN_USERS,...fbExtra];
+  // Usuarios builtin: usar datos base pero tomar el rol desde Firebase si existe ahí
+  const builtinMerged=BUILTIN_USERS.map(b=>{
+    const fbUser=fbByUsername[b.username];
+    // Si Firebase tiene un rol guardado para este usuario builtin, usarlo
+    if(fbUser&&fbUser.role&&fbUser.role!==b.role){
+      return{...b, role:fbUser.role};
+    }
+    return b;
+  });
+  // Agregar usuarios que solo están en Firebase (no son builtin ni están eliminados)
+  const fbExtra=fb.filter(f=>!builtinUsernames.has(f.username)&&!f.deleted);
+  // Filtrar builtin marcados como eliminados en Firebase
+  const fbDeletedUsernames=new Set(fb.filter(f=>f.deleted).map(f=>f.username));
+  const filteredBuiltin=builtinMerged.filter(b=>!fbDeletedUsernames.has(b.username));
+  return[...filteredBuiltin,...fbExtra];
 }
 
 /* ═══ BLOQUEO ═══ */
@@ -4061,11 +4075,24 @@ async function toggleRol(id){
 }
 
 async function deleteUser(id){
-  if(BUILTIN_USERS.find(b=>b.id===id)){alert('No puedes eliminar usuarios base.');return;}
   if(id===currentUser?.id){alert('No puedes eliminarte a ti mismo.');return;}
   const u=loadUsers().find(x=>x.id===id);
-  if(!confirm(`¿Eliminar al usuario "${u?.name}"?`))return;
-  await window._deleteUser(id);
+  if(!u){alert('Usuario no encontrado.');return;}
+  if(!confirm('Eliminar usuario "'+u.name+'"?\n\nEsta accion es permanente.'))return;
+  const builtinIdx=BUILTIN_USERS.findIndex(b=>b.id===id);
+  if(builtinIdx>=0){
+    // Eliminar del array en memoria
+    BUILTIN_USERS.splice(builtinIdx,1);
+    // Marcar como eliminado en Firebase para que no se recargue
+    try{await window._saveUser({id,username:u.username,name:u.name,
+        role:u.role,deleted:true,deletedAt:new Date().toISOString()});}
+    catch(e){console.warn('Firebase:',e);}
+  } else {
+    try{await window._deleteUser(id);}
+    catch(e){alert('Error al eliminar: '+e.message);return;}
+  }
+  showSyncToast('Usuario "'+u.name+'" eliminado');
+  renderAdminPanel();
 }
 
 /* ═══ DASHBOARD ═══ */
