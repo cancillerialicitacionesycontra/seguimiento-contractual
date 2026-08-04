@@ -7788,7 +7788,7 @@ async function saveLiqRecord(){
   const ticket=sanitize(document.getElementById('liq-f-ticket').value.trim(),50);
   const abogado=document.getElementById('liq-f-abogado').value;
   const contratista=sanitize(document.getElementById('liq-f-contratista').value.trim(),500);
-  if(!ticket||!abogado||!contratista){alert('Completa los campos obligatorios: N° Contrato, Abogado y Contratista.');return;}
+  if(!ticket||!contratista){alert('Completa los campos obligatorios: N° Contrato y Contratista.');return;}
   const id=liqEditingId||('liq_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
   // ── CRÍTICO: recuperar el registro existente para preservar bitacoraLiq ──
   const existing=liqEditingId?(window._liqRecords||[]).find(r=>r.id===liqEditingId):null;
