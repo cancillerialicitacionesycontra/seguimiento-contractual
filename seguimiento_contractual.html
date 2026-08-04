@@ -2491,6 +2491,7 @@ const ESTADOS={
     {value:'en-revision-at',  label:'En Revisión A.T.',        css:'sb-en-revision-at'},
     {value:'en-revision-jlc', label:'En Revisión Jefe L y C', css:'sb-en-revision-jlc'},
     {value:'aprobado',        label:'Aprobado ✅',             css:'sb-aprobado'},
+    {value:'cancelado',       label:'Cancelado',               css:'sb-cancelado'},
   ],
   contractual:[
     {value:'asignado',          label:'Asignado',               css:'sb-pc-asignado'},
@@ -2509,11 +2510,9 @@ function getEstado(tipo,value){
 }
 
 function estadoIsTerminal(tipo,value){
-  // REQ 2: "Aprobado en asesoría previa" = ACTIVO (no terminal)
-  // El proceso solo cierra cuando pasa a "Contratado" en la fase contractual
-  // Para asesoría: ningún estado es terminal — siempre sigue activo hasta contratarse
-  // Para contractual: contratado y cancelado son terminales
-  if(tipo==='asesoria') return false; // aprobado ≠ cerrado — sigue activo
+  // Asesoría: solo "cancelado" es terminal — aprobado sigue activo
+  if(tipo==='asesoria') return value==='cancelado';
+  // Contractual: contratado y cancelado son terminales
   return ['contratado','cancelado'].includes(value);
 }
 
@@ -3430,11 +3429,81 @@ async function changeEstado(id,tipo,sel){
 /* ═══ SEMÁFORO DE VENCIMIENTO ═══ */
 let vencimientoFilter=null;
 
+/* ── Festivos Colombia (Ley Emiliani + fijos) ────────────────────────
+   Se generan para el año actual y los 2 siguientes.
+   Regla Emiliani: si el festivo cae lunes = ese mismo lunes;
+   si cae otro día = siguiente lunes.                               */
+function _festivos(anio){
+  const f=[];
+  // ── Fijos ───────────────────────────────────────────────────────
+  const fijos=[[1,1],[3,25],[5,1],[7,20],[8,7],[12,8],[12,25]];
+  fijos.forEach(([m,d])=>f.push(`${anio}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`));
+  // ── Fijos trasladados a lunes (Ley Emiliani) ────────────────────
+  const emiliani=[[1,6],[3,19],[6,29],[8,15],[10,12],[11,1],[11,11]];
+  emiliani.forEach(([m,d])=>{
+    const base=new Date(anio,m-1,d);
+    const dow=base.getDay(); // 0=dom,1=lun,...
+    const diff=dow===1?0:(dow===0?1:8-dow); // días hasta próximo lunes
+    base.setDate(base.getDate()+diff);
+    f.push(`${anio}-${String(base.getMonth()+1).padStart(2,'0')}-${String(base.getDate()).padStart(2,'0')}`);
+  });
+  // ── Semana Santa (Jueves y Viernes) ────────────────────────────
+  // Algoritmo de Meeus para Pascua
+  const a=anio%19,b=Math.floor(anio/100),cc=anio%100;
+  const d2=Math.floor(b/4),e=b%4,f2=Math.floor((b+8)/25);
+  const g=Math.floor((b-f2+1)/3),h=(19*a+b-d2-g+15)%30;
+  const i=Math.floor(cc/4),k=cc%4;
+  const l=(32+2*e+2*i-h-k)%7;
+  const m2=Math.floor((a+11*h+22*l)/451);
+  const mes=Math.floor((h+l-7*m2+114)/31);
+  const dia=(h+l-7*m2+114)%31+1;
+  const pascua=new Date(anio,mes-1,dia);
+  // Jueves Santo = Pascua - 3
+  const js=new Date(pascua); js.setDate(js.getDate()-3);
+  // Viernes Santo = Pascua - 2
+  const vs=new Date(pascua); vs.setDate(vs.getDate()-2);
+  // Ascensión = Pascua + 43 (trasladado a lunes)
+  const asc=new Date(pascua); asc.setDate(asc.getDate()+43);
+  const ascDow=asc.getDay(); if(ascDow!==1) asc.setDate(asc.getDate()+(ascDow===0?1:8-ascDow));
+  // Corpus Christi = Pascua + 64 (trasladado a lunes)
+  const cc2=new Date(pascua); cc2.setDate(cc2.getDate()+64);
+  const cc2Dow=cc2.getDay(); if(cc2Dow!==1) cc2.setDate(cc2.getDate()+(cc2Dow===0?1:8-cc2Dow));
+  // Sagrado Corazón = Pascua + 71 (trasladado a lunes)
+  const sc=new Date(pascua); sc.setDate(sc.getDate()+71);
+  const scDow=sc.getDay(); if(scDow!==1) sc.setDate(sc.getDate()+(scDow===0?1:8-scDow));
+  [js,vs,asc,cc2,sc].forEach(d=>{
+    f.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+  });
+  return new Set(f);
+}
+// Cache de festivos para no recalcular en cada llamada
+const _festivosCache={};
+function _esFestivo(anio,mes,dia){
+  if(!_festivosCache[anio]) _festivosCache[anio]=_festivos(anio);
+  const key=`${anio}-${String(mes).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+  return _festivosCache[anio].has(key);
+}
+function _esHabil(d){
+  const dow=d.getDay();
+  if(dow===0||dow===6) return false; // sábado o domingo
+  return !_esFestivo(d.getFullYear(),d.getMonth()+1,d.getDate());
+}
+
+/* ── diasHasta: cuenta DÍAS HÁBILES (L-V, sin festivos colombianos) ─ */
 function diasHasta(fechaISO){
   if(!fechaISO) return null;
   const hoy=new Date(); hoy.setHours(0,0,0,0);
-  const fecha=new Date(fechaISO+'T00:00:00');
-  return Math.round((fecha-hoy)/(1000*60*60*24));
+  const meta=new Date(fechaISO+'T00:00:00'); meta.setHours(0,0,0,0);
+  if(hoy.getTime()===meta.getTime()) return 0;
+  const sign=meta>hoy?1:-1;
+  let cur=new Date(hoy); cur.setDate(cur.getDate()+sign);
+  let count=0;
+  // Avanzar día a día contando solo hábiles
+  while(sign===1?cur<=meta:cur>=meta){
+    if(_esHabil(cur)) count++;
+    cur.setDate(cur.getDate()+sign);
+  }
+  return sign*count;
 }
 
 function filtrarVencimiento(tipo){
@@ -6978,21 +7047,21 @@ function _generarPdfPendientesAbogado(abogado){
 
     ${pdfSectionTitle('📋','Procesos Pendientes')}
     ${proc.length
-      ? pdfTable(HDRS_PROC, proc.map(r=>mkRowProc(r)), W_PROC)
+      ? pdfTable(HDRS_PROC, [...proc].sort((a,b)=>(getFechaAlerta(a)||'9999-99-99').localeCompare(getFechaAlerta(b)||'9999-99-99')).map(r=>mkRowProc(r)), W_PROC)
       : `<div style="color:${PDF_GRAY};font-size:11px;padding:12px;background:#F8FAFC;border-radius:8px;text-align:center;">Sin procesos pendientes</div>`
     }
 
     ${pdfSectionTitle('✏️','Modificaciones Pendientes')}
     ${mod.length
-      ? pdfTable(HDRS_PROC, mod.map(r=>mkRowMod(r)), W_PROC)
+      ? pdfTable(HDRS_PROC, [...mod].sort((a,b)=>(getFechaAlerta(a)||'9999-99-99').localeCompare(getFechaAlerta(b)||'9999-99-99')).map(r=>mkRowMod(r)), W_PROC)
       : `<div style="color:${PDF_GRAY};font-size:11px;padding:12px;background:#F8FAFC;border-radius:8px;text-align:center;">Sin modificaciones pendientes</div>`
     }
 
     ${pdfSectionTitle('💧','Liquidaciones Pendientes')}
-    ${(()=>{const r=liq.filter(x=>x.tramite==='Liquidacion');return r.length?pdfTable(HDRS_LIQ,r.map(x=>mkRowLiq(x)),W_LIQ):`<div style="color:${PDF_GRAY};font-size:11px;padding:12px;background:#F8FAFC;border-radius:8px;text-align:center;">Sin liquidaciones pendientes</div>`;})()}
+    ${(()=>{const r=liq.filter(x=>x.tramite==='Liquidacion');return r.length?pdfTable(HDRS_LIQ,[...r].sort((a,b)=>(a.fechaTerminacion||'9999-99-99').localeCompare(b.fechaTerminacion||'9999-99-99')).map(x=>mkRowLiq(x)),W_LIQ):`<div style="color:${PDF_GRAY};font-size:11px;padding:12px;background:#F8FAFC;border-radius:8px;text-align:center;">Sin liquidaciones pendientes</div>`;})()}
 
     ${pdfSectionTitle('🔒','Cierres Contractuales Pendientes')}
-    ${(()=>{const r=liq.filter(x=>x.tramite==='Cierre');return r.length?pdfTable(HDRS_LIQ,r.map(x=>mkRowLiq(x)),W_LIQ):`<div style="color:${PDF_GRAY};font-size:11px;padding:12px;background:#F8FAFC;border-radius:8px;text-align:center;">Sin cierres contractuales pendientes</div>`;})()}
+    ${(()=>{const r=liq.filter(x=>x.tramite==='Cierre');return r.length?pdfTable(HDRS_LIQ,[...r].sort((a,b)=>(a.fechaTerminacion||'9999-99-99').localeCompare(b.fechaTerminacion||'9999-99-99')).map(x=>mkRowLiq(x)),W_LIQ):`<div style="color:${PDF_GRAY};font-size:11px;padding:12px;background:#F8FAFC;border-radius:8px;text-align:center;">Sin cierres contractuales pendientes</div>`;})()}
 
     ${pdfFooter()}
   `,`Pendientes — ${abogado}`);
