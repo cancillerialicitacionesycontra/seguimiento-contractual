@@ -2578,21 +2578,23 @@ const BUILTIN_USERS=[
 ];
 function loadUsers(){
   const fb=window._fbUsers||[];
-  // Construir mapa de Firebase por username para acceder rápido al rol guardado
   const fbByUsername=Object.fromEntries(fb.map(f=>[f.username, f]));
   const builtinUsernames=new Set(BUILTIN_USERS.map(b=>b.username));
-  // Usuarios builtin: usar datos base pero tomar el rol desde Firebase si existe ahí
+  // Usuarios builtin: tomar role, pwHash y name desde Firebase si fueron modificados
   const builtinMerged=BUILTIN_USERS.map(b=>{
     const fbUser=fbByUsername[b.username];
-    // Si Firebase tiene un rol guardado para este usuario builtin, usarlo
-    if(fbUser&&fbUser.role&&fbUser.role!==b.role){
-      return{...b, role:fbUser.role};
-    }
-    return b;
+    if(!fbUser) return b;
+    return{
+      ...b,
+      // Tomar role de Firebase si fue cambiado
+      role:    (fbUser.role    && fbUser.role    !== b.role)    ? fbUser.role    : b.role,
+      // Tomar pwHash de Firebase si fue cambiado (cambio de contraseña)
+      pwHash:  (fbUser.pwHash  && fbUser.pwHash  !== b.pwHash)  ? fbUser.pwHash  : b.pwHash,
+      // Tomar name de Firebase si fue cambiado
+      name:    (fbUser.name    && fbUser.name    !== b.name)    ? fbUser.name    : b.name,
+    };
   });
-  // Agregar usuarios que solo están en Firebase (no son builtin ni están eliminados)
   const fbExtra=fb.filter(f=>!builtinUsernames.has(f.username)&&!f.deleted);
-  // Filtrar builtin marcados como eliminados en Firebase
   const fbDeletedUsernames=new Set(fb.filter(f=>f.deleted).map(f=>f.username));
   const filteredBuiltin=builtinMerged.filter(b=>!fbDeletedUsernames.has(b.username));
   return[...filteredBuiltin,...fbExtra];
@@ -4191,7 +4193,9 @@ async function saveUser(){
   const dup=users.find(u=>u.username===username&&u.id!==editingUserId);
   if(dup){showErr('Ya existe un usuario con ese login.');return;}
   const pwHash=pass?await sha256(pass):users.find(u=>u.id===editingUserId)?.pwHash||'';
-  const userData={id:editingUserId||'u'+Date.now(),name,username,pwHash,role,updatedAt:new Date().toISOString()};
+  const existingUser=loadUsers().find(u=>u.id===editingUserId);
+  const abogado=existingUser?.abogado||'';
+  const userData={id:editingUserId||'u'+Date.now(),name,username,pwHash,role,abogado,updatedAt:new Date().toISOString()};
   showSyncToast('Guardando usuario...',3000);
   try{await window._saveUser(userData);if(editingUserId===currentUser?.id){currentUser={...currentUser,name,username,role};applyUserUI();}showSyncToast('✅ Usuario guardado');closeUserModal();}
   catch(err){showErr('Error: '+err.message);}
