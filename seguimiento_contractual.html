@@ -7151,6 +7151,34 @@ function _generarPdfPendientesAbogado(abogado){
     ${pdfSectionTitle('🔒','Cierres Contractuales Pendientes')}
     ${(()=>{const r=liq.filter(x=>x.tramite==='Cierre');return r.length?pdfTable(HDRS_LIQ,[...r].sort((a,b)=>(a.fechaTerminacion||'9999-99-99').localeCompare(b.fechaTerminacion||'9999-99-99')).map(x=>mkRowLiq(x)),W_LIQ):`<div style="color:${PDF_GRAY};font-size:11px;padding:12px;background:#F8FAFC;border-radius:8px;text-align:center;">Sin cierres contractuales pendientes</div>`;})()}
 
+    <!-- ══ CUADRO DE RECOMENDACIONES ══ -->
+    ${pdfSectionTitle('📝','Recomendaciones y Observaciones')}
+    <div style="border:1.5px solid ${PDF_NAVY};border-radius:10px;overflow:hidden;margin-bottom:20px;">
+      <!-- Encabezado del cuadro -->
+      <div style="background:${PDF_NAVY};padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="color:white;font-size:11px;font-weight:700;">Recomendaciones y Observaciones — ${escHtml(abogado)}</span>
+        <span style="color:${PDF_GOLD};font-size:10px;">Fecha: ${fechaHoy}</span>
+      </div>
+      <!-- Área editable para impresión -->
+      <div style="background:white;padding:0;">
+        <div contenteditable="true" id="rec-box-${Date.now()}"
+          style="min-height:180px;padding:16px 18px;font-size:11px;color:#1E293B;line-height:1.8;outline:none;font-family:Arial,sans-serif;"
+          placeholder="Escriba aquí las recomendaciones y observaciones..."
+          oninput="this.style.border='none'"
+          onkeydown="event.stopPropagation()">
+        </div>
+        <!-- Líneas guía visuales -->
+        <div style="padding:0 18px 16px;display:flex;flex-direction:column;gap:28px;pointer-events:none;margin-top:-${180-16}px;position:relative;z-index:0;">
+          ${Array.from({length:5},()=>`<div style="border-bottom:1px dashed #E2E8F0;height:1px;"></div>`).join('')}
+        </div>
+      </div>
+      <!-- Pie del cuadro -->
+      <div style="background:#F8FAFC;border-top:1px solid #E2E8F0;padding:10px 16px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:10px;color:${PDF_GRAY};">Elaborado por:</span>
+        <div style="flex:1;border-bottom:1px solid #CBD5E1;height:20px;"></div>
+      </div>
+    </div>
+
     ${pdfFooter()}
   `,`Pendientes — ${abogado}`);
 }
@@ -7423,8 +7451,12 @@ function renderMod(){
         const maxCell=r.fechaMaxGestion
           ?`<span style="font-family:var(--mono);font-size:11px;">${fmtDate(r.fechaMaxGestion)}</span>${semBadge}`
           :`<span style="color:#CBD5E1;font-size:11px;">—</span>`;
-        return `<tr class="main-row">
-          <td><span class="ticket-badge">${escHtml(r.ticket||'—')}</span></td>
+        const rowId='mod-acc-'+r.id;
+        const histHtml=(r.historialEstados||[]).length>0
+          ?`<div class="accordion-section full"><span class="accordion-label">🔄 Historial de Estados</span><div class="accordion-value">${(r.historialEstados||[]).slice().reverse().map(h=>`<div style="font-size:11px;padding:2px 0;"><span style="color:var(--muted);font-family:var(--mono);">${h.fecha||''}</span> <b>${escHtml(h.de||'—')}</b> → <b>${escHtml(h.a||'—')}</b> <span style="color:var(--muted);">por ${escHtml(h.por||'—')}</span></div>`).join('')}</div></div>`
+          :'';
+        return `<tr class="main-row" onclick="toggleAccordion('${rowId}')">
+          <td><span class="expand-arrow" id="arr-${rowId}">▶</span><span class="ticket-badge">${escHtml(r.ticket||'—')}</span></td>
           <td><span class="tipo-badge ${r.tipo||'asesoria'}">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span></td>
           <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.objeto||'—')}</td>
           <td style="white-space:nowrap;font-size:12px;">${escHtml(r.abogado||'—')}</td>
@@ -7441,6 +7473,22 @@ function renderMod(){
             <button class="icon-btn" onclick="openModalMod('${r.id}')" ${adm?'':'disabled'}>✏️</button>
             <button class="icon-btn del" onclick="deleteModRecord('${r.id}')" ${adm?'':'disabled'}>🗑️</button>
           </div></td>
+        
+        </tr>
+        <tr class="accordion-row" id="${rowId}">
+          <td colspan="13">
+            <div class="accordion-inner">
+              <div class="accordion-section full"><span class="accordion-label">📋 Objeto</span><div class="accordion-value obj-text">${escHtml(r.objeto||'Sin objeto definido.')}</div></div>
+              <div class="accordion-section"><span class="accordion-label">🏛️ Dependencia</span><span class="accordion-value">${escHtml(r.dependencia||'—')}</span></div>
+              <div class="accordion-section"><span class="accordion-label">👥 GIT</span><span class="accordion-value">${escHtml(r.git||'—')}</span></div>
+              <div class="accordion-section"><span class="accordion-label">📄 SECOP</span><span class="accordion-value" style="font-family:var(--mono)">${escHtml(r.secop||'—')}</span></div>
+              <div class="accordion-section"><span class="accordion-label">📅 F. Asignación</span><span class="accordion-value">${fmtDate(r.fechaAsignacion)||'—'}</span></div>
+              <div class="accordion-section"><span class="accordion-label">📅 F. Adjudicación</span><span class="accordion-value">${fmtDate(r.fechaAdjudicacion)||'—'}</span></div>
+              <div class="accordion-section"><span class="accordion-label" style="color:var(--red);">⏰ F. Máx. Gestión</span><span class="accordion-value">${r.fechaMaxGestion?fmtDate(r.fechaMaxGestion)+'&nbsp;'+semBadge:'<span style="color:#CBD5E1;">Sin fecha</span>'}</span></div>
+              ${r.obs?`<div class="accordion-section full"><span class="accordion-label">💬 Observaciones</span><span class="accordion-value" style="color:var(--muted);font-style:italic;">${escHtml(r.obs)}</span></div>`:''}
+              ${histHtml}
+            </div>
+          </td>
         </tr>`;
       }).join('');
     }
