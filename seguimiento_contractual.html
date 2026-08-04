@@ -2476,6 +2476,7 @@ const ABOGADOS_LIST=[
   {v:'ERIKA HERNANDEZ',        l:'ERIKA HERNANDEZ'},
   {v:'YUDDY SOCHA',            l:'YUDDY SOCHA'},
   {v:'DIANA TORRES',           l:'DIANA TORRES'},
+  {v:'AMILKAR MURILLO',        l:'AMILKAR MURILLO'},
 ];
 function buildAbogadoOptions(selId,val=''){
   const sel=document.getElementById(selId);
@@ -2572,6 +2573,8 @@ const BUILTIN_USERS=[
    pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'viewer',abogado:'YUDDY SOCHA'},
   {id:'u_dtorres',name:'Diana Torres',username:'diana.torres',
    pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'viewer',abogado:'DIANA TORRES'},
+  {id:'u_amurillo',name:'Amilkar Murillo',username:'amilkar.murillo',
+   pwHash:'a05179f896a85c42267222b5abc77e8ea085c0e8e436c6bfd54c8b47a9bb3aa3',role:'viewer',abogado:'AMILKAR MURILLO'},
 ];
 function loadUsers(){
   const fb=window._fbUsers||[];
@@ -7885,7 +7888,10 @@ function renderLiq(){
     &&(!activeLiqDep||(r.dependencia||'')===activeLiqDep)
     &&(!activeLiqGit||(activeLiqGit==='__sin_git__'?!(r.git||'').trim():(r.git||'')===activeLiqGit))
     &&(!activeLiqEstado||(r.estado||'')===activeLiqEstado));
-  const abogadosSel=[...new Set(baseParaAbo.map(r=>r.abogado||'').filter(Boolean))].sort();
+  const abogadosSel=[...new Set([
+    ...baseParaAbo.map(r=>r.abogado||'').filter(Boolean),
+    ...loadUsers().filter(u=>u.abogado).map(u=>u.abogado),
+  ])].filter(Boolean).sort();
 
   // Para Estados: filtrar por dependencia + git + abogado
   const baseParaEst=records.filter(r=>_base(r)
