@@ -2521,7 +2521,12 @@ function estadoIsTerminal(tipo,value){
 /* "Aprobado" en asesoría previa: el expediente sigue activo pero ya
    completó su revisión interna — NO debe generar alerta de fecha máxima */
 function estadoSinAlerta(tipo,value){
+  // Aprobado en asesoría: sigue activo pero ya completó revisión interna
   if(tipo==='asesoria'&&value==='aprobado') return true;
+  // En revisión A.T. y en revisión Jefe L y C: el expediente está en manos
+  // de otra área — el abogado no tiene acción pendiente, no es su alerta
+  const sinAlerta=['en-revision-at','en-revision-jlc','en-revision-jlc-pc'];
+  if(sinAlerta.includes(value)) return true;
   return false;
 }
 
