@@ -4831,13 +4831,13 @@ function generarPDFIndividual(){
 
 function pdfAbogadoIndividual(abogado, proc, allRecords){
   const fin=proc.filter(r=>estadoIsTerminal(r.tipo,r.estado));
-  const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+  const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado));
   const asesorias=proc.filter(r=>r.tipo==='asesoria');
   const contractuales=proc.filter(r=>r.tipo==='contractual');
-  const vencidos=activos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
-  const proxHoy=activos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))===0);
-  const prox3=activos.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;});
-  const prox7=activos.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=4&&d<=7;});
+  const vencidos=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
+  const proxHoy=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))===0);
+  const prox3=activos.filter(r=>{if(estadoSinAlerta(r.tipo,r.estado))return false;const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;});
+  const prox7=activos.filter(r=>{if(estadoSinAlerta(r.tipo,r.estado))return false;const d=diasHasta(getFechaAlerta(r));return d>=4&&d<=7;});
   const fechaHoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
 
   const diasList=fin.filter(r=>r.fechaAsignacion&&(r.fechaAdjudicacion||r.fechaAdjudicacion)).map(r=>{
@@ -5298,11 +5298,11 @@ function pdfGeneral(records){
   const asesorias=records.filter(r=>r.tipo==='asesoria');
   const contractuales=records.filter(r=>r.tipo==='contractual');
   const finalizados=records.filter(r=>estadoIsTerminal(r.tipo,r.estado));
-  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
-  const vencidos=activos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
-  const hoy=activos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))===0);
-  const prox3=activos.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;});
-  const prox7=activos.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=4&&d<=7;});
+  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado));
+  const vencidos=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
+  const hoy=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))===0);
+  const prox3=activos.filter(r=>{if(estadoSinAlerta(r.tipo,r.estado))return false;const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;});
+  const prox7=activos.filter(r=>{if(estadoSinAlerta(r.tipo,r.estado))return false;const d=diasHasta(getFechaAlerta(r));return d>=4&&d<=7;});
   const pctFin=records.length?Math.round(finalizados.length/records.length*100):0;
   const pctVenc=activos.length?Math.round(vencidos.length/activos.length*100):0;
   const totalRiesgo=vencidos.length+hoy.length+prox3.length;
@@ -5440,8 +5440,8 @@ function pdfPorAbogado(records){
   const metricas=abogados.map(ab=>{
     const proc=records.filter(r=>r.abogado===ab);
     const fin=proc.filter(r=>estadoIsTerminal(r.tipo,r.estado));
-    const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
-    const venc=activos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
+    const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado));
+    const venc=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
     const dias=fin.filter(r=>r.fechaAsignacion&&(r.fechaAdjudicacion||r.fechaAdjudicacion)).map(r=>{const d=Math.round((new Date((r.fechaAdjudicacion||r.fechaAdjudicacion)+'T00:00:00')-new Date(r.fechaAsignacion+'T00:00:00'))/(1000*60*60*24));return d>=0?d:null;}).filter(d=>d!==null);
     const avg=dias.length?Math.round(dias.reduce((a,b)=>a+b,0)/dias.length):null;
     return{ab,proc,fin,activos,venc,avg};
@@ -5461,7 +5461,7 @@ function pdfPorAbogado(records){
   [...metricas].sort((a,b)=>a.ab.localeCompare(b.ab)).forEach(m=>{
     const rows=m.proc.sort((a,b)=>(a.ticket||'').localeCompare(b.ticket||'')).map(r=>{
       const est=getEstado(r.tipo,r.estado);
-      const d=getFechaAlerta(r)&&!estadoIsTerminal(r.tipo,r.estado)?diasHasta(getFechaAlerta(r)):null;
+      const d=getFechaAlerta(r)&&!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado)?diasHasta(getFechaAlerta(r)):null;
       const alerta=d===null?(estadoIsTerminal(r.tipo,r.estado)?'Finalizado':'Sin fecha'):d<0?`<span style="color:${PDF_RED};font-weight:700;">Vencido</span>`:d===0?`<span style="color:${PDF_RED};">Hoy</span>`:d<=3?`<span style="color:#C2410C;">${d}d</span>`:d<=7?`<span style="color:#D97706;">${d}d</span>`:'Al día';
       return [`<b style="font-family:monospace;">${escHtml(r.ticket||'—')}</b>`,`<span style="font-size:10px;padding:1px 5px;border-radius:6px;background:${r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE'};color:${r.tipo==='asesoria'?PDF_SKY:PDF_TEAL};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,`<span style="font-size:9px;word-break:break-word;white-space:normal;">${escHtml(r.objeto||'—')}</span>`,`<span style="padding:1px 6px;border-radius:6px;font-size:10px;background:#F1F5F9;color:${PDF_NAVY};font-weight:600;">${est.label}</span>`,fmtDate(getFechaAlerta(r))||'—',alerta];
     });
@@ -5503,16 +5503,16 @@ function pdfPorEstado(records){
 }
 
 function pdfVencimiento(records){
-  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
-  const conFecha=activos.filter(r=>getFechaAlerta(r));
+  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado));
+  const conFecha=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r));
   const sinFecha=activos.filter(r=>!getFechaAlerta(r));
 
-  const vencidos=conFecha.filter(r=>diasHasta(getFechaAlerta(r))<0)
+  const vencidos=conFecha.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&diasHasta(getFechaAlerta(r))<0)
     .sort((a,b)=>getFechaAlerta(a).localeCompare(getFechaAlerta(b)));
-  const hoy=conFecha.filter(r=>diasHasta(getFechaAlerta(r))===0);
-  const prox3=conFecha.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;})
+  const hoy=conFecha.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&diasHasta(getFechaAlerta(r))===0);
+  const prox3=conFecha.filter(r=>{if(estadoSinAlerta(r.tipo,r.estado))return false;const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;})
     .sort((a,b)=>getFechaAlerta(a).localeCompare(getFechaAlerta(b)));
-  const prox7=conFecha.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=4&&d<=7;})
+  const prox7=conFecha.filter(r=>{if(estadoSinAlerta(r.tipo,r.estado))return false;const d=diasHasta(getFechaAlerta(r));return d>=4&&d<=7;})
     .sort((a,b)=>getFechaAlerta(a).localeCompare(getFechaAlerta(b)));
 
   const totalRiesgo=vencidos.length+hoy.length+prox3.length;
@@ -5972,8 +5972,8 @@ function pdfModPorAbogado(){
   const metricas=abogados.map(ab=>{
     const proc=records.filter(r=>r.abogado===ab);
     const fin=proc.filter(r=>estadoIsTerminal(r.tipo,r.estado));
-    const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
-    const venc=activos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
+    const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado));
+    const venc=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
     return{ab,proc,fin,activos,venc};
   });
   const resRows=metricas.map(m=>[
@@ -6024,9 +6024,9 @@ function pdfModIndividual(abogado){
   const proc=records.filter(r=>normStr(r.abogado)===normStr(abogado));
   if(!proc.length){alert(`No hay modificaciones asignadas a ${abogado}.`);return;}
   const fechaHoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
-  const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+  const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado));
   const fin=proc.filter(r=>estadoIsTerminal(r.tipo,r.estado));
-  const vencidos=activos.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
+  const vencidos=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
   const rows=proc.sort((a,b)=>{const na=parseFloat(a.ticket||''),nb=parseFloat(b.ticket||'');return !isNaN(na)&&!isNaN(nb)?na-nb:0;}).map(r=>{
     const fa=getFechaAlerta(r);const d=fa&&!estadoIsTerminal(r.tipo,r.estado)?diasHasta(fa):null;
     const alerta=d===null?(estadoIsTerminal(r.tipo,r.estado)?'<span style="color:'+PDF_GREEN+';">Fin.</span>':'—'):d<0?`<b style="color:${PDF_RED};">🔴 ${Math.abs(d)}d</b>`:d===0?`<b style="color:${PDF_RED};">Hoy</b>`:d<=3?`<span style="color:#C2410C;">🟠${d}d</span>`:d<=7?`<span style="color:#D97706;">🟡${d}d</span>`:'✅';
@@ -6913,8 +6913,8 @@ function pdfConsolidadoAbogado(){
     // Cierres pendientes (tramite=Cierre, estado pendiente)
     const cieP=liq.filter(r=>r.abogado===ab&&r.tramite==='Cierre'&&cierreEstadosPend.includes(r.estado));
     const tot=p.length+m.length+liqP.length+cieP.length;
-    const vp=p.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
-    const vm=m.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
+    const vp=p.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
+    const vm=m.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
     const vencidos=vp+vm;
     const pctCarga=granTotal?Math.round(tot/granTotal*100):0;
     return [
@@ -6930,8 +6930,8 @@ function pdfConsolidadoAbogado(){
     ];
   });
 
-  const totalVenc=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length
-    + mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
+  const totalVenc=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length
+    + mod.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0).length;
   const totalLiqFin=liq.filter(r=>finStates.includes(r.estado)).length;
 
   // Fila totales — también pendientes
@@ -7086,12 +7086,12 @@ function _generarPdfPendientesAbogado(abogado){
   const liqCie=liq.filter(r=>r.tramite==='Cierre').length;
 
   // ── Variables de riesgo (deben ir antes de puntos) ───────────────
-  const procVenc=proc.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
-  const procHoy2=proc.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))===0);
-  const proc3d=proc.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;});
-  const modVenc=mod.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
-  const modHoy2=mod.filter(r=>getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))===0);
-  const mod3d=mod.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;});
+  const procVenc=proc.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
+  const procHoy2=proc.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))===0);
+  const proc3d=proc.filter(r=>{if(estadoSinAlerta(r.tipo,r.estado))return false;const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;});
+  const modVenc=mod.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
+  const modHoy2=mod.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))===0);
+  const mod3d=mod.filter(r=>{if(estadoSinAlerta(r.tipo,r.estado))return false;const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;});
   const totalRiesgoPA=(procVenc.length+procHoy2.length+proc3d.length+modVenc.length+modHoy2.length+mod3d.length);
   const nivelRiesgoPA=totalRiesgoPA>10?'CRÍTICO':totalRiesgoPA>5?'ALTO':totalRiesgoPA>2?'MODERADO':'BAJO';
   const colorRiesgoPA={'CRÍTICO':PDF_RED,'ALTO':PDF_ORANGE,'MODERADO':'#D97706','BAJO':PDF_GREEN}[nivelRiesgoPA];
