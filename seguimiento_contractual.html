@@ -2491,7 +2491,7 @@ const ESTADOS={
     {value:'en-revision-at',  label:'En Revisión A.T.',        css:'sb-en-revision-at'},
     {value:'en-revision-jlc', label:'En Revisión Jefe L y C', css:'sb-en-revision-jlc'},
     {value:'aprobado',        label:'Aprobado ✅',             css:'sb-aprobado'},
-    {value:'cancelado',       label:'Cancelado',               css:'sb-cancelado'},
+    {value:'cancelado',       label:'Cancelado ❌',               css:'sb-cancelado'},
   ],
   contractual:[
     {value:'asignado',          label:'Asignado',               css:'sb-pc-asignado'},
@@ -2500,6 +2500,7 @@ const ESTADOS={
     {value:'en-evaluacion',     label:'En Evaluación',          css:'sb-pc-en-evaluacion'},
     {value:'adjudicado',        label:'Adjudicado',             css:'sb-pc-adjudicado'},
     {value:'en-revision-jlc-pc',label:'En Revisión Jefe L y C',css:'sb-pc-revision-jlc'},
+    {value:'aclaratorio',       label:'Aclaratorio',            css:'sb-pc-aclaratorio'},
     {value:'contratado',        label:'Contratado ✅',          css:'sb-pc-contratado'},
     {value:'cancelado',         label:'Cancelado ❌',           css:'sb-pc-cancelado'},
   ]
@@ -3381,7 +3382,7 @@ function getEstadoBg(tipo,valor){
   const map={
     'asignado':'#FEF9C3','en-revision-lyc':'#DBEAFE','en-revision-at':'#EDE9FE','en-revision-jlc':'#E0E7FF','aprobado':'#D1FAE5',
     'en-estructuracion':'#CFFAFE','publicado-secop':'#DBEAFE','en-evaluacion':'#FFEDD5',
-    'adjudicado':'#EDE9FE','en-revision-jlc-pc':'#E0E7FF','contratado':'#D1FAE5','cancelado':'#FEE2E2'
+    'adjudicado':'#EDE9FE','en-revision-jlc-pc':'#E0E7FF','contratado':'#D1FAE5','cancelado':'#FEE2E2','aclaratorio':'#FEF3C7'
   };
   return map[valor]||'#F1F5F9';
 }
@@ -3389,7 +3390,7 @@ function getEstadoColor(tipo,valor){
   const map={
     'asignado':'#92400E','en-revision-lyc':'#1D4ED8','en-revision-at':'#5B21B6','en-revision-jlc':'#3730A3','aprobado':'#065F46',
     'en-estructuracion':'#0E7490','publicado-secop':'#1D4ED8','en-evaluacion':'#C2410C',
-    'adjudicado':'#5B21B6','en-revision-jlc-pc':'#3730A3','contratado':'#065F46','cancelado':'#991B1B'
+    'adjudicado':'#5B21B6','en-revision-jlc-pc':'#3730A3','contratado':'#065F46','cancelado':'#991B1B','aclaratorio':'#92400E'
   };
   return map[valor]||'#1E293B';
 }
