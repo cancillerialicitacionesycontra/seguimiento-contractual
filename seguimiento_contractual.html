@@ -2498,6 +2498,7 @@ const ESTADOS={
     {value:'asignado',          label:'Asignado',               css:'sb-pc-asignado'},
     {value:'en-estructuracion', label:'En Estructuración',      css:'sb-pc-en-estructuracion'},
     {value:'publicado-secop',   label:'Publicado en SECOP',     css:'sb-pc-publicado-secop'},
+    {value:'publicado-secop-at', label:'Publicado en SECOP - A.T.',css:'sb-pc-publicado-secop-at'},
     {value:'en-evaluacion',     label:'En Evaluación',          css:'sb-pc-en-evaluacion'},
     {value:'adjudicado',        label:'Adjudicado',             css:'sb-pc-adjudicado'},
     {value:'en-revision-jlc-pc',label:'En Revisión Jefe L y C',css:'sb-pc-revision-jlc'},
@@ -2525,7 +2526,7 @@ function estadoSinAlerta(tipo,value){
   if(tipo==='asesoria'&&value==='aprobado') return true;
   // En revisión A.T. y en revisión Jefe L y C: el expediente está en manos
   // de otra área — el abogado no tiene acción pendiente, no es su alerta
-  const sinAlerta=['en-revision-at','en-revision-jlc','en-revision-jlc-pc'];
+  const sinAlerta=['en-revision-at','en-revision-jlc','en-revision-jlc-pc','publicado-secop-at'];
   if(sinAlerta.includes(value)) return true;
   return false;
 }
@@ -2979,6 +2980,7 @@ function checkNotificaciones(){
   // ── Procesos sin avance > 30 días ─────────────────────────────
   const dormidos=(window._records||[]).filter(r=>{
     if(estadoIsTerminal(r.tipo,r.estado)) return false;
+    if(estadoSinAlerta(r.tipo,r.estado)) return false;
     const bit=(r.bitacora||[]);
     if(!bit.length) return true;
     const ult=bit.slice().sort((a,b)=>String(b.date||b.ts||'').localeCompare(String(a.date||a.ts||'')))[0];
@@ -3469,7 +3471,7 @@ function getEstadoBg(tipo,valor){
   const map={
     'asignado':'#FEF9C3','en-revision-lyc':'#DBEAFE','en-revision-at':'#EDE9FE','en-revision-jlc':'#E0E7FF','aprobado':'#D1FAE5',
     'en-estructuracion':'#CFFAFE','publicado-secop':'#DBEAFE','en-evaluacion':'#FFEDD5',
-    'adjudicado':'#EDE9FE','en-revision-jlc-pc':'#E0E7FF','contratado':'#D1FAE5','cancelado':'#FEE2E2','aclaratorio':'#FEF3C7'
+    'adjudicado':'#EDE9FE','en-revision-jlc-pc':'#E0E7FF','contratado':'#D1FAE5','cancelado':'#FEE2E2','aclaratorio':'#FEF3C7','publicado-secop-at':'#E0F2FE'
   };
   return map[valor]||'#F1F5F9';
 }
@@ -3477,7 +3479,7 @@ function getEstadoColor(tipo,valor){
   const map={
     'asignado':'#92400E','en-revision-lyc':'#1D4ED8','en-revision-at':'#5B21B6','en-revision-jlc':'#3730A3','aprobado':'#065F46',
     'en-estructuracion':'#0E7490','publicado-secop':'#1D4ED8','en-evaluacion':'#C2410C',
-    'adjudicado':'#5B21B6','en-revision-jlc-pc':'#3730A3','contratado':'#065F46','cancelado':'#991B1B','aclaratorio':'#92400E'
+    'adjudicado':'#5B21B6','en-revision-jlc-pc':'#3730A3','contratado':'#065F46','cancelado':'#991B1B','aclaratorio':'#92400E','publicado-secop-at':'#0369A1'
   };
   return map[valor]||'#1E293B';
 }
@@ -3605,7 +3607,7 @@ function filtrarVencimientoMod(tipo){
   renderMod();
 }
 function updateSemaforoMod(records){
-  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r));
+  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r));
   let hoy=0,tres=0,siete=0;
   activos.forEach(r=>{
     if(estadoSinAlerta(r.tipo,r.estado)) return;
@@ -3628,7 +3630,7 @@ function getFechaAlerta(r){
 }
 
 function updateSemaforo(records){
-  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&getFechaAlerta(r));
+  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r));
   let hoy=0,tres=0,siete=0;
   activos.forEach(r=>{
     if(estadoSinAlerta(r.tipo,r.estado)) return;
