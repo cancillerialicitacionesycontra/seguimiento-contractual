@@ -1501,10 +1501,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         <div class="form-section-title">📅 Fechas</div>
         <div class="form-grid">
           <div class="form-group">
-            <label>F. Asignación</label>
-            <input type="date" id="liq-f-asignacion">
-          </div>
-          <div class="form-group">
             <label>F. Finalización</label>
             <input type="date" id="liq-f-inicio">
           </div>
@@ -4891,16 +4887,17 @@ function pdfAbogadoIndividual(abogado, proc, allRecords){
     const tipoColor=r.tipo==='asesoria'?PDF_SKY:PDF_TEAL;
     return [
       `<b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
-      `<span style="padding:2px 4px;border-radius:4px;font-size:8px;font-weight:700;background:${tipoBg};color:${tipoColor};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,
+      `<span style="padding:2px 6px;border-radius:8px;font-size:10px;font-weight:700;background:${tipoBg};color:${tipoColor};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,
       `<span style="font-size:9px;word-break:break-word;white-space:normal;">${escHtml(r.objeto||'—')}</span>`,
-      `<span style="padding:2px 4px;border-radius:4px;font-size:8px;background:#F1F5F9;color:${PDF_NAVY};font-weight:600;">${est.label}</span>`,
-      `<span style="font-family:monospace;font-size:8px;">${fmtDate(r.fechaAsignacion)||'—'}</span>`,
-      pdfFechaAlerta(r),
+      `<span style="padding:2px 6px;border-radius:6px;font-size:10px;background:#F1F5F9;color:${PDF_NAVY};font-weight:600;">${est.label}</span>`,
+      `<span style="font-family:monospace;font-size:10px;">${fmtDate(r.fechaAsignacion)||'—'}</span>`,
+      `<span style="font-family:monospace;font-size:10px;">${fmtDate(fa)||'—'}</span>`,
+      alerta,
     ];
   });
 
-  const tablaHeader=['Ticket','Tipo','Objeto','Estado','F. Asignación','F. Alerta'];
-  const tablaWidths=['8%','10%','28%','14%','12%','28%'];
+  const tablaHeader=['Ticket','Tipo','Objeto','Estado','F. Asignación','F. Límite','Alerta'];
+  const tablaWidths=['8%','11%','30%','15%','12%','12%','12%'];
 
   let bitacora='';
   const conAvances=proc.filter(r=>(r.bitacora||[]).length>0);
@@ -4912,10 +4909,10 @@ function pdfAbogadoIndividual(abogado, proc, allRecords){
       bitacora+=`<div style="margin-bottom:12px;">
         <div style="background:${PDF_BG};border-left:4px solid ${r.tipo==='asesoria'?PDF_SKY:PDF_TEAL};border-radius:0 8px 8px 0;padding:8px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <span style="font-family:monospace;font-weight:700;color:${PDF_NAVY};background:#DBEAFE;padding:2px 8px;border-radius:4px;">${escHtml(r.ticket||'—')}</span>
-          <span style="font-size:9px;color:${PDF_NAVY};font-weight:600;flex:1;">${escHtml(r.objeto||'—')}</span>
-          <span style="padding:2px 4px;border-radius:4px;font-size:8px;font-weight:700;background:#F1F5F9;color:${PDF_NAVY};">${est.label}</span>
+          <span style="font-size:12px;color:${PDF_NAVY};font-weight:600;flex:1;">${escHtml(r.objeto||'—')}</span>
+          <span style="padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:#F1F5F9;color:${PDF_NAVY};">${est.label}</span>
         </div>
-        <table style="width:100%;border-collapse:collapse;font-size:9px;">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
           <thead><tr style="background:${PDF_NAVY};color:white;">
             <th style="padding:7px 10px;text-align:left;width:12%;">Fecha</th>
             <th style="padding:7px 10px;text-align:left;width:16%;">Registrado por</th>
@@ -4931,7 +4928,7 @@ function pdfAbogadoIndividual(abogado, proc, allRecords){
     });
   } else {
     bitacora=pdfSectionTitle('📓','Bitácora de Avances')+
-      `<div style="padding:14px;color:${PDF_GRAY};font-size:9px;font-style:italic;background:${PDF_BG};border-radius:8px;">No hay entradas de bitácora registradas para los procesos de este abogado.</div>`;
+      `<div style="padding:14px;color:${PDF_GRAY};font-size:12px;font-style:italic;background:${PDF_BG};border-radius:8px;">No hay entradas de bitácora registradas para los procesos de este abogado.</div>`;
   }
 
   // ── Variables de riesgo (igual que pdfGeneral) ──────────────────
@@ -4960,7 +4957,7 @@ function pdfAbogadoIndividual(abogado, proc, allRecords){
       <div>
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:${colorRiesgo};font-weight:700;">Nivel de Riesgo Contractual</div>
         <div style="font-size:22px;font-weight:800;color:${colorRiesgo};margin:2px 0;">${nivelRiesgo}</div>
-        <div style="font-size:9px;color:${PDF_GRAY};">${totalRiesgo} expediente${totalRiesgo!==1?'s':''} en riesgo inmediato (vencidos, hoy o en 3 días)</div>
+        <div style="font-size:11px;color:${PDF_GRAY};">${totalRiesgo} expediente${totalRiesgo!==1?'s':''} en riesgo inmediato (vencidos, hoy o en 3 días)</div>
       </div>
     </div>
 
@@ -4986,52 +4983,25 @@ function pdfPrintStyles(){
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'Inter',sans-serif;font-size:10px;color:#1E293B;background:white;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .pdf-page{max-width:1100px;margin:0 auto;padding:24px 32px;}
+    .pdf-page{max-width:820px;margin:0 auto;padding:24px 32px;}
     .no-print{display:flex;}
-    table{border-collapse:collapse;width:100%;table-layout:fixed;}
-    td,th{word-break:break-word;overflow-wrap:anywhere;}
+    table{border-collapse:collapse;width:100%;table-layout:auto;}
+    td,th{word-break:break-word;overflow-wrap:anywhere;word-wrap:break-word;overflow-wrap:break-word;}
     @media print{
       @page{size:letter landscape;margin:8mm 10mm;}
-      *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
       html,body{font-size:8px;}
       .no-print{display:none!important;}
-      .pdf-page{padding:0;max-width:100%;width:100%;}
-
-      /* ── Tablas: nunca cortar filas ────────────────── */
-      table{
-        font-size:7.5px;
-        width:100%;
-        table-layout:fixed;
-        border-collapse:collapse;
-        page-break-inside:auto;
-      }
+      .pdf-page{padding:6mm 8mm;max-width:100%;width:100%;}
+      @page{size:letter portrait;margin:6mm 8mm 8mm;}
+      tr{page-break-inside:avoid;}
+      .pdf-section{page-break-inside:auto;}
+      .pdf-pagebreak{page-break-before:always;}
       thead{display:table-header-group;}
-      tr,tbody tr{page-break-inside:avoid!important;break-inside:avoid!important;}
-      td,th{
-        padding:4px 5px!important;
-        font-size:7.5px!important;
-        word-break:break-word!important;
-        white-space:normal!important;
-        overflow:visible!important;
-        vertical-align:top!important;
-      }
-
-      /* ── Divs: nunca cortar bloques con borde/fondo ── */
-      div{overflow:visible!important;}
-      .pdf-section{page-break-inside:avoid!important;break-inside:avoid!important;}
-      .pdf-pagebreak{page-break-before:always!important;break-before:always!important;}
-
-      /* ── Texto ──────────────────────────────────────── */
-      span{white-space:normal!important;overflow:visible!important;}
-      table td{font-size:8px!important;}
-      table td span{font-size:8px!important;line-height:1.4!important;}
-      table td b{font-size:8.5px!important;font-weight:700!important;}
-      table th{font-size:7.5px!important;}
-      h1,h2,h3{page-break-after:avoid;break-after:avoid;}
+      table{font-size:8px;}
+      td,th{padding:4px 5px!important;font-size:8px!important;}
     }
   </style>`;
 }
-
 
 /* ── Número de informe único ── */
 function pdfReportId(){
@@ -5089,11 +5059,11 @@ function pdfSemaforoCumplimiento(fechaMaxStr){
   if(isNaN(fecha)) return '<span style="color:#CBD5E1;font-size:10px;">—</span>';
   const hoy=new Date();hoy.setHours(0,0,0,0);
   const diff=Math.ceil((fecha-hoy)/(1000*60*60*24));
-  if(diff<0)  return `<div style="page-break-inside:avoid;break-inside:avoid;"><span style="background:#FEF2F2;color:#991B1B;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;">🔴 Vencido ${Math.abs(diff)}d</span>`;
+  if(diff<0)  return `<span style="background:#FEF2F2;color:#991B1B;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;">🔴 Vencido ${Math.abs(diff)}d</span>`;
   if(diff===0)return `<span style="background:#FEF2F2;color:#DC2626;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;">🔴 Vence hoy</span>`;
   if(diff<=3) return `<span style="background:#FFF7ED;color:#C2410C;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;">🟠 ${diff}d</span>`;
   if(diff<=7) return `<span style="background:#FEFCE8;color:#854D0E;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;">🟡 ${diff}d</span>`;
-  return `<span style="background:#F0FDF4;color:#166534;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;">🟢 ${diff}d</span></div>`;
+  return `<span style="background:#F0FDF4;color:#166534;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;">🟢 ${diff}d</span>`;
 }
 
 /* ── Días en estado actual ── */
@@ -5147,7 +5117,7 @@ function pdfHeader(titulo, subtitulo='', excelData=null){
   return `
   ${pdfPrintStyles()}
   ${pdfWatermark()}
-  <div class="no-print" style="display:flex;gap:10px;margin-bottom:14px;padding:16px;background:#F8FAFC;border-radius:10px;border:1px solid ${PDF_BORDER};align-items:center;flex-wrap:wrap;">
+  <div class="no-print" style="display:flex;gap:10px;margin-bottom:24px;padding:16px;background:#F8FAFC;border-radius:10px;border:1px solid ${PDF_BORDER};align-items:center;flex-wrap:wrap;">
     <button onclick="window.print()" style="background:${PDF_NAVY};color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:.03em;">🖨️ Imprimir / Guardar PDF</button>
     ${excelBtn}
     <button onclick="window.close()" style="background:white;color:${PDF_GRAY};border:1.5px solid ${PDF_BORDER};padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;">✕ Cerrar</button>
@@ -5186,7 +5156,7 @@ function pdfHeader(titulo, subtitulo='', excelData=null){
 
 /* ── Caja introductoria ── */
 function pdfIntroBox(texto){
-  return `<div style="page-break-inside:avoid;break-inside:avoid;background:linear-gradient(135deg,#EFF6FF,#F0F9FF);border-left:3px solid ${PDF_SKY};border-radius:0 8px 8px 0;padding:11px 16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(2,132,199,.08);">
+  return `<div style="background:linear-gradient(135deg,#EFF6FF,#F0F9FF);border-left:3px solid ${PDF_SKY};border-radius:0 8px 8px 0;padding:11px 16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(2,132,199,.08);">
     <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.16em;color:${PDF_SKY};font-weight:700;margin-bottom:5px;">📋 Alcance del Informe</div>
     <div style="font-size:10px;color:#1E293B;line-height:1.6;">${texto}</div>
   </div>`;
@@ -5200,25 +5170,14 @@ function pdfConclusions(puntos){
     alert:{bg:'#FEF2F2',border:'#FECACA',left:'#EF4444',icon:'🔴',color:'#991B1B',label:'Alerta crítica'},
     info: {bg:'#EFF6FF',border:'#BFDBFE',left:'#3B82F6',icon:'ℹ️',color:'#1E40AF',label:'Observación'},
   };
-  return `<div style="page-break-inside:avoid;break-inside:avoid;display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">${puntos.map(p=>{const t=tipos[p.tipo]||tipos.info;return `<div style="background:${t.bg};border:1px solid ${t.border};border-left:3px solid ${t.left};border-radius:0 6px 6px 0;padding:9px 13px;display:flex;gap:10px;align-items:flex-start;"><div style="flex-shrink:0;width:18px;height:18px;background:${t.left};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;margin-top:1px;">${t.icon}</div><div style="flex:1;"><div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.1em;color:${t.left};font-weight:700;margin-bottom:3px;">${t.label}</div><div style="font-size:10px;color:${t.color};line-height:1.55;">${p.txt}</div></div></div>`;}).join('')}</div>`;
+  return `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">${puntos.map(p=>{const t=tipos[p.tipo]||tipos.info;return `<div style="background:${t.bg};border:1px solid ${t.border};border-left:3px solid ${t.left};border-radius:0 6px 6px 0;padding:9px 13px;display:flex;gap:10px;align-items:flex-start;"><div style="flex-shrink:0;width:18px;height:18px;background:${t.left};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;margin-top:1px;">${t.icon}</div><div style="flex:1;"><div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.1em;color:${t.left};font-weight:700;margin-bottom:3px;">${t.label}</div><div style="font-size:10px;color:${t.color};line-height:1.55;">${p.txt}</div></div></div>`;}).join('')}</div>`;
 }
 
 /* ── Grid de KPIs ── */
 function pdfKpiGrid(kpis){
-  const pct=Math.floor(100/Math.min(kpis.length,4))+'%';
-  const cells=kpis.map(k=>`<td style="width:${pct};vertical-align:top;padding:3px;">
-    <div style="background:white;border:1px solid ${PDF_BORDER};border-radius:6px;padding:10px 12px;border-top:3px solid ${k.color};page-break-inside:avoid!important;break-inside:avoid!important;">
-      <div style="font-size:7px;text-transform:uppercase;letter-spacing:.07em;color:${PDF_GRAY};margin-bottom:4px;">${k.label}</div>
-      <div style="font-size:22px;font-weight:800;color:${k.color};line-height:1.1;margin-bottom:3px;">${k.value}</div>
-      <div style="font-size:7px;color:${PDF_GRAY};border-top:1px solid ${PDF_BORDER};padding-top:4px;margin-top:3px;">${k.sub||''}</div>
-    </div>
-  </td>`).join('');
-  return `<table style="width:100%;border-collapse:collapse;margin-bottom:12px;page-break-inside:avoid!important;break-inside:avoid!important;">
-    <tr style="page-break-inside:avoid!important;break-inside:avoid!important;">${cells}</tr>
-  </table>`;
+  const cols=Math.min(kpis.length,4);
+  return `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:10px;margin-bottom:18px;">${kpis.map(k=>`<div style="background:white;border:1px solid ${PDF_BORDER};border-radius:8px;padding:14px;border-top:3px solid ${k.color};box-shadow:0 1px 4px rgba(0,0,0,.04);"><div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.1em;color:${PDF_GRAY};margin-bottom:8px;font-weight:600;">${k.label}</div><div style="font-size:26px;font-weight:800;color:${k.color};font-family:'JetBrains Mono',monospace;line-height:1;margin-bottom:4px;">${k.value}</div>${k.sub?`<div style="font-size:9px;color:${PDF_GRAY};border-top:1px solid ${PDF_BORDER};padding-top:5px;margin-top:4px;">${k.sub}</div>`:''}</div>`).join('')}</div>`;
 }
-
-
 
 /* ── Título de sección numerado ── */
 let _pdfSectionN=0;
@@ -5233,20 +5192,10 @@ function pdfSectionTitle(icon, title, subtitleOrReset='', resetCounter=false){
 
 /* ── Tabla estilizada ── */
 function pdfTable(headers, rows, colWidths=[]){
-  const textoCols=new Set(['Objeto','Contratista / Proveedor','Contratista','Último Avance','Descripción','Observaciones']);
-  const ths=headers.map((h,i)=>{
-    const centro=!textoCols.has(h);
-    const w=colWidths[i]||'auto';
-    return `<th style="padding:4px 5px;text-align:${centro?'center':'left'};font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:white;background:${PDF_NAVY};width:${w};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h}</th>`;
-  }).join('');
-  const trs=rows.map((r,ri)=>`<tr style="background:${ri%2===0?'white':'#F8FAFC'};page-break-inside:avoid!important;break-inside:avoid!important;">${r.map((cell,ci)=>{
-    const h=headers[ci]||'';
-    const esTexto=textoCols.has(h)||ci===2;
-    return `<td style="padding:4px 5px;font-size:7.5px;color:#1E293B;border-bottom:1px solid ${PDF_BORDER};vertical-align:top;font-family:inherit;word-break:break-word;overflow-wrap:anywhere;white-space:normal;line-height:1.4;text-align:${esTexto?'left':'center'};">${cell??'—'}</td>`;
-  }).join('')}</tr>`).join('');
-  return `<div style="border-radius:8px;overflow:visible;border:1px solid ${PDF_BORDER};margin-bottom:14px;page-break-inside:auto;"><table style="width:100%;border-collapse:collapse;table-layout:fixed;"><thead><tr>${ths}</tr></thead><tbody>${trs}${!rows.length?`<tr><td colspan="${headers.length}" style="padding:14px;text-align:center;color:${PDF_GRAY};font-style:italic;font-size:9px;">Sin registros para mostrar</td></tr>`:''}</tbody></table></div>`;
+  const ths=headers.map((h,i)=>`<th style="padding:8px 10px;text-align:left;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:white;background:${PDF_NAVY};min-width:${colWidths[i]||'60px'};white-space:nowrap;">${h}</th>`).join('');
+  const trs=rows.map((r,ri)=>`<tr style="background:${ri%2===0?'white':'#F8FAFC'};">${r.map(c=>`<td style="padding:8px 10px;font-size:9.5px;color:#1E293B;border-bottom:1px solid ${PDF_BORDER};vertical-align:top;word-break:break-word;overflow-wrap:anywhere;white-space:normal;line-height:1.5;">${c??'—'}</td>`).join('')}</tr>`).join('');
+  return `<div style="border-radius:8px;overflow:hidden;border:1px solid ${PDF_BORDER};margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);"><table style="width:100%;border-collapse:collapse;table-layout:auto;"><thead><tr>${ths}</tr></thead><tbody>${trs}${!rows.length?`<tr><td colspan="${headers.length}" style="padding:16px;text-align:center;color:${PDF_GRAY};font-style:italic;font-size:10px;">Sin registros para mostrar</td></tr>`:''}</tbody></table></div>`;
 }
-
 
 /* ── Barra de progreso ── */
 function pdfProgressBar(pct, color, height='8px'){
@@ -5256,7 +5205,7 @@ function pdfProgressBar(pct, color, height='8px'){
 
 /* ── Tarjeta métrica ── */
 function pdfMetricCard(label, value, sub, color, icon=''){
-  return `<div style="background:${color}10;border:1px solid ${color}30;border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:8px;box-shadow:0 1px 3px rgba(0,0,0,.04);page-break-inside:avoid;break-inside:avoid;">${icon?`<div style="width:24px;height:24px;background:${color}20;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">${icon}</div>`:''}<div style="flex:1;min-width:0;"><div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.08em;color:${color};font-weight:700;margin-bottom:2px;">${label}</div><div style="font-size:20px;font-weight:800;color:${PDF_NAVY};font-family:'JetBrains Mono',monospace;line-height:1;">${value}</div>${sub?`<div style="font-size:7.5px;color:${PDF_GRAY};margin-top:2px;">${sub}</div>`:''}</div></div>`;
+  return `<div style="background:${color}10;border:1px solid ${color}30;border-radius:8px;padding:11px 13px;display:flex;align-items:center;gap:11px;box-shadow:0 1px 3px rgba(0,0,0,.04);">${icon?`<div style="width:30px;height:30px;background:${color}20;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">${icon}</div>`:''}<div style="flex:1;min-width:0;"><div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.08em;color:${color};font-weight:700;margin-bottom:2px;">${label}</div><div style="font-size:20px;font-weight:800;color:${PDF_NAVY};font-family:'JetBrains Mono',monospace;line-height:1;">${value}</div>${sub?`<div style="font-size:8.5px;color:${PDF_GRAY};margin-top:2px;">${sub}</div>`:''}</div></div>`;
 }
 
 /* ── Separador visual ── */
@@ -5265,7 +5214,7 @@ function pdfDivider(){return `<div style="height:1px;background:linear-gradient(
 /* ── Caja de alerta ── */
 function pdfAlertBox(texto, tipo='info'){
   const cfg={info:{bg:'#EFF6FF',border:'#60A5FA',left:'#3B82F6',label:'ℹ️ Observación',color:'#1E40AF'},warn:{bg:'#FFFBEB',border:'#FCD34D',left:'#F59E0B',label:'⚠️ Atención',color:'#92400E'},danger:{bg:'#FEF2F2',border:'#FCA5A5',left:'#EF4444',label:'🔴 Alerta Crítica',color:'#991B1B'},ok:{bg:'#F0FDF4',border:'#86EFAC',left:'#22C55E',label:'✅ Resultado',color:'#065F46'}}[tipo]||{bg:'#F8FAFC',border:PDF_GRAY,left:PDF_GRAY,label:'Nota',color:PDF_GRAY};
-  return `<div style="page-break-inside:avoid;break-inside:avoid;background:${cfg.bg};border:1px solid ${cfg.border};border-left:4px solid ${cfg.left};border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:10px;"><div style="font-size:8.5px;font-weight:700;color:${cfg.color};text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">${cfg.label}</div><div style="font-size:11px;color:#1E293B;line-height:1.65;">${texto}</div></div>`;
+  return `<div style="background:${cfg.bg};border:1px solid ${cfg.border};border-left:4px solid ${cfg.left};border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:10px;"><div style="font-size:8.5px;font-weight:700;color:${cfg.color};text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">${cfg.label}</div><div style="font-size:11px;color:#1E293B;line-height:1.65;">${texto}</div></div>`;
 }
 
 /* ── Firmas ── */
@@ -5284,8 +5233,7 @@ function pdfFooter(){
 function abrirPdf(html, titulo='Informe', excelData=null){
   _pdfSectionN=0;
   const win=window.open('','_blank');
-  const estilos=pdfPrintStyles();
-  win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escHtml(titulo)} — MRE</title>${estilos}</head><body><div class="pdf-page">${html}</div></body></html>`);
+  win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escHtml(titulo)} — MRE</title></head><body><div class="pdf-page">${html}</div></body></html>`);
   win.document.close();
   // Inyectar Excel después del write para evitar conflictos con parser HTML
   if(excelData){
@@ -5379,7 +5327,7 @@ function pdfGeneral(records){
       <div style="flex:1;background:#F1F5F9;border-radius:4px;height:10px;overflow:hidden;">
         <div style="width:${pct}%;height:100%;background:${color};border-radius:4px;"></div>
       </div>
-      <span style="font-family:monospace;font-size:9px;font-weight:700;color:${color};min-width:24px;text-align:right;">${e.cnt}</span>
+      <span style="font-family:monospace;font-size:12px;font-weight:700;color:${color};min-width:24px;text-align:right;">${e.cnt}</span>
     </div>`;
   }).join('');
 
@@ -5491,219 +5439,167 @@ function pdfGeneral(records){
   `,'Informe General Procesos');
 }
 
-function pdfPorAbogado(){
-  if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
-  const records=window._records||[];
-  if(!records.length){alert('No hay procesos registrados.');return;}
-  const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
-  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
-  const vencidos=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
-  const total=records.length;
-  const pctFin=total?Math.round((total-activos.length)/total*100):0;
-  let nivelRiesgo,colorRiesgo;
-  if(vencidos.length>5){nivelRiesgo='ALTO';colorRiesgo=PDF_RED;}
-  else if(vencidos.length>0){nivelRiesgo='MEDIO';colorRiesgo=PDF_ORANGE;}
-  else{nivelRiesgo='BAJO';colorRiesgo=PDF_GREEN;}
-  const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
-  const HDRS=['Abogado','Procesos','Activos','Vencidos','% Avance'];
-  const W=['auto','70px','70px','80px','80px'];
-  const rows=abogados.map(ab=>{
-    const rAb=records.filter(r=>normStr(r.abogado)===normStr(ab));
-    const actAb=rAb.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
-    const vAb=actAb.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
-    const pct=rAb.length?Math.round((rAb.length-actAb.length)/rAb.length*100):0;
-    return [`<b style="font-size:8.5px;">${escHtml(ab)}</b>`,
-      `<span style="font-size:9px;font-weight:700;color:${PDF_NAVY};">${rAb.length}</span>`,
-      `<span style="font-size:9px;">${actAb.length}</span>`,
-      `<span style="font-size:9px;color:${vAb.length>0?PDF_RED:PDF_GREEN};font-weight:700;">${vAb.length}</span>`,
-      `<span style="font-size:9px;color:${pct>=70?PDF_GREEN:PDF_ORANGE};font-weight:600;">${pct}%</span>`];
+function pdfPorAbogado(records){
+  const abogados=filtrarAbogadosRegistrados([...new Set(records.map(r=>r.abogado).filter(Boolean))].sort());
+  if(!abogados.length){alert('No hay procesos con abogado asignado.');return;}
+  const metricas=abogados.map(ab=>{
+    const proc=records.filter(r=>r.abogado===ab);
+    const fin=proc.filter(r=>estadoIsTerminal(r.tipo,r.estado));
+    const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado));
+    const venc=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
+    const dias=fin.filter(r=>r.fechaAsignacion&&(r.fechaAdjudicacion||r.fechaAdjudicacion)).map(r=>{const d=Math.round((new Date((r.fechaAdjudicacion||r.fechaAdjudicacion)+'T00:00:00')-new Date(r.fechaAsignacion+'T00:00:00'))/(1000*60*60*24));return d>=0?d:null;}).filter(d=>d!==null);
+    const avg=dias.length?Math.round(dias.reduce((a,b)=>a+b,0)/dias.length):null;
+    return{ab,proc,fin,activos,venc,avg};
   });
-  const puntos=[
-    {tipo:'info', txt:`Total de procesos registrados: <strong>${total}</strong> (${activos.length} activos, ${total-activos.length} finalizados).`},
-    vencidos.length>0
-      ?{tipo:'warn',txt:`<strong>${vencidos.length}</strong> expedientes vencidos — requieren atención urgente.`}
-      :{tipo:'ok',  txt:`Sin expedientes vencidos en este período.`},
-    {tipo:'info', txt:`Avance general: <strong>${pctFin}%</strong> de los procesos han sido finalizados.`},
-  ];
-  abrirPdf(`
-    ${pdfHeader('Procesos por Abogado',`Distribución y carga de trabajo por abogado · ${fechaHoy} · ${hora}`)}
-    ${pdfIntroBox(`Distribución de <strong>${total} procesos</strong> entre <strong>${abogados.length} abogados</strong>.`)}
-    ${pdfSectionTitle('📊','Indicadores Generales',true)}
-    ${pdfKpiGrid([
-      {label:'Total procesos', value:total,              color:PDF_NAVY, sub:'Registros totales'},
-      {label:'Activos',        value:activos.length,     color:PDF_SKY,  sub:'En trámite'},
-      {label:'Vencidos',       value:vencidos.length,    color:vencidos.length>0?PDF_RED:PDF_GREEN, sub:'Superaron F. Máx.'},
-      {label:'% Finalizado',   value:pctFin+'%',         color:pctFin>=70?PDF_GREEN:PDF_ORANGE, sub:'Del total'},
-    ])}
-    ${pdfSectionTitle('🚦','Nivel de Riesgo Contractual')}
-    ${pdfSemaforoCumplimiento(nivelRiesgo,colorRiesgo,`${vencidos.length} expedientes en riesgo inmediato`)}
-    ${pdfSectionTitle('⚖️','Carga de Trabajo por Abogado')}
-    ${pdfTable(HDRS,rows,W)}
-    ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
-    ${pdfConclusions(puntos)}
-    ${pdfSectionTitle('📝','Recomendaciones y Observaciones')}
-    <div style="border:1.5px solid ${PDF_NAVY};border-radius:10px;overflow:hidden;margin-bottom:20px;page-break-inside:avoid;break-inside:avoid;">
-      <div style="background:${PDF_NAVY};padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
-        <span style="color:white;font-size:11px;font-weight:700;">Recomendaciones y Observaciones</span>
-        <span style="color:${PDF_GOLD};font-size:10px;">Fecha: ${fechaHoy}</span>
-      </div>
-      <div style="background:white;padding:0;">
-        <div contenteditable="true" id="rec-box-${Date.now()}"
-          style="min-height:160px;padding:16px 18px;font-size:11px;color:#1E293B;line-height:1.8;outline:none;font-family:Arial,sans-serif;"
-          onkeydown="event.stopPropagation()">
-        </div>
-      </div>
-      <div style="background:#F8FAFC;border-top:1px solid #E2E8F0;padding:10px 16px;display:flex;align-items:center;gap:12px;">
-        <span style="font-size:10px;color:${PDF_GRAY};">Elaborado por:</span>
-        <div style="flex:1;border-bottom:1px solid #CBD5E1;height:20px;"></div>
-      </div>
-    </div>
-    ${pdfFooter()}
-  `,'Procesos por Abogado');
+  const resRows=metricas.map(m=>[`<b style="color:${PDF_NAVY};">${escHtml(m.ab)}</b>`,m.proc.length,m.proc.filter(r=>r.tipo==='asesoria').length,m.proc.filter(r=>r.tipo==='contractual').length,m.fin.length,m.activos.length,m.avg!==null?`<span style="font-family:monospace;font-weight:700;color:${m.avg<=15?PDF_GREEN:m.avg<=30?'#D97706':PDF_RED};">${m.avg}d</span>`:'Sin datos',m.venc.length>0?`<span style="color:${PDF_RED};font-weight:700;">⚠️ ${m.venc.length}</span>`:`<span style="color:${PDF_GREEN};">✅ 0</span>`]);
+  const masVencidos=[...metricas].sort((a,b)=>b.venc.length-a.venc.length)[0];
+  const masLento=[...metricas].filter(m=>m.avg!==null).sort((a,b)=>b.avg-a.avg)[0];
+  const masRapido=[...metricas].filter(m=>m.avg!==null).sort((a,b)=>a.avg-b.avg)[0];
+  const masCarga=[...metricas].sort((a,b)=>b.activos.length-a.activos.length)[0];
+  let conclusiones='';
+  if(masCarga?.activos.length>0) conclusiones+=pdfAlertBox(`El abogado <strong>${masCarga.ab}</strong> tiene la mayor carga activa con <strong>${masCarga.activos.length} proceso${masCarga.activos.length!==1?'s':''}</strong> en trámite. Se recomienda evaluar la distribución de trabajo.`,'info');
+  if(masRapido&&masLento&&masRapido.ab!==masLento.ab) conclusiones+=pdfAlertBox(`En tiempos de respuesta, <strong>${masRapido.ab}</strong> registra el mejor promedio con <strong>${masRapido.avg} días</strong>. <strong>${masLento.ab}</strong> presenta el mayor promedio con <strong>${masLento.avg} días</strong> (diferencia: ${masLento.avg-masRapido.avg} días).`,'info');
+  if(masVencidos?.venc.length>0) conclusiones+=pdfAlertBox(`El abogado <strong>${masVencidos.ab}</strong> tiene <strong>${masVencidos.venc.length} proceso${masVencidos.venc.length!==1?'s':''} vencido${masVencidos.venc.length!==1?'s':''}</strong>. Se recomienda revisar estos casos con carácter prioritario.`,'danger');
+  const sinVenc=metricas.filter(m=>m.venc.length===0&&m.proc.length>0);
+  if(sinVenc.length) conclusiones+=pdfAlertBox(`Sin procesos vencidos: <strong>${sinVenc.map(m=>m.ab).join(', ')}</strong>. Se destaca su gestión oportuna.`,'ok');
+  let detalles='';
+  [...metricas].sort((a,b)=>a.ab.localeCompare(b.ab)).forEach(m=>{
+    const rows=m.proc.sort((a,b)=>(a.ticket||'').localeCompare(b.ticket||'')).map(r=>{
+      const est=getEstado(r.tipo,r.estado);
+      const d=getFechaAlerta(r)&&!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado)?diasHasta(getFechaAlerta(r)):null;
+      const alerta=d===null?(estadoIsTerminal(r.tipo,r.estado)?'Finalizado':'Sin fecha'):d<0?`<span style="color:${PDF_RED};font-weight:700;">Vencido</span>`:d===0?`<span style="color:${PDF_RED};">Hoy</span>`:d<=3?`<span style="color:#C2410C;">${d}d</span>`:d<=7?`<span style="color:#D97706;">${d}d</span>`:'Al día';
+      return [`<b style="font-family:monospace;">${escHtml(r.ticket||'—')}</b>`,`<span style="font-size:10px;padding:1px 5px;border-radius:6px;background:${r.tipo==='asesoria'?'#E0F2FE':'#CFFAFE'};color:${r.tipo==='asesoria'?PDF_SKY:PDF_TEAL};">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,`<span style="font-size:9px;word-break:break-word;white-space:normal;">${escHtml(r.objeto||'—')}</span>`,`<span style="padding:1px 6px;border-radius:6px;font-size:10px;background:#F1F5F9;color:${PDF_NAVY};font-weight:600;">${est.label}</span>`,fmtDate(getFechaAlerta(r))||'—',alerta];
+    });
+    detalles+=`<div style="margin-bottom:16px;"><div style="background:${PDF_BG};border-left:4px solid ${PDF_SKY};border-radius:0 8px 8px 0;padding:10px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><div><div style="font-size:13px;font-weight:700;color:${PDF_NAVY};">⚖️ ${escHtml(m.ab)}</div><div style="font-size:10px;color:${PDF_GRAY};margin-top:2px;">${m.proc.length} procesos · ${m.fin.length} finalizados${m.avg!==null?' · Promedio: '+m.avg+' días':''}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;"><span style="background:#E0F2FE;color:${PDF_SKY};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">Asesorías: ${m.proc.filter(r=>r.tipo==='asesoria').length}</span><span style="background:#CFFAFE;color:${PDF_TEAL};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">Contractuales: ${m.proc.filter(r=>r.tipo==='contractual').length}</span>${m.venc.length>0?`<span style="background:#FEE2E2;color:${PDF_RED};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">⚠️ Vencidos: ${m.venc.length}</span>`:''}</div></div>${pdfTable(['Ticket','Tipo','Objeto','Estado','F. Adjudicación','Alerta'],rows,['8%','11%','34%','16%','12%','15%'])}</div>`;
+  });
+  abrirPdf(`${pdfHeader('Informe de Procesos por Abogado','Distribución de carga de trabajo, rendimiento y alertas por abogado asignado')}${pdfIntroBox('Este informe presenta el estado de los procesos agrupados por abogado asignado. Permite evaluar la distribución de la carga de trabajo, el tiempo promedio de atención desde la asignación hasta la finalización, y detectar situaciones de riesgo como procesos vencidos o próximos a vencer.')}${pdfSectionTitle('📊','Resumen Ejecutivo por Abogado')}${pdfTable(['Abogado','Total','Asesorías','Contractuales','Finalizados','Activos','Promedio','Vencidos'],resRows,['22%','6%','8%','10%','9%','7%','12%','10%'])}${pdfSectionTitle('📋','Análisis y Conclusiones')}${conclusiones}${pdfSectionTitle('📁','Detalle de Procesos por Abogado')}${detalles}${pdfFooter()}`,'Informe por Abogado');
 }
 
-function pdfPorEstado(){
-  if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
-  const records=window._records||[];
-  if(!records.length){alert('No hay procesos registrados.');return;}
-  const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
-  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
-  const vencidos=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
-  const total=records.length;
-  let nivelRiesgo,colorRiesgo;
-  if(vencidos.length>5){nivelRiesgo='ALTO';colorRiesgo=PDF_RED;}
-  else if(vencidos.length>0){nivelRiesgo='MEDIO';colorRiesgo=PDF_ORANGE;}
-  else{nivelRiesgo='BAJO';colorRiesgo=PDF_GREEN;}
-  const byEstado={};
-  records.forEach(r=>{
-    const key=r.estado||'sin-estado';
-    if(!byEstado[key]) byEstado[key]={label:getEstado(r.tipo,key).label||key,count:0,venc:0};
-    byEstado[key].count++;
-    if(!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0) byEstado[key].venc++;
+function pdfPorEstado(records){
+  const asesorias=records.filter(r=>r.tipo==='asesoria');
+  const contractuales=records.filter(r=>r.tipo==='contractual');
+  const statsA=ESTADOS.asesoria.map(e=>({...e,count:asesorias.filter(r=>r.estado===e.value).length}));
+  const statsC=ESTADOS.contractual.map(e=>({...e,count:contractuales.filter(r=>r.estado===e.value).length}));
+  const resRowsA=statsA.map(e=>{const pct=asesorias.length?Math.round(e.count/asesorias.length*100):0;return[`<span style="font-weight:600;color:${PDF_NAVY};">${e.label}</span>`,e.count,pct+'%',e.count>0?`<div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;background:#E2E8F0;border-radius:4px;height:8px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${PDF_SKY};border-radius:4px;"></div></div><span style="font-size:9px;color:${PDF_GRAY};min-width:28px;">${pct}%</span></div>`:'—'];});
+  const resRowsC=statsC.map(e=>{const pct=contractuales.length?Math.round(e.count/contractuales.length*100):0;return[`<span style="font-weight:600;color:${PDF_NAVY};">${e.label}</span>`,e.count,pct+'%',e.count>0?`<div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;background:#E2E8F0;border-radius:4px;height:8px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${PDF_PURPLE};border-radius:4px;"></div></div><span style="font-size:9px;color:${PDF_GRAY};min-width:28px;">${pct}%</span></div>`:'—'];});
+  const estadoMayorA=[...statsA].sort((a,b)=>b.count-a.count)[0];
+  const estadoMayorC=[...statsC].sort((a,b)=>b.count-a.count)[0];
+  const aprobados=asesorias.filter(r=>r.estado==='aprobado').length;
+  const contratados=contractuales.filter(r=>r.estado==='contratado').length;
+  const cancelados=contractuales.filter(r=>r.estado==='cancelado').length;
+  let conclusiones='';
+  if(estadoMayorA?.count>0) conclusiones+=pdfAlertBox(`En asesorías previas, el estado más frecuente es <strong>"${estadoMayorA.label}"</strong> con <strong>${estadoMayorA.count} proceso${estadoMayorA.count!==1?'s':''}</strong> (${asesorias.length?Math.round(estadoMayorA.count/asesorias.length*100):0}%). ${estadoMayorA.value==='aprobado'?'El alto número de aprobadas es un indicador positivo.':'Se recomienda monitorear el avance para evitar acumulaciones.'}`, 'info');
+  if(estadoMayorC?.count>0) conclusiones+=pdfAlertBox(`En procesos contractuales, el estado predominante es <strong>"${estadoMayorC.label}"</strong> con <strong>${estadoMayorC.count} proceso${estadoMayorC.count!==1?'s':''}</strong> (${contractuales.length?Math.round(estadoMayorC.count/contractuales.length*100):0}%).`,'info');
+  if(cancelados>0) conclusiones+=pdfAlertBox(`Se registran <strong>${cancelados} proceso${cancelados!==1?'s':''} cancelado${cancelados!==1?'s':''}</strong>. Se recomienda documentar las causas para mejorar la planificación futura.`,'warn');
+  if(aprobados+contratados>0) conclusiones+=pdfAlertBox(`Se han finalizado exitosamente <strong>${aprobados} asesoría${aprobados!==1?'s':''} aprobada${aprobados!==1?'s':''}</strong> y <strong>${contratados} proceso${contratados!==1?'s':''} contratado${contratados!==1?'s':''}</strong>.`,'ok');
+  const colsA=['#FCD34D','#93C5FD','#C4B5FD','#6EE7B7'];
+  const colsC=['#FCD34D','#67E8F9','#93C5FD','#FDBA74','#C4B5FD','#6EE7B7','#FCA5A5'];
+  let detalles='';
+  [{titulo:'Asesoría Previa',color:PDF_SKY,stats:statsA,proc:asesorias,cols:colsA},{titulo:'Proceso Contractual',color:PDF_TEAL,stats:statsC,proc:contractuales,cols:colsC}].forEach(grupo=>{
+    detalles+=`<div style="background:${grupo.color}22;border-radius:8px;padding:10px 16px;margin:20px 0 14px;"><div style="font-size:13px;font-weight:700;color:${grupo.color};">${grupo.titulo} — ${grupo.proc.length} proceso${grupo.proc.length!==1?'s':''}</div></div>`;
+    grupo.stats.forEach((est,ei)=>{
+      const proc=grupo.proc.filter(r=>r.estado===est.value);
+      if(!proc.length) return;
+      const rows=proc.map(r=>[`<b style="font-family:monospace;">${escHtml(r.ticket||'—')}</b>`,`<span style="font-size:9px;word-break:break-word;white-space:normal;">${escHtml(r.objeto||'—')}</span>`,escHtml(r.abogado||'—'),escHtml(r.git?r.git.replace('GIT ',''):r.dependencia||'—'),fmtDate(r.fechaAsignacion)||'—',fmtDate(r.fechaAdjudicacion)||'—']);
+      detalles+=`<div style="margin-bottom:12px;"><div style="padding:7px 12px;background:white;border:1px solid ${PDF_BORDER};border-left:4px solid ${grupo.cols[ei]||grupo.color};border-radius:0 6px 6px 0;margin-bottom:8px;display:flex;align-items:center;gap:10px;"><span style="font-size:12px;font-weight:700;color:${PDF_NAVY};">${est.label}</span><span style="background:${PDF_NAVY};color:white;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700;">${proc.length}</span></div>${pdfTable(['Ticket','Objeto','Abogado','GIT / Dependencia','F. Asignación','F. Adjudicación'],rows,['8%','30%','16%','20%','12%','12%'])}</div>`;
+    });
   });
-  const estados=Object.entries(byEstado).sort((a,b)=>b[1].count-a[1].count);
-  const HDRS=['Estado','Cantidad','Vencidos','% del Total'];
-  const W=['auto','80px','80px','90px'];
-  const rows=estados.map(([k,v])=>[
-    `<span style="font-size:8.5px;">${escHtml(v.label)}</span>`,
-    `<span style="font-size:10px;font-weight:700;color:${PDF_NAVY};">${v.count}</span>`,
-    `<span style="font-size:9px;color:${v.venc>0?PDF_RED:PDF_GREEN};font-weight:700;">${v.venc}</span>`,
-    `<span style="font-size:9px;">${Math.round(v.count/total*100)}%</span>`,
-  ]);
-  const puntos=[
-    {tipo:'info', txt:`Total de procesos: <strong>${total}</strong> distribuidos en <strong>${estados.length}</strong> estados distintos.`},
-    vencidos.length>0
-      ?{tipo:'warn',txt:`<strong>${vencidos.length}</strong> expedientes vencidos requieren atención inmediata.`}
-      :{tipo:'ok',  txt:`Sin expedientes vencidos en este período.`},
-    {tipo:'info', txt:`Estado más frecuente: <strong>${estados[0]?.[1]?.label||'—'}</strong> con ${estados[0]?.[1]?.count||0} procesos.`},
-  ];
-  abrirPdf(`
-    ${pdfHeader('Procesos por Estado',`Distribución por estado de trámite · ${fechaHoy} · ${hora}`)}
-    ${pdfIntroBox(`Distribución de <strong>${total} procesos</strong> según su estado actual de trámite.`)}
-    ${pdfSectionTitle('📊','Indicadores Generales',true)}
-    ${pdfKpiGrid([
-      {label:'Total procesos', value:total,          color:PDF_NAVY,   sub:'Registros totales'},
-      {label:'Activos',        value:activos.length, color:PDF_SKY,    sub:'En trámite'},
-      {label:'Vencidos',       value:vencidos.length,color:vencidos.length>0?PDF_RED:PDF_GREEN, sub:'Superaron F. Máx.'},
-      {label:'Estados',        value:estados.length, color:PDF_PURPLE, sub:'Distintos'},
-    ])}
-    ${pdfSectionTitle('🚦','Nivel de Riesgo Contractual')}
-    ${pdfSemaforoCumplimiento(nivelRiesgo,colorRiesgo,`${vencidos.length} expedientes en riesgo inmediato`)}
-    ${pdfSectionTitle('🔄','Distribución por Estado')}
-    ${pdfTable(HDRS,rows,W)}
-    ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
-    ${pdfConclusions(puntos)}
-    ${pdfSectionTitle('📝','Recomendaciones y Observaciones')}
-    <div style="border:1.5px solid ${PDF_NAVY};border-radius:10px;overflow:hidden;margin-bottom:20px;page-break-inside:avoid;break-inside:avoid;">
-      <div style="background:${PDF_NAVY};padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
-        <span style="color:white;font-size:11px;font-weight:700;">Recomendaciones y Observaciones</span>
-        <span style="color:${PDF_GOLD};font-size:10px;">Fecha: ${fechaHoy}</span>
-      </div>
-      <div style="background:white;padding:0;">
-        <div contenteditable="true" id="rec-box-${Date.now()}"
-          style="min-height:160px;padding:16px 18px;font-size:11px;color:#1E293B;line-height:1.8;outline:none;font-family:Arial,sans-serif;"
-          onkeydown="event.stopPropagation()">
-        </div>
-      </div>
-      <div style="background:#F8FAFC;border-top:1px solid #E2E8F0;padding:10px 16px;display:flex;align-items:center;gap:12px;">
-        <span style="font-size:10px;color:${PDF_GRAY};">Elaborado por:</span>
-        <div style="flex:1;border-bottom:1px solid #CBD5E1;height:20px;"></div>
-      </div>
-    </div>
-    ${pdfFooter()}
-  `,'Procesos por Estado');
+  abrirPdf(`${pdfHeader('Informe por Estado de los Procesos','Distribución y detalle de procesos según su estado actual de gestión')}${pdfIntroBox('Este informe agrupa todos los procesos registrados según su estado actual de avance, diferenciando entre asesorías previas y procesos contractuales. Permite identificar en qué etapa se concentra la mayor carga, detectar estados que representen cuellos de botella, y hacer seguimiento al progreso general de la actividad contractual del Ministerio.')}${pdfSectionTitle('📊','Distribución de Asesorías Previas por Estado')}${pdfTable(['Estado','N° Procesos','% del Total','Distribución'],resRowsA,['35%','15%','12%','38%'])}${pdfSectionTitle('📊','Distribución de Procesos Contractuales por Estado')}${pdfTable(['Estado','N° Procesos','% del Total','Distribución'],resRowsC,['35%','15%','12%','38%'])}${pdfSectionTitle('📋','Análisis y Conclusiones')}${conclusiones}${pdfSectionTitle('📁','Detalle de Procesos por Estado')}${detalles}${pdfFooter()}`,'Informe por Estado');
 }
 
-function pdfVencimiento(){
-  if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
-  const records=window._records||[];
-  const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+function pdfVencimiento(records){
   const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado));
-  const conFecha=activos.filter(r=>getFechaAlerta(r));
-  const vencidos=conFecha.filter(r=>diasHasta(getFechaAlerta(r))<0);
-  const hoy=conFecha.filter(r=>diasHasta(getFechaAlerta(r))===0);
-  const prox3=conFecha.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;});
-  const prox7=conFecha.filter(r=>{const d=diasHasta(getFechaAlerta(r));return d>=4&&d<=7;});
-  const totalAlerta=vencidos.length+hoy.length+prox3.length;
-  let nivelRiesgo,colorRiesgo;
-  if(vencidos.length>3){nivelRiesgo='ALTO';colorRiesgo=PDF_RED;}
-  else if(vencidos.length>0||hoy.length>0){nivelRiesgo='MEDIO';colorRiesgo=PDF_ORANGE;}
-  else{nivelRiesgo='BAJO';colorRiesgo=PDF_GREEN;}
-  const HDRS=['N° Exp.','Tipo','Objeto / Descripción','Abogado','Estado','F. Alerta','Último Avance','Días'];
-  const W=['52px','50px','155px','82px','75px','58px','138px','48px'];
-  const mkRow=r=>[
-    `<b style="font-family:monospace;font-size:9px;font-weight:700;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
-    `<span style="font-size:8px;">${escHtml(r.tipo==='asesoria'?'Asesoría':'Contractual')}</span>`,
-    `<span style="font-size:7.5px;line-height:1.35;word-break:break-word;white-space:normal;">${escHtml(r.objeto||'—')}</span>`,
-    `<span style="font-size:8px;">${escHtml(r.abogado||'—')}</span>`,
-    `<span style="font-size:7px;padding:2px 4px;border-radius:4px;background:#F1F5F9;color:#1E293B;display:inline-block;">${escHtml(getEstado(r.tipo,r.estado).label||r.estado||'—')}</span>`,
-    pdfFechaAlerta(r),
-    pdfAvanceProc(r),
-    _diasTranscurridos(r.fechaAsignacion),
-  ];
-  const puntos=[
-    {tipo:totalAlerta>0?'alert':'ok',txt:totalAlerta>0?`Total en alerta inmediata: <strong>${totalAlerta} expedientes</strong>.`:`Sin expedientes en alerta de vencimiento.`},
-    vencidos.length>0?{tipo:'alert',txt:`<strong>${vencidos.length}</strong> expediente(s) VENCIDOS — superaron la fecha máxima de gestión.`}:{tipo:'ok',txt:`Sin expedientes vencidos.`},
-    hoy.length>0?{tipo:'warn',txt:`<strong>${hoy.length}</strong> expediente(s) vencen HOY — requieren acción inmediata.`}:{tipo:'ok',txt:`Sin vencimientos hoy.`},
-    prox3.length>0?{tipo:'warn',txt:`<strong>${prox3.length}</strong> expediente(s) vencen en los próximos 3 días hábiles.`}:{tipo:'ok',txt:`Sin vencimientos en los próximos 3 días.`},
-  ];
+  const conFecha=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r));
+  const sinFecha=activos.filter(r=>!getFechaAlerta(r));
+
+  const vencidos=conFecha.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&diasHasta(getFechaAlerta(r))<0)
+    .sort((a,b)=>getFechaAlerta(a).localeCompare(getFechaAlerta(b)));
+  const hoy=conFecha.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&diasHasta(getFechaAlerta(r))===0);
+  const prox3=conFecha.filter(r=>{if(estadoSinAlerta(r.tipo,r.estado))return false;const d=diasHasta(getFechaAlerta(r));return d>=1&&d<=3;})
+    .sort((a,b)=>getFechaAlerta(a).localeCompare(getFechaAlerta(b)));
+  const prox7=conFecha.filter(r=>{if(estadoSinAlerta(r.tipo,r.estado))return false;const d=diasHasta(getFechaAlerta(r));return d>=4&&d<=7;})
+    .sort((a,b)=>getFechaAlerta(a).localeCompare(getFechaAlerta(b)));
+
+  const totalRiesgo=vencidos.length+hoy.length+prox3.length;
+  const nivelRiesgo=totalRiesgo>10?'CRÍTICO':totalRiesgo>5?'ALTO':totalRiesgo>2?'MODERADO':'BAJO';
+  const colorRiesgo={'CRÍTICO':PDF_RED,'ALTO':'#C2410C','MODERADO':'#D97706','BAJO':PDF_GREEN}[nivelRiesgo];
+
+  function alertRows(proc){
+    return proc.map(r=>{
+      const fechaA=getFechaAlerta(r);
+      const d=diasHasta(fechaA);
+      const esFMax=!!r.fechaMaxGestion;
+      const est=getEstado(r.tipo,r.estado);
+      const tipoLabel=r.tipo==='contractual'?'Contractual':'Asesoría';
+      const tipoBg=r.tipo==='contractual'?'#CFFAFE':'#E0F2FE';
+      const tipoColor=r.tipo==='contractual'?PDF_TEAL:PDF_SKY;
+      const situacion=d<0
+        ?`<b style="color:${PDF_RED};">⚠ ${Math.abs(d)}d vencido</b>`
+        :d===0
+        ?`<b style="color:${PDF_RED};">🔴 Vence hoy</b>`
+        :`<span style="color:#C2410C;font-weight:700;">${d}d restante${d!==1?'s':''}</span>`;
+      return [
+        `<b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
+        `<span style="padding:1px 6px;border-radius:8px;font-size:10px;background:${tipoBg};color:${tipoColor};font-weight:700;">${tipoLabel}</span>`,
+        `<span style="font-size:9px;word-break:break-word;white-space:normal;">${escHtml(r.objeto||'—')}</span>`,
+        escHtml(r.abogado||'—'),
+        `<span style="font-size:10px;">${est.label}</span>`,
+        `<b style="font-family:monospace;font-size:10px;">${fmtDate(fechaA)||'—'}</b><br><span style="font-size:9px;color:var(--muted);">${esFMax?'F. Máx. Gestión':'F. Adjudicación'}</span>`,
+        situacion,
+      ];
+    });
+  }
+
+  const concls=[];
+  concls.push(pdfAlertBox(
+    `Nivel de riesgo contractual: <strong style="color:${colorRiesgo};">${nivelRiesgo}</strong> — Se identifican <strong>${totalRiesgo} proceso${totalRiesgo!==1?'s':''}</strong> en situación de riesgo inmediato (vencidos, que vencen hoy o en los próximos 3 días).`,
+    nivelRiesgo==='BAJO'?'ok':nivelRiesgo==='MODERADO'?'warn':'danger'
+  ));
+  if(vencidos.length>0){
+    const abogadosVenc=[...new Set(vencidos.map(r=>r.abogado).filter(Boolean))];
+    concls.push(pdfAlertBox(`<strong>${vencidos.length} proceso${vencidos.length!==1?'s':''}</strong> han superado su fecha límite. Responsables: <strong>${abogadosVenc.join(', ')||'sin asignar'}</strong>. Acción requerida: prórroga, cierre o reasignación urgente.`,'danger'));
+  }
+  if(hoy.length>0) concls.push(pdfAlertBox(`<strong>${hoy.length} proceso${hoy.length!==1?'s':''}</strong> vence${hoy.length===1?'':'n'} hoy. Validar estado antes del cierre de jornada.`,'danger'));
+  if(prox3.length>0) concls.push(pdfAlertBox(`<strong>${prox3.length} proceso${prox3.length!==1?'s':''}</strong> vence${prox3.length===1?'':'n'} en los próximos 3 días. Priorizar en la agenda del equipo.`,'warn'));
+  if(prox7.length>0) concls.push(pdfAlertBox(`<strong>${prox7.length} proceso${prox7.length!==1?'s':''}</strong> vence${prox7.length===1?'':'n'} entre 4 y 7 días. Incluir en seguimiento semanal.`,'warn'));
+  if(sinFecha.length>0) concls.push(pdfAlertBox(`<strong>${sinFecha.length} proceso${sinFecha.length!==1?'s':''} activo${sinFecha.length!==1?'s':''}</strong> sin fecha de gestión registrada. Completar esta información para el seguimiento oportuno.`,'warn'));
+  if(totalRiesgo===0&&sinFecha.length===0) concls.push(pdfAlertBox('✅ No se identifican procesos en situación de riesgo inmediato. Todos los procesos activos se encuentran dentro de sus plazos.','ok'));
+
+  const cols=['7%','10%','26%','15%','13%','13%','12%'];
+  const hdrs=['Ticket','Tipo','Objeto','Abogado','Estado','Fecha Límite','Situación'];
+
+  const sinFechaRows=sinFecha.map(r=>[
+    `<b style="font-family:monospace;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
+    `<span style="padding:1px 6px;border-radius:8px;font-size:10px;background:${r.tipo==='contractual'?'#CFFAFE':'#E0F2FE'};color:${r.tipo==='contractual'?PDF_TEAL:PDF_SKY};font-weight:700;">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,
+    `<span style="font-size:9px;word-break:break-word;white-space:normal;">${escHtml(r.objeto||'—')}</span>`,
+    escHtml(r.abogado||'—'),
+    `<span style="font-size:10px;">${getEstado(r.tipo,r.estado).label}</span>`,
+  ]);
+
   abrirPdf(`
-    ${pdfHeader('Alertas de Vencimiento',`Expedientes próximos a vencer o vencidos · ${fechaHoy} · ${hora}`)}
-    ${pdfIntroBox(`Expedientes con <strong>fecha máxima de gestión vencida o próxima a vencer</strong>. Total en alerta: <strong>${totalAlerta}</strong>.`)}
-    ${pdfSectionTitle('📊','Indicadores Generales',true)}
+    ${pdfHeader('Informe de Alertas de Vencimiento','Procesos en riesgo que requieren atención prioritaria · '+new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'}))}
+    ${pdfIntroBox('Este informe identifica los procesos con fecha de gestión próxima a vencer o ya vencida. Se clasifican usando la misma lógica del semáforo de la aplicación: prioriza la Fecha Máxima de Gestión y, si no existe, usa la Fecha de Adjudicación. Permite priorizar la atención del equipo responsable.')}
     ${pdfKpiGrid([
-      {label:'🔴 Vencidos',   value:vencidos.length, color:vencidos.length>0?PDF_RED:PDF_GREEN,    sub:'Superaron F. Máx.'},
-      {label:'⚠️ Vencen hoy', value:hoy.length,      color:hoy.length>0?'#DC2626':PDF_GREEN,       sub:'Urgente'},
-      {label:'⏰ En 3 días',  value:prox3.length,    color:prox3.length>0?PDF_ORANGE:PDF_GREEN,    sub:'Alta prioridad'},
-      {label:'📅 En 7 días',  value:prox7.length,    color:prox7.length>0?'#D97706':PDF_GREEN,     sub:'Prioridad media'},
+      {label:'Procesos Vencidos',   value:vencidos.length, color:PDF_RED,     sub:'Acción inmediata'},
+      {label:'Vencen Hoy',          value:hoy.length,      color:'#DC2626',   sub:'Urgente'},
+      {label:'Próximos 3 días',     value:prox3.length,    color:'#EA580C',   sub:'Alta prioridad'},
+      {label:'Próximos 7 días',     value:prox7.length,    color:'#D97706',   sub:'En seguimiento'},
+      {label:'Sin Fecha Registrada',value:sinFecha.length,  color:PDF_GRAY,   sub:'Completar info'},
+      {label:'Total en Riesgo',     value:totalRiesgo,     color:colorRiesgo, sub:'Vencidos+Hoy+3d'},
     ])}
-    ${pdfSectionTitle('🚦','Nivel de Riesgo Contractual')}
-    ${pdfSemaforoCumplimiento(nivelRiesgo,colorRiesgo,`${totalAlerta} expedientes en alerta`)}
-    ${vencidos.length?`${pdfSectionTitle('🔴','Expedientes Vencidos')}${pdfTable(HDRS,vencidos.map(mkRow),W)}`:''}
-    ${hoy.length?`${pdfSectionTitle('⚠️','Vencen Hoy')}${pdfTable(HDRS,hoy.map(mkRow),W)}`:''}
-    ${prox3.length?`${pdfSectionTitle('⏰','Vencen en 3 Días Hábiles')}${pdfTable(HDRS,prox3.map(mkRow),W)}`:''}
-    ${prox7.length?`${pdfSectionTitle('📅','Vencen en 7 Días Hábiles')}${pdfTable(HDRS,prox7.map(mkRow),W)}`:''}
-    ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
-    ${pdfConclusions(puntos)}
-    ${pdfSectionTitle('📝','Recomendaciones y Observaciones')}
-    <div style="border:1.5px solid ${PDF_NAVY};border-radius:10px;overflow:hidden;margin-bottom:20px;page-break-inside:avoid;break-inside:avoid;">
-      <div style="background:${PDF_NAVY};padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
-        <span style="color:white;font-size:11px;font-weight:700;">Recomendaciones y Observaciones</span>
-        <span style="color:${PDF_GOLD};font-size:10px;">Fecha: ${fechaHoy}</span>
-      </div>
-      <div style="background:white;padding:0;">
-        <div contenteditable="true" id="rec-box-${Date.now()}"
-          style="min-height:160px;padding:16px 18px;font-size:11px;color:#1E293B;line-height:1.8;outline:none;font-family:Arial,sans-serif;"
-          onkeydown="event.stopPropagation()"></div>
-      </div>
-      <div style="background:#F8FAFC;border-top:1px solid #E2E8F0;padding:10px 16px;display:flex;align-items:center;gap:12px;">
-        <span style="font-size:10px;color:${PDF_GRAY};">Elaborado por:</span>
-        <div style="flex:1;border-bottom:1px solid #CBD5E1;height:20px;"></div>
-      </div>
-    </div>
+    ${pdfSectionTitle('📋','Análisis y Recomendaciones')}${concls.join('')}
+    ${vencidos.length?pdfSectionTitle('🔴','Procesos Vencidos — Requieren Acción Inmediata')
+      +'<div style="background:#FEF2F2;border:1.5px solid #FECACA;border-radius:8px;padding:10px 16px;margin-bottom:12px;font-size:11px;color:#991B1B;font-weight:600;">⚠ Estos procesos han superado su Fecha Máxima de Gestión o Fecha de Adjudicación. Requieren gestión urgente.</div>'
+      +pdfTable(hdrs,alertRows(vencidos),cols):''}
+    ${hoy.length?pdfSectionTitle('🔴','Vencen Hoy')
+      +pdfTable(hdrs,alertRows(hoy),cols):''}
+    ${prox3.length?pdfSectionTitle('🟠','Vencen en los Próximos 3 Días')
+      +pdfTable(hdrs,alertRows(prox3),cols):''}
+    ${prox7.length?pdfSectionTitle('🟡','Vencen entre 4 y 7 Días')
+      +pdfTable(hdrs,alertRows(prox7),cols):''}
+    ${sinFecha.length?pdfSectionTitle('⚪','Procesos Activos Sin Fecha de Gestión Registrada')
+      +'<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 16px;margin-bottom:12px;font-size:11px;color:#64748B;">Estos procesos no tienen Fecha Máxima de Gestión ni Fecha de Adjudicación registrada. Se recomienda completar esta información para incluirlos en el seguimiento.</div>'
+      +pdfTable(['Ticket','Tipo','Objeto','Abogado','Estado'],sinFechaRows,['7%','10%','43%','20%','18%']):''}
     ${pdfFooter()}
   `,'Alertas de Vencimiento');
 }
@@ -6066,6 +5962,8 @@ function generarInformeIndividual(){
     pdfModIndividual(abogado);
   } else if(_infModulo==='liquidaciones'){
     pdfLiqIndividual(abogado);
+  } else if(_infModulo==='liquidaciones'){
+    pdfLiqIndividual(abogado);
   } else if(_infModulo==='pendientes-global'){
     _generarPdfPendientesAbogado(abogado);
   }
@@ -6075,210 +5973,77 @@ function generarInformeIndividual(){
 function pdfModPorAbogado(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
   const records=window._modRecords||[];
-  if(!records.length){alert('No hay modificaciones registradas.');return;}
-  const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
-  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
-  const vencidos=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
-  const total=records.length;
-  const pctFin=total?Math.round((total-activos.length)/total*100):0;
-  let nivelRiesgo,colorRiesgo;
-  if(vencidos.length>3){nivelRiesgo='ALTO';colorRiesgo=PDF_RED;}
-  else if(vencidos.length>0){nivelRiesgo='MEDIO';colorRiesgo=PDF_ORANGE;}
-  else{nivelRiesgo='BAJO';colorRiesgo=PDF_GREEN;}
-  const abogados=[...new Set(records.map(r=>r.abogado).filter(Boolean))].sort();
-  const HDRS=['Abogado','Modificaciones','Activas','Vencidas','% Avance'];
-  const W=['auto','90px','80px','80px','80px'];
-  const rows=abogados.map(ab=>{
-    const rAb=records.filter(r=>normStr(r.abogado)===normStr(ab));
-    const actAb=rAb.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
-    const vAb=actAb.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
-    const pct=rAb.length?Math.round((rAb.length-actAb.length)/rAb.length*100):0;
-    return [`<b style="font-size:8.5px;">${escHtml(ab)}</b>`,
-      `<span style="font-size:9px;font-weight:700;color:${PDF_NAVY};">${rAb.length}</span>`,
-      `<span style="font-size:9px;">${actAb.length}</span>`,
-      `<span style="font-size:9px;color:${vAb.length>0?PDF_RED:PDF_GREEN};font-weight:700;">${vAb.length}</span>`,
-      `<span style="font-size:9px;color:${pct>=70?PDF_GREEN:PDF_ORANGE};font-weight:600;">${pct}%</span>`];
+  if(!records.length){alert('No hay modificaciones para generar el informe.');return;}
+  const fechaHoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
+  const abogados=filtrarAbogadosRegistrados([...new Set(records.map(r=>r.abogado).filter(Boolean))].sort());
+  const metricas=abogados.map(ab=>{
+    const proc=records.filter(r=>r.abogado===ab);
+    const fin=proc.filter(r=>estadoIsTerminal(r.tipo,r.estado));
+    const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado));
+    const venc=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
+    return{ab,proc,fin,activos,venc};
   });
-  const puntos=[
-    {tipo:'info', txt:`Total de modificaciones: <strong>${total}</strong> (${activos.length} activas, ${total-activos.length} finalizadas).`},
-    vencidos.length>0?{tipo:'warn',txt:`<strong>${vencidos.length}</strong> modificaciones vencidas — requieren atención.`}:{tipo:'ok',txt:`Sin modificaciones vencidas.`},
-    {tipo:'info', txt:`Avance general: <strong>${pctFin}%</strong> finalizadas.`},
-  ];
-  abrirPdf(`
-    ${pdfHeader('Modificaciones por Abogado',`Distribución de modificaciones por abogado · ${fechaHoy} · ${hora}`)}
-    ${pdfIntroBox(`Distribución de <strong>${total} modificaciones</strong> entre <strong>${abogados.length} abogados</strong>.`)}
-    ${pdfSectionTitle('📊','Indicadores Generales',true)}
-    ${pdfKpiGrid([
-      {label:'Total modificaciones', value:total,          color:PDF_PURPLE, sub:'Registros totales'},
-      {label:'Activas',              value:activos.length, color:PDF_SKY,    sub:'En trámite'},
-      {label:'Vencidas',             value:vencidos.length,color:vencidos.length>0?PDF_RED:PDF_GREEN, sub:'Superaron F. Máx.'},
-      {label:'% Finalizado',         value:pctFin+'%',     color:pctFin>=70?PDF_GREEN:PDF_ORANGE, sub:'Del total'},
-    ])}
-    ${pdfSectionTitle('🚦','Nivel de Riesgo Contractual')}
-    ${pdfSemaforoCumplimiento(nivelRiesgo,colorRiesgo,`${vencidos.length} modificaciones en riesgo inmediato`)}
-    ${pdfSectionTitle('✏️','Carga de Trabajo por Abogado')}
-    ${pdfTable(HDRS,rows,W)}
-    ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
-    ${pdfConclusions(puntos)}
-    ${pdfSectionTitle('📝','Recomendaciones y Observaciones')}
-    <div style="border:1.5px solid ${PDF_NAVY};border-radius:10px;overflow:hidden;margin-bottom:20px;page-break-inside:avoid;break-inside:avoid;">
-      <div style="background:${PDF_NAVY};padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
-        <span style="color:white;font-size:11px;font-weight:700;">Recomendaciones y Observaciones</span>
-        <span style="color:${PDF_GOLD};font-size:10px;">Fecha: ${fechaHoy}</span>
-      </div>
-      <div style="background:white;padding:0;">
-        <div contenteditable="true" id="rec-box-${Date.now()}"
-          style="min-height:160px;padding:16px 18px;font-size:11px;color:#1E293B;line-height:1.8;outline:none;font-family:Arial,sans-serif;"
-          onkeydown="event.stopPropagation()">
-        </div>
-      </div>
-      <div style="background:#F8FAFC;border-top:1px solid #E2E8F0;padding:10px 16px;display:flex;align-items:center;gap:12px;">
-        <span style="font-size:10px;color:${PDF_GRAY};">Elaborado por:</span>
-        <div style="flex:1;border-bottom:1px solid #CBD5E1;height:20px;"></div>
-      </div>
-    </div>
-    ${pdfFooter()}
-  `,'Modificaciones por Abogado');
+  const resRows=metricas.map(m=>[
+    `<b style="color:${PDF_NAVY};">${escHtml(m.ab)}</b>`,
+    m.proc.length,
+    m.proc.filter(r=>r.tipo==='asesoria').length,
+    m.proc.filter(r=>r.tipo==='contractual').length,
+    m.fin.length,m.activos.length,
+    m.venc.length>0?`<span style="color:${PDF_RED};font-weight:700;">⚠️ ${m.venc.length}</span>`:`<span style="color:${PDF_GREEN};">✅ 0</span>`
+  ]);
+  let detalles='';
+  metricas.forEach(m=>{
+    if(!m.proc.length)return;
+    const rows=m.proc.sort((a,b)=>{const na=parseFloat(a.ticket||''),nb=parseFloat(b.ticket||'');return !isNaN(na)&&!isNaN(nb)?na-nb:0;}).map(r=>{
+      const est=getEstado(r.tipo,r.estado);
+      const fa=getFechaAlerta(r);const d=fa&&!estadoIsTerminal(r.tipo,r.estado)?diasHasta(fa):null;
+      const alerta=d===null?(estadoIsTerminal(r.tipo,r.estado)?'Fin.':'—'):d<0?`<b style="color:${PDF_RED};">🔴 ${Math.abs(d)}d</b>`:d===0?`<b style="color:${PDF_RED};">Hoy</b>`:d<=3?`<span style="color:#C2410C;">🟠${d}d</span>`:d<=7?`<span style="color:#D97706;">🟡${d}d</span>`:'✅';
+      return[`<b style="font-family:monospace;">${escHtml(r.ticket||'—')}</b>`,`<span style="font-size:10px;">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,`<span style="font-size:9px;word-break:break-word;white-space:normal;">${escHtml(r.objeto||'—')}</span>`,`<span style="font-size:10px;">${getEstado(r.tipo,r.estado).label}</span>`,fmtDate(fa)||'—',alerta];
+    });
+    detalles+=`<div style="margin-bottom:14px;"><div style="background:${PDF_BG};border-left:4px solid #7C3AED;border-radius:0 8px 8px 0;padding:10px 16px;margin-bottom:8px;"><b style="color:${PDF_NAVY};">⚖️ ${escHtml(m.ab)}</b> — ${m.proc.length} modificaciones · ${m.fin.length} finalizadas${m.venc.length?` · <span style="color:${PDF_RED};">⚠️ ${m.venc.length} vencidas</span>`:''}</div>${pdfTable(['Ticket','Tipo','Objeto','Estado','F. Límite','Alerta'],rows,['8%','11%','36%','16%','12%','11%'])}</div>`;
+  });
+  abrirPdf(`${pdfHeader('Informe de Modificaciones por Abogado','Distribución y detalle de modificaciones por abogado responsable · '+fechaHoy)}${pdfIntroBox('Este informe presenta la distribución de modificaciones contractuales por abogado, incluyendo indicadores de carga, procesos finalizados, activos y alertas de vencimiento.')}${pdfSectionTitle('📊','Resumen por Abogado')}${pdfTable(['Abogado','Total','Asesorías','Contractuales','Finalizados','Activos','Vencidos'],resRows,['25%','8%','10%','12%','10%','8%','12%'])}${pdfSectionTitle('📁','Detalle por Abogado')}${detalles}${pdfFooter()}`,'Modificaciones por Abogado');
 }
 
 function pdfModEstado(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
   const records=window._modRecords||[];
-  if(!records.length){alert('No hay modificaciones registradas.');return;}
-  const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
-  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
-  const vencidos=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
-  const total=records.length;
-  let nivelRiesgo,colorRiesgo;
-  if(vencidos.length>3){nivelRiesgo='ALTO';colorRiesgo=PDF_RED;}
-  else if(vencidos.length>0){nivelRiesgo='MEDIO';colorRiesgo=PDF_ORANGE;}
-  else{nivelRiesgo='BAJO';colorRiesgo=PDF_GREEN;}
-  const byEstado={};
-  records.forEach(r=>{
-    const key=r.estado||'sin-estado';
-    if(!byEstado[key]) byEstado[key]={label:getEstado(r.tipo,key).label||key,count:0,venc:0};
-    byEstado[key].count++;
-    if(!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0) byEstado[key].venc++;
+  if(!records.length){alert('No hay modificaciones para generar el informe.');return;}
+  const fechaHoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
+  const asesorias=records.filter(r=>r.tipo==='asesoria');
+  const contractuales=records.filter(r=>r.tipo==='contractual');
+  const statsA=ESTADOS.asesoria.map(e=>({...e,count:asesorias.filter(r=>r.estado===e.value).length}));
+  const statsC=ESTADOS.contractual.map(e=>({...e,count:contractuales.filter(r=>r.estado===e.value).length}));
+  let detalles='';
+  [{titulo:'Asesoría Previa',color:PDF_SKY,stats:statsA,proc:asesorias},{titulo:'Proceso Contractual',color:PDF_TEAL,stats:statsC,proc:contractuales}].forEach(g=>{
+    detalles+=`<div style="background:${g.color}22;border-radius:8px;padding:10px 16px;margin:16px 0 10px;"><b style="color:${g.color};">${g.titulo} — ${g.proc.length}</b></div>`;
+    g.stats.forEach(est=>{
+      const proc=g.proc.filter(r=>r.estado===est.value);if(!proc.length)return;
+      const rows=proc.map(r=>[`<b style="font-family:monospace;">${escHtml(r.ticket||'—')}</b>`,`<span style="font-size:9px;word-break:break-word;white-space:normal;">${escHtml(r.objeto||'—')}</span>`,escHtml(r.abogado||'—'),fmtDate(r.fechaMaxGestion||r.fechaAdjudicacion)||'—']);
+      detalles+=`<div style="margin-bottom:14px;"><div style="padding:6px 12px;background:white;border-left:4px solid ${g.color};margin-bottom:6px;"><b>${est.label}</b> <span style="background:${PDF_NAVY};color:white;padding:1px 7px;border-radius:10px;font-size:10px;">${proc.length}</span></div>${pdfTable(['Ticket','Objeto','Abogado','F. Límite'],rows,['8%','44%','28%','18%'])}</div>`;
+    });
   });
-  const estados=Object.entries(byEstado).sort((a,b)=>b[1].count-a[1].count);
-  const HDRS=['Estado','Cantidad','Vencidas','% del Total'];
-  const W=['auto','80px','80px','90px'];
-  const rows=estados.map(([k,v])=>[
-    `<span style="font-size:8.5px;">${escHtml(v.label)}</span>`,
-    `<span style="font-size:10px;font-weight:700;color:${PDF_NAVY};">${v.count}</span>`,
-    `<span style="font-size:9px;color:${v.venc>0?PDF_RED:PDF_GREEN};font-weight:700;">${v.venc}</span>`,
-    `<span style="font-size:9px;">${Math.round(v.count/total*100)}%</span>`,
-  ]);
-  const puntos=[
-    {tipo:'info', txt:`Total de modificaciones: <strong>${total}</strong> en <strong>${estados.length}</strong> estados distintos.`},
-    vencidos.length>0?{tipo:'warn',txt:`<strong>${vencidos.length}</strong> modificaciones vencidas.`}:{tipo:'ok',txt:`Sin modificaciones vencidas.`},
-    {tipo:'info', txt:`Estado más frecuente: <strong>${estados[0]?.[1]?.label||'—'}</strong> con ${estados[0]?.[1]?.count||0} modificaciones.`},
-  ];
-  abrirPdf(`
-    ${pdfHeader('Modificaciones por Estado',`Distribución por estado de trámite · ${fechaHoy} · ${hora}`)}
-    ${pdfIntroBox(`Distribución de <strong>${total} modificaciones</strong> según su estado actual.`)}
-    ${pdfSectionTitle('📊','Indicadores Generales',true)}
-    ${pdfKpiGrid([
-      {label:'Total modif.',  value:total,          color:PDF_PURPLE, sub:'Registros totales'},
-      {label:'Activas',       value:activos.length, color:PDF_SKY,    sub:'En trámite'},
-      {label:'Vencidas',      value:vencidos.length,color:vencidos.length>0?PDF_RED:PDF_GREEN, sub:'Superaron F. Máx.'},
-      {label:'Estados',       value:estados.length, color:PDF_PURPLE, sub:'Distintos'},
-    ])}
-    ${pdfSectionTitle('🚦','Nivel de Riesgo Contractual')}
-    ${pdfSemaforoCumplimiento(nivelRiesgo,colorRiesgo,`${vencidos.length} modificaciones en riesgo inmediato`)}
-    ${pdfSectionTitle('🔄','Distribución por Estado')}
-    ${pdfTable(HDRS,rows,W)}
-    ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
-    ${pdfConclusions(puntos)}
-    ${pdfSectionTitle('📝','Recomendaciones y Observaciones')}
-    <div style="border:1.5px solid ${PDF_NAVY};border-radius:10px;overflow:hidden;margin-bottom:20px;page-break-inside:avoid;break-inside:avoid;">
-      <div style="background:${PDF_NAVY};padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
-        <span style="color:white;font-size:11px;font-weight:700;">Recomendaciones y Observaciones</span>
-        <span style="color:${PDF_GOLD};font-size:10px;">Fecha: ${fechaHoy}</span>
-      </div>
-      <div style="background:white;padding:0;">
-        <div contenteditable="true" id="rec-box-${Date.now()}"
-          style="min-height:160px;padding:16px 18px;font-size:11px;color:#1E293B;line-height:1.8;outline:none;font-family:Arial,sans-serif;"
-          onkeydown="event.stopPropagation()">
-        </div>
-      </div>
-      <div style="background:#F8FAFC;border-top:1px solid #E2E8F0;padding:10px 16px;display:flex;align-items:center;gap:12px;">
-        <span style="font-size:10px;color:${PDF_GRAY};">Elaborado por:</span>
-        <div style="flex:1;border-bottom:1px solid #CBD5E1;height:20px;"></div>
-      </div>
-    </div>
-    ${pdfFooter()}
-  `,'Modificaciones por Estado');
+  abrirPdf(`${pdfHeader('Modificaciones por Estado','Distribución de modificaciones por estado actual · '+fechaHoy)}${pdfIntroBox('Modificaciones contractuales agrupadas por estado de tramitación.')}${pdfSectionTitle('📊','Distribución por Estado — Asesorías')}${pdfTable(['Estado','Cant.','%','Barras'],statsA.map(e=>[`<b>${e.label}</b>`,e.count,asesorias.length?Math.round(e.count/asesorias.length*100)+'%':'0%',e.count>0?`<div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;background:#E2E8F0;border-radius:3px;height:7px;"><div style="width:${Math.min(e.count*5,100)}%;height:100%;background:${PDF_NAVY};border-radius:3px;"></div></div><span style="font-size:9px;color:${PDF_GRAY};">${e.count}</span></div>`:'—']),['38%','10%','12%','40%'])}${pdfSectionTitle('📊','Distribución por Estado — Contractuales')}${pdfTable(['Estado','Cant.','%','Barras'],statsC.map(e=>[`<b>${e.label}</b>`,e.count,contractuales.length?Math.round(e.count/contractuales.length*100)+'%':'0%',e.count>0?`<div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;background:#E2E8F0;border-radius:3px;height:7px;"><div style="width:${Math.min(e.count*5,100)}%;height:100%;background:${PDF_NAVY};border-radius:3px;"></div></div><span style="font-size:9px;color:${PDF_GRAY};">${e.count}</span></div>`:'—']),['38%','10%','12%','40%'])}${pdfSectionTitle('📁','Detalle por Estado')}${detalles}${pdfFooter()}`,'Modificaciones por Estado');
 }
 
 function pdfModIndividual(abogado){
-  if(!abogado) abogado=prompt('Nombre del abogado:');
-  if(!abogado) return;
-  const records=(window._modRecords||[]).filter(r=>normStr(r.abogado)===normStr(abogado));
-  if(!records.length){alert(`No hay modificaciones asignadas a ${abogado}.`);return;}
-  const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
-  const activos=records.filter(r=>!estadoIsTerminal(r.tipo,r.estado));
+  const records=window._modRecords||[];
+  const proc=records.filter(r=>normStr(r.abogado)===normStr(abogado));
+  if(!proc.length){alert(`No hay modificaciones asignadas a ${abogado}.`);return;}
+  const fechaHoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
+  const activos=proc.filter(r=>!estadoIsTerminal(r.tipo,r.estado)&&!estadoSinAlerta(r.tipo,r.estado));
+  const fin=proc.filter(r=>estadoIsTerminal(r.tipo,r.estado));
   const vencidos=activos.filter(r=>!estadoSinAlerta(r.tipo,r.estado)&&getFechaAlerta(r)&&diasHasta(getFechaAlerta(r))<0);
-  const pctFin=records.length?Math.round((records.length-activos.length)/records.length*100):0;
-  let nivelRiesgo,colorRiesgo;
-  if(vencidos.length>0){nivelRiesgo='ALTO';colorRiesgo=PDF_RED;}
-  else{nivelRiesgo='BAJO';colorRiesgo=PDF_GREEN;}
-  const HDRS=['N° Exp.','Tipo','Objeto / Descripción','Estado','F. Alerta','Último Avance','Días'];
-  const W=['52px','50px','155px','80px','58px','140px','48px'];
-  const mkRow=r=>[
-    `<b style="font-family:monospace;font-size:9px;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
-    `<span style="font-size:8px;">${escHtml(r.tipo==='asesoria'?'Asesoría':'Contractual')}</span>`,
-    `<span style="font-size:7.5px;word-break:break-word;">${escHtml(r.objeto||'—')}</span>`,
-    `<span style="font-size:7px;padding:2px 4px;border-radius:4px;background:#F1F5F9;">${escHtml(getEstado(r.tipo,r.estado).label||r.estado||'—')}</span>`,
-    pdfFechaAlerta(r),
-    pdfAvanceProc(r),
-    _diasTranscurridos(r.fechaAsignacion),
-  ];
-  const puntos=[
-    {tipo:'info', txt:`<strong>${escHtml(abogado)}</strong> tiene <strong>${records.length}</strong> modificaciones: ${activos.length} activas, ${records.length-activos.length} finalizadas.`},
-    vencidos.length>0?{tipo:'warn',txt:`<strong>${vencidos.length}</strong> modificaciones vencidas.`}:{tipo:'ok',txt:`Sin modificaciones vencidas.`},
-    {tipo:'info', txt:`Avance: <strong>${pctFin}%</strong> finalizadas.`},
-  ];
-  abrirPdf(`
-    ${pdfHeader(`Modificaciones — ${escHtml(abogado)}`,`Informe individual de modificaciones · ${fechaHoy} · ${hora}`)}
-    ${pdfIntroBox(`Modificaciones asignadas al abogado <strong>${escHtml(abogado)}</strong>. Total: <strong>${records.length}</strong>.`)}
-    ${pdfSectionTitle('📊','Indicadores Generales',true)}
-    ${pdfKpiGrid([
-      {label:'Total asignadas', value:records.length, color:PDF_PURPLE, sub:'Modificaciones'},
-      {label:'Activas',         value:activos.length, color:PDF_SKY,    sub:'En trámite'},
-      {label:'Vencidas',        value:vencidos.length,color:vencidos.length>0?PDF_RED:PDF_GREEN, sub:'Superaron F. Máx.'},
-      {label:'% Avance',        value:pctFin+'%',     color:pctFin>=70?PDF_GREEN:PDF_ORANGE, sub:'Finalizadas'},
-    ])}
-    ${pdfSectionTitle('🚦','Nivel de Riesgo Contractual')}
-    ${pdfSemaforoCumplimiento(nivelRiesgo,colorRiesgo,`${vencidos.length} modificaciones en riesgo inmediato`)}
-    ${pdfSectionTitle('✏️','Modificaciones Asignadas')}
-    ${pdfTable(HDRS,records.map(mkRow),W)}
-    ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
-    ${pdfConclusions(puntos)}
-    ${pdfSectionTitle('📝','Recomendaciones y Observaciones')}
-    <div style="border:1.5px solid ${PDF_NAVY};border-radius:10px;overflow:hidden;margin-bottom:20px;page-break-inside:avoid;break-inside:avoid;">
-      <div style="background:${PDF_NAVY};padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
-        <span style="color:white;font-size:11px;font-weight:700;">Recomendaciones y Observaciones</span>
-        <span style="color:${PDF_GOLD};font-size:10px;">Fecha: ${fechaHoy}</span>
-      </div>
-      <div style="background:white;padding:0;">
-        <div contenteditable="true" id="rec-box-${Date.now()}"
-          style="min-height:160px;padding:16px 18px;font-size:11px;color:#1E293B;line-height:1.8;outline:none;font-family:Arial,sans-serif;"
-          onkeydown="event.stopPropagation()">
-        </div>
-      </div>
-      <div style="background:#F8FAFC;border-top:1px solid #E2E8F0;padding:10px 16px;display:flex;align-items:center;gap:12px;">
-        <span style="font-size:10px;color:${PDF_GRAY};">Elaborado por:</span>
-        <div style="flex:1;border-bottom:1px solid #CBD5E1;height:20px;"></div>
-      </div>
-    </div>
-    ${pdfFooter()}
-  `,`Modificaciones — ${abogado}`);
+  const rows=proc.sort((a,b)=>{const na=parseFloat(a.ticket||''),nb=parseFloat(b.ticket||'');return !isNaN(na)&&!isNaN(nb)?na-nb:0;}).map(r=>{
+    const fa=getFechaAlerta(r);const d=fa&&!estadoIsTerminal(r.tipo,r.estado)?diasHasta(fa):null;
+    const alerta=d===null?(estadoIsTerminal(r.tipo,r.estado)?'<span style="color:'+PDF_GREEN+';">Fin.</span>':'—'):d<0?`<b style="color:${PDF_RED};">🔴 ${Math.abs(d)}d</b>`:d===0?`<b style="color:${PDF_RED};">Hoy</b>`:d<=3?`<span style="color:#C2410C;">🟠${d}d</span>`:d<=7?`<span style="color:#D97706;">🟡${d}d</span>`:'✅';
+    return[`<b style="font-family:monospace;">${escHtml(r.ticket||'—')}</b>`,`<span style="font-size:10px;">${r.tipo==='contractual'?'Contractual':'Asesoría'}</span>`,`<span style="font-size:9px;word-break:break-word;white-space:normal;">${escHtml(r.objeto||'—')}</span>`,`<span style="font-size:10px;">${getEstado(r.tipo,r.estado).label}</span>`,fmtDate(r.fechaAsignacion)||'—',fmtDate(fa)||'—',alerta];
+  });
+  abrirPdf(`${pdfHeader('Informe Individual — Modificaciones',`Abogado: ${abogado} · ${fechaHoy}`)}${pdfIntroBox(`Modificaciones asignadas a <strong>${abogado}</strong>.`)}${pdfKpiGrid([{label:'Total',value:proc.length,color:PDF_NAVY,sub:'Asignadas'},{label:'Activas',value:activos.length,color:'#7C3AED',sub:'En trámite'},{label:'Finalizadas',value:fin.length,color:PDF_GREEN,sub:'Completadas'},{label:'Vencidas',value:vencidos.length,color:PDF_RED,sub:'Sin cerrar'}])}${pdfSectionTitle('📋','Detalle de Modificaciones')}${pdfTable(['Ticket','Tipo','Objeto','Estado','F. Asignación','F. Límite','Alerta'],rows,['7%','10%','30%','15%','11%','11%','11%'])}${pdfFooter()}`,'Modificaciones Individual');
 }
 
+/* ═══ INFORMES — LIQUIDACIONES ADICIONALES ═══ */
+/* ══ HELPER: Generar datos Excel para informes de liquidaciones ══ */
 function mkExcelData(records, filename){
   const ESTADO_LABEL={
     'pendiente-enviar':'Pendiente enviar proyecto','en-asesoria':'En asesoría',
@@ -6381,7 +6146,7 @@ function pdfResumenTramite(records){
 ══════════════════════════════════════════════════════════════════ */
 function pdfLiqCompetencia(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
-  // Filtrar por _liqEsPendiente
+  // Usa _liqEsPendiente
   const all=(window._liqRecords||[]).filter(r=>_liqEsPendiente(r));
 
   // Rango: hoy (00:00) hasta hoy + 5 meses (23:59)
@@ -6478,7 +6243,7 @@ function pdfLiqCompetencia(){
     ])}
 
     ${pdfSectionTitle('👤','Expedientes por Abogado')}
-    ${pdfTable(['Abogado','Expedientes en riesgo','Proporción'],abogRows,['auto','20%','20%'])}
+    ${pdfTable(['Abogado','Expedientes en riesgo','Proporción'],abogRows,['40%','20%','40%'])}
 
     ${pdfSectionTitle('📅','Detalle por Mes de Vencimiento')}
     ${bloquesMes}
@@ -6497,13 +6262,13 @@ function pdfLiqPorAbogado(){
   const fechaHoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
 
-  // Solo 'liquidado-cerrado' es estado final
+  // Usa _liqEsPendiente para filtrar
 
   const abogados=filtrarAbogadosRegistrados([...new Set(records.map(r=>r.abogado).filter(Boolean))].sort());
 
   // ── KPIs globales ──────────────────────────────────────────────
-  const totalLiq=records.filter(r=>r.tramite==='Liquidacion'&&_liqEsPendiente(r)).length;
-  const totalCie=records.filter(r=>r.tramite==='Cierre'&&_liqEsPendiente(r)).length;
+  const totalLiq=records.filter(r=>r.tramite==='Liquidacion').length;
+  const totalCie=records.filter(r=>r.tramite==='Cierre').length;
   const pendLiq=records.filter(r=>r.tramite==='Liquidacion'&&_liqEsPendiente(r)).length;
   const pendCie=records.filter(r=>r.tramite==='Cierre'&&_liqEsPendiente(r)).length;
   const finLiq=records.filter(r=>r.tramite==='Liquidacion'&&!_liqEsPendiente(r)).length;
@@ -6531,12 +6296,12 @@ function pdfLiqPorAbogado(){
     const pctColor=pct>=70?PDF_GREEN:pct>=40?'#D97706':PDF_RED;
     const alertColor=totPend>10?PDF_RED:totPend>5?PDF_ORANGE:'#D97706';
     return[
-      `<b style="color:${PDF_NAVY};font-size:9px;">${escHtml(ab)}</b>`,
-      pL>0?`<span style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:700;">${pL}</span>`:`<span style="color:#CBD5E1;font-size:9px;">—</span>`,
-      pC>0?`<span style="background:#E0F2FE;color:#0E7490;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:700;">${pC}</span>`:`<span style="color:#CBD5E1;font-size:9px;">—</span>`,
-      totPend>0?`<span style="background:${alertColor}20;color:${alertColor};padding:2px 8px;border-radius:8px;font-size:8px;font-weight:800;">${totPend}</span>`:`<span style="color:#CBD5E1;">—</span>`,
-      fL>0?`<span style="color:${PDF_GREEN};font-weight:700;font-size:9px;">${fL}</span>`:`<span style="color:#CBD5E1;">—</span>`,
-      fC>0?`<span style="color:${PDF_GREEN};font-weight:700;font-size:9px;">${fC}</span>`:`<span style="color:#CBD5E1;">—</span>`,
+      `<b style="color:${PDF_NAVY};font-size:10px;">${escHtml(ab)}</b>`,
+      pL>0?`<span style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;">${pL}</span>`:`<span style="color:#CBD5E1;font-size:10px;">—</span>`,
+      pC>0?`<span style="background:#E0F2FE;color:#0E7490;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;">${pC}</span>`:`<span style="color:#CBD5E1;font-size:10px;">—</span>`,
+      totPend>0?`<span style="background:${alertColor}20;color:${alertColor};padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800;">${totPend}</span>`:`<span style="color:#CBD5E1;">—</span>`,
+      fL>0?`<span style="color:${PDF_GREEN};font-weight:700;font-size:10px;">${fL}</span>`:`<span style="color:#CBD5E1;">—</span>`,
+      fC>0?`<span style="color:${PDF_GREEN};font-weight:700;font-size:10px;">${fC}</span>`:`<span style="color:#CBD5E1;">—</span>`,
       `<div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;background:#E2E8F0;border-radius:3px;height:8px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${pctColor};border-radius:3px;"></div></div><span style="font-size:9px;color:${pctColor};font-weight:700;min-width:30px;">${pct}%</span></div>`,
     ];
   }).filter(Boolean);
@@ -6594,13 +6359,11 @@ function pdfLiqPorAbogado(){
     if(!rLiq.length&&!rCie.length) return;
 
     const mkRows=recs=>recs.map(r=>[
-      `<b style="font-family:monospace;font-size:9px;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
+      `<b style="font-family:monospace;font-size:10px;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
       `<span style="font-family:monospace;font-size:9px;color:${PDF_GRAY};">${escHtml(r.numeroProceso||'—')}</span>`,
       `<span style="font-size:9px;word-break:break-word;white-space:normal;">${escHtml(r.contratista||'—')}</span>`,
       `<span style="font-size:9px;padding:2px 7px;border-radius:8px;background:#F1F5F9;color:${PDF_NAVY};font-weight:600;">${getEstadoLiq(r.estado).label}</span>`,
       `<span style="font-family:monospace;font-size:9px;">${fmtDate(r.fechaTerminacion)||'—'}</span>`,
-      `<span style="font-family:monospace;font-size:9px;">${fmtDate(r.fechaAsignacion)||'—'}</span>`,
-      _diasTranscurridos(r.fechaAsignacion),
       pdfAvanceLiq(r),
     ]);
 
@@ -6608,23 +6371,23 @@ function pdfLiqPorAbogado(){
     <div style="margin-bottom:18px;">
       <!-- Encabezado del abogado -->
       <div style="background:${PDF_NAVY};border-radius:8px 8px 0 0;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;">
-        <b style="color:white;font-size:8px;">${escHtml(ab)}</b>
-        <span style="background:${PDF_GOLD};color:${PDF_NAVY};padding:3px 12px;border-radius:12px;font-size:9px;font-weight:700;">${rLiq.length+rCie.length} pendiente${rLiq.length+rCie.length!==1?'s':''}</span>
+        <b style="color:white;font-size:12px;">${escHtml(ab)}</b>
+        <span style="background:${PDF_GOLD};color:${PDF_NAVY};padding:3px 12px;border-radius:12px;font-size:10px;font-weight:700;">${rLiq.length+rCie.length} pendiente${rLiq.length+rCie.length!==1?'s':''}</span>
       </div>
       <div style="border:1px solid ${PDF_BORDER};border-top:none;border-radius:0 0 8px 8px;padding:14px 14px 10px;">
         ${rLiq.length?`
         <div style="margin-bottom:14px;">
-          <div style="font-size:9px;font-weight:700;color:#B45309;margin-bottom:8px;padding:5px 10px;background:#FFFBEB;border-radius:6px;border:1px solid #FDE68A;">
+          <div style="font-size:10px;font-weight:700;color:#B45309;margin-bottom:8px;padding:5px 10px;background:#FFFBEB;border-radius:6px;border:1px solid #FDE68A;">
             LIQUIDACIONES PENDIENTES — ${rLiq.length} expediente${rLiq.length!==1?'s':''}
           </div>
-          ${pdfTable(['N° Contrato','N° Proceso','Contratista / Proveedor','Estado','F. Finalización','F. Asignación','Días','Último Avance'],mkRows(rLiq),['60px','60px','auto','95px','65px','65px','55px','130px'])}
+          ${pdfTable(['N° Contrato','N° Proceso','Contratista / Proveedor','Estado','F. Finalización','Último Avance'],mkRows(rLiq),['10%','10%','28%','22%','12%','18%'])}
         </div>`:''}
         ${rCie.length?`
         <div>
-          <div style="font-size:9px;font-weight:700;color:#0E7490;margin-bottom:8px;padding:5px 10px;background:#F0FDFA;border-radius:6px;border:1px solid #99F6E4;">
+          <div style="font-size:10px;font-weight:700;color:#0E7490;margin-bottom:8px;padding:5px 10px;background:#F0FDFA;border-radius:6px;border:1px solid #99F6E4;">
             CIERRES PENDIENTES — ${rCie.length} expediente${rCie.length!==1?'s':''}
           </div>
-          ${pdfTable(['N° Contrato','N° Proceso','Contratista / Proveedor','Estado','F. Finalización','F. Asignación','Días','Último Avance'],mkRows(rCie),['60px','60px','auto','95px','65px','65px','55px','130px'])}
+          ${pdfTable(['N° Contrato','N° Proceso','Contratista / Proveedor','Estado','F. Finalización','Último Avance'],mkRows(rCie),['10%','10%','28%','22%','12%','18%'])}
         </div>`:''}
       </div>
     </div>`;
@@ -6651,25 +6414,25 @@ function pdfLiqPorAbogado(){
     <!-- ══ NIVEL DE RIESGO ═════════════════════════════════════════ -->
     ${pdfSectionTitle('🚦','Nivel de Riesgo Contractual')}
     <div style="background:${colorRiesgo}12;border:2px solid ${colorRiesgo};border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:16px;">
-      <div style="width:52px;height:52px;border-radius:50%;background:${colorRiesgo};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${iconRiesgo}</div>
+      <div style="width:52px;height:52px;border-radius:50%;background:${colorRiesgo};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${iconRiesgo}</div>
       <div>
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:${colorRiesgo};font-weight:700;">Nivel de Riesgo</div>
-        <div style="font-size:18px;font-weight:800;color:${colorRiesgo};margin:2px 0;">RIESGO ${nivelRiesgo}</div>
-        <div style="font-size:8px;color:#475569;">${pctPend}% de los expedientes pendientes de finalizar (${totalPend} de ${totalLiq+totalCie})</div>
+        <div style="font-size:22px;font-weight:800;color:${colorRiesgo};margin:2px 0;">RIESGO ${nivelRiesgo}</div>
+        <div style="font-size:11px;color:#475569;">${pctPend}% de los expedientes pendientes de finalizar (${totalPend} de ${totalLiq+totalCie})</div>
       </div>
     </div>
 
     <!-- ══ RESUMEN DE PENDIENTES POR ABOGADO ══════════════════════ -->
     ${pdfSectionTitle('📋','Resumen de Pendientes por Abogado')}
-    <p style="font-size:8px;color:${PDF_GRAY};margin-bottom:10px;">
+    <p style="font-size:11px;color:${PDF_GRAY};margin-bottom:10px;">
       La siguiente tabla muestra exclusivamente los expedientes <b>pendientes de finalizar</b>
       por cada abogado. Los expedientes ya finalizados se contabilizan en las columnas de avance.
     </p>
     ${resRows.length?pdfTable(
       ['Abogado Responsable','Liq. pendientes','Cierres pendientes','Total pendiente','Liq. finalizadas','Cierres finalizados','% Avance'],
       resRows,
-      ['auto','9%','10%','9%','10%','10%','12%']
-    ):'<p style="color:#9CA3AF;text-align:center;font-size:8px;">Sin expedientes pendientes</p>'}
+      ['22%','11%','12%','12%','12%','12%','19%']
+    ):'<p style="color:#9CA3AF;text-align:center;font-size:12px;">Sin expedientes pendientes</p>'}
 
     <!-- ══ ANÁLISIS Y RECOMENDACIONES ═════════════════════════════ -->
     ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
@@ -6677,23 +6440,16 @@ function pdfLiqPorAbogado(){
 
     <!-- ══ DETALLE POR ABOGADO (SOLO PENDIENTES) ══════════════════ -->
     ${pdfSectionTitle('📁','Detalle por Abogado — Expedientes Pendientes')}
-    <p style="font-size:8px;color:${PDF_GRAY};margin-bottom:16px;">
+    <p style="font-size:11px;color:${PDF_GRAY};margin-bottom:16px;">
       Se listan únicamente los expedientes <b>pendientes de trámite</b> (no los finalizados).
       Ordenados por número de contrato dentro de cada abogado.
     </p>
-    ${detalles||`<p style="color:#9CA3AF;text-align:center;font-size:8px;padding:20px;">No hay expedientes pendientes para ningún abogado.</p>`}
+    ${detalles||`<p style="color:#9CA3AF;text-align:center;font-size:13px;padding:20px;">No hay expedientes pendientes para ningún abogado.</p>`}
 
     ${pdfFooter()}
   `,'Liquidaciones por Abogado',mkExcelData(records,'Liquidaciones_Por_Abogado'));
 }
 
-
-/* ══ HELPER: Determina si una liquidación/cierre está pendiente ══ */
-function _liqEsPendiente(r){
-  // Estados que representan un expediente FINALIZADO (no mostrar en informes de pendientes)
-  const ESTADOS_FINALES_LIQ=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
-  return !ESTADOS_FINALES_LIQ.includes(r.estado);
-}
 
 function pdfLiqIndividual(abogado){
   const allRecords=(window._liqRecords||[]).filter(r=>normStr(r.abogado)===normStr(abogado));
@@ -6748,7 +6504,7 @@ function pdfLiqIndividual(abogado){
     nivelRiesgo='SIN ALERTA';  colorRiesgo='#F1F5F9'; colorRiesgoTexto='#475569'; colorRiesgoCirculo='#E2E8F0';
   }
   const HDRS=['N° Contrato','Contratista','Estado','F. Finalización','F. Máx. Liqu','F. Asignación','Días','Último Avance'];
-  const W=['60px','148px','80px','60px','60px','60px','46px','125px'];
+  const W=['62px','auto','82px','62px','62px','62px','58px','145px'];
   const mkRow=r=>[
     `<b style="font-family:monospace;font-size:9px;color:${PDF_NAVY};">${escHtml(r.ticket||'—')}</b>`,
     `<span style="font-size:7.5px;word-break:break-word;">${escHtml(r.contratista||'—')}</span>`,
@@ -6871,6 +6627,7 @@ function pdfLiqIndividual(abogado){
     ${pdfFooter()}
   `,`Liquidaciones — ${abogado}`);
 }
+
 function pdfLiqDependenciaIndividual(dep){
   // Solo registros CON esa dependencia y SIN git
   const allRecords=(window._liqRecords||[]).filter(r=>(r.dependencia||'').trim()===dep && !(r.git||'').trim());
@@ -6878,7 +6635,7 @@ function pdfLiqDependenciaIndividual(dep){
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
-  // Filtrar por _liqEsPendiente
+  // Usa _liqEsPendiente
 
   const liqRecs=allRecords.filter(r=>r.tramite==='Liquidacion').sort((a,b)=>(a.ticket||'').localeCompare(b.ticket||'',undefined,{numeric:true}));
   const cieRecs=allRecords.filter(r=>r.tramite==='Cierre').sort((a,b)=>(a.ticket||'').localeCompare(b.ticket||'',undefined,{numeric:true}));
@@ -6893,13 +6650,11 @@ function pdfLiqDependenciaIndividual(dep){
   const pctCieFin=cieRecs.length?Math.round(cierreCont/cieRecs.length*100):0;
 
   const mkRows=recs=>recs.map(r=>[
-    `<b style="font-family:monospace;font-size:8px;">${escHtml(r.ticket||'—')}</b>`,
-    `<span style="font-size:8px;word-break:break-word;white-space:normal;">${escHtml(r.contratista||'—')}</span>`,
-    `<span style="font-size:8px;">${escHtml(r.abogado||'—')}</span>`,
-    `<span style="font-size:8px;padding:2px 5px;border-radius:5px;background:#F1F5F9;">${getEstadoLiq(r.estado).label}</span>`,
-    `<span style="font-size:8px;font-family:monospace;">${fmtDate(r.fechaTerminacion)||'—'}</span>`,
-    `<span style="font-size:8px;font-family:monospace;">${fmtDate(r.fechaAsignacion)||'—'}</span>`,
-    _diasTranscurridos(r.fechaAsignacion),
+    `<b style="font-family:monospace;font-size:10px;">${escHtml(r.ticket||'—')}</b>`,
+    `<span style="font-size:9px;word-break:break-word;white-space:normal;">${escHtml(r.contratista||'—')}</span>`,
+    `<span style="font-size:10px;">${escHtml(r.abogado||'—')}</span>`,
+    `<span style="font-size:9px;padding:2px 5px;border-radius:5px;background:#F1F5F9;">${getEstadoLiq(r.estado).label}</span>`,
+    `<span style="font-size:10px;">${fmtDate(r.fechaTerminacion)||'—'}</span>`,
     pdfAvanceLiq(r),
   ]);
 
@@ -6929,22 +6684,22 @@ function pdfLiqDependenciaIndividual(dep){
     ${pdfResumenTramite(allRecords)}
 
     <div style="background:#FFFBEB;border:2px solid #FCD34D;border-radius:10px;padding:12px 16px;margin-bottom:12px;">
-      <div style="font-size:8px;font-weight:700;color:#B45309;margin-bottom:12px;">💧 LIQUIDACIONES — ${liqRecs.length} expedientes</div>
+      <div style="font-size:13px;font-weight:700;color:#B45309;margin-bottom:12px;">💧 LIQUIDACIONES — ${liqRecs.length} expedientes</div>
       ${pdfKpiGrid([
         {label:'Liq. y Cerrado',    value:liqCerrado, color:PDF_GREEN, sub:'Finalizado completo'},
         {label:'Liq. Pte. Cerrar',  value:liqPte,     color:'#F59E0B', sub:'Falta acta de cierre'},
         {label:'Pte. por Liquidar', value:liqTram,    color:'#EA580C', sub:'En trámite activo'},
       ])}
-      ${liqRecs.length?pdfTable(['N° Contrato','Contratista','Abogado','Estado','F. Máx Liqu','F. Asignación','Días','Último Avance'],mkRows(liqRecs),['60px','auto','90px','90px','65px','65px','50px','120px']):'<p style="color:#9CA3AF;font-size:8px;text-align:center;">Sin liquidaciones</p>'}
+      ${liqRecs.length?pdfTable(['N° Contrato','Contratista','Abogado','Estado','F. Máx Liqu','Último Avance'],mkRows(liqRecs),['11%','30%','22%','22%','13%']):'<p style="color:#9CA3AF;font-size:12px;text-align:center;">Sin liquidaciones</p>'}
     </div>
 
     <div style="background:#F0FDFA;border:2px solid #99F6E4;border-radius:10px;padding:12px 16px;margin-bottom:12px;">
-      <div style="font-size:8px;font-weight:700;color:#0E7490;margin-bottom:12px;">🔒 CIERRES — ${cieRecs.length} expedientes</div>
+      <div style="font-size:13px;font-weight:700;color:#0E7490;margin-bottom:12px;">🔒 CIERRES — ${cieRecs.length} expedientes</div>
       ${pdfKpiGrid([
         {label:'Cierre Contractual', value:cierreCont, color:PDF_TEAL,  sub:'Finalizado'},
         {label:'Pte. por Cierre',    value:cieTram,    color:'#7C3AED', sub:'En trámite activo'},
       ])}
-      ${cieRecs.length?pdfTable(['N° Contrato','Contratista','Abogado','Estado','F. Máx Liqu','F. Asignación','Días','Último Avance'],mkRows(cieRecs),['60px','auto','90px','90px','65px','65px','50px','120px']):'<p style="color:#9CA3AF;font-size:8px;text-align:center;">Sin cierres</p>'}
+      ${cieRecs.length?pdfTable(['N° Contrato','Contratista','Abogado','Estado','F. Máx Liqu','Último Avance'],mkRows(cieRecs),['11%','30%','22%','22%','13%']):'<p style="color:#9CA3AF;font-size:12px;text-align:center;">Sin cierres</p>'}
     </div>
 
     ${pdfFooter()}
@@ -6959,7 +6714,7 @@ function pdfLiqGITIndividual(git){
   const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
   const finStates=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
-  // Filtrar por _liqEsPendiente
+  // Usa _liqEsPendiente
 
   // Separar por trámite
   const liqRecs=allRecords.filter(r=>r.tramite==='Liquidacion');
@@ -6998,23 +6753,21 @@ function pdfLiqGITIndividual(git){
       `<b style="color:${PDF_NAVY};">${escHtml(n)}</b>`,
       `<span style="font-weight:700;">${tot}</span>`,
       `<span style="color:#F59E0B;">${d.liq}</span>`,
-      d.liqFin>0?`<span style="background:#D1FAE5;color:#065F46;padding:1px 5px;border-radius:5px;font-size:8px;">${d.liqFin}</span>`:'0',
-      d.liq-d.liqFin>0?`<span style="background:#FEF2F2;color:#991B1B;padding:1px 5px;border-radius:5px;font-size:8px;">${d.liq-d.liqFin}</span>`:'0',
+      d.liqFin>0?`<span style="background:#D1FAE5;color:#065F46;padding:1px 5px;border-radius:5px;font-size:10px;">${d.liqFin}</span>`:'0',
+      d.liq-d.liqFin>0?`<span style="background:#FEF2F2;color:#991B1B;padding:1px 5px;border-radius:5px;font-size:10px;">${d.liq-d.liqFin}</span>`:'0',
       `<span style="color:${PDF_TEAL};">${d.cie}</span>`,
-      d.cieFin>0?`<span style="background:#CFFAFE;color:#0E7490;padding:1px 5px;border-radius:5px;font-size:8px;">${d.cieFin}</span>`:'0',
-      d.cie-d.cieFin>0?`<span style="background:#F5F3FF;color:#5B21B6;padding:1px 5px;border-radius:5px;font-size:8px;">${d.cie-d.cieFin}</span>`:'0',
+      d.cieFin>0?`<span style="background:#CFFAFE;color:#0E7490;padding:1px 5px;border-radius:5px;font-size:10px;">${d.cieFin}</span>`:'0',
+      d.cie-d.cieFin>0?`<span style="background:#F5F3FF;color:#5B21B6;padding:1px 5px;border-radius:5px;font-size:10px;">${d.cie-d.cieFin}</span>`:'0',
     ];
   });
 
   const mkRows=(recs)=>recs.slice().sort((a,b)=>(a.ticket||'').localeCompare(b.ticket||'',undefined,{numeric:true})).map(r=>[
-    `<b style="font-family:monospace;font-size:8px;">${escHtml(r.ticket||'—')}</b>`,
-    `<span style="font-size:8px;">${escHtml(r.dependencia||'—')}</span>`,
-    `<span style="font-size:8px;word-break:break-word;white-space:normal;">${escHtml(r.contratista||'—')}</span>`,
-    `<span style="font-size:8px;">${escHtml(r.abogado||'—')}</span>`,
-    `<span style="font-size:8px;padding:2px 5px;border-radius:5px;background:#F1F5F9;">${getEstadoLiq(r.estado).label}</span>`,
-    `<span style="font-size:8px;font-family:monospace;">${fmtDate(r.fechaTerminacion)||'—'}</span>`,
-    `<span style="font-size:8px;font-family:monospace;">${fmtDate(r.fechaAsignacion)||'—'}</span>`,
-    _diasTranscurridos(r.fechaAsignacion),
+    `<b style="font-family:monospace;font-size:10px;">${escHtml(r.ticket||'—')}</b>`,
+    `<span style="font-size:9px;">${escHtml(r.dependencia||'—')}</span>`,
+    `<span style="font-size:9px;word-break:break-word;white-space:normal;">${escHtml(r.contratista||'—')}</span>`,
+    `<span style="font-size:10px;">${escHtml(r.abogado||'—')}</span>`,
+    `<span style="font-size:9px;padding:2px 5px;border-radius:5px;background:#F1F5F9;">${getEstadoLiq(r.estado).label}</span>`,
+    `<span style="font-size:10px;">${fmtDate(r.fechaTerminacion)||'—'}</span>`,
     pdfAvanceLiq(r),
   ]);
 
@@ -7045,23 +6798,23 @@ function pdfLiqGITIndividual(git){
 
     <!-- SECCIÓN LIQUIDACIONES -->
     <div style="background:#FFFBEB;border:2px solid #FCD34D;border-radius:10px;padding:12px 16px;margin-bottom:12px;">
-      <div style="font-size:8px;font-weight:700;color:#B45309;margin-bottom:12px;">💧 LIQUIDACIONES — ${liqRecs.length} expedientes</div>
+      <div style="font-size:13px;font-weight:700;color:#B45309;margin-bottom:12px;">💧 LIQUIDACIONES — ${liqRecs.length} expedientes</div>
       ${pdfKpiGrid([
         {label:'Liq. y Cerrado',    value:liqCerrado, color:PDF_GREEN,  sub:'Finalizado completo'},
         {label:'Liq. Pte. Cerrar',  value:liqPte,     color:'#F59E0B',  sub:'Falta acta de cierre'},
         {label:'Pte. por Liquidar', value:liqTram,    color:'#EA580C',  sub:'En trámite activo'},
       ])}
-      ${liqRecs.length?pdfTable(['N° Contrato','Dependencia','Contratista','Abogado','Estado','F. Máx Liqu','F. Asignación','Días','Último Avance'],mkRows(liqRecs),['58px','75px','auto','85px','85px','62px','62px','50px','110px']):'<p style="color:#9CA3AF;font-size:8px;text-align:center;">Sin liquidaciones</p>'}
+      ${liqRecs.length?pdfTable(['N° Contrato','Dependencia','Contratista','Abogado','Estado','F. Máx Liqu','Último Avance'],mkRows(liqRecs),['9%','22%','20%','18%','18%','11%']):'<p style="color:#9CA3AF;font-size:12px;text-align:center;">Sin liquidaciones</p>'}
     </div>
 
     <!-- SECCIÓN CIERRES -->
     <div style="background:#F0FDFA;border:2px solid #99F6E4;border-radius:10px;padding:12px 16px;margin-bottom:12px;">
-      <div style="font-size:8px;font-weight:700;color:#0E7490;margin-bottom:12px;">🔒 CIERRES — ${cieRecs.length} expedientes</div>
+      <div style="font-size:13px;font-weight:700;color:#0E7490;margin-bottom:12px;">🔒 CIERRES — ${cieRecs.length} expedientes</div>
       ${pdfKpiGrid([
         {label:'Cierre Contractual', value:cierreCont, color:PDF_TEAL,  sub:'Finalizado'},
         {label:'Pte. por Cierre',    value:cieTram,    color:'#7C3AED', sub:'En trámite activo'},
       ])}
-      ${cieRecs.length?pdfTable(['N° Contrato','Dependencia','Contratista','Abogado','Estado','F. Máx Liqu','F. Asignación','Días','Último Avance'],mkRows(cieRecs),['58px','75px','auto','85px','85px','62px','62px','50px','110px']):'<p style="color:#9CA3AF;font-size:8px;text-align:center;">Sin cierres</p>'}
+      ${cieRecs.length?pdfTable(['N° Contrato','Dependencia','Contratista','Abogado','Estado','F. Máx Liqu','Último Avance'],mkRows(cieRecs),['9%','22%','20%','18%','18%','11%']):'<p style="color:#9CA3AF;font-size:12px;text-align:center;">Sin cierres</p>'}
     </div>
 
     ${Object.keys(byAbog).length>1?`${pdfSectionTitle('⚖️','Carga por Abogado')}
@@ -7263,15 +7016,15 @@ function pdfConsolidadoGeneral(){
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
         <div>
           <div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#1E40AF;font-weight:700;margin-bottom:8px;">Asesorías Previas — por estado</div>
-          ${pdfTable(['Estado','N°','%','Distribución'],asesRows,['auto','10%','10%','28%'])}
+          ${pdfTable(['Estado','N°','%','Distribución'],asesRows,['36%','10%','10%','42%'])}
         </div>
         <div>
           <div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:${PDF_TEAL};font-weight:700;margin-bottom:8px;">Procesos Contractuales — por estado</div>
-          ${pdfTable(['Estado','N°','%','Distribución'],contRows,['auto','10%','10%','28%'])}
+          ${pdfTable(['Estado','N°','%','Distribución'],contRows,['36%','10%','10%','42%'])}
         </div>
       </div>
       <div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:${PDF_NAVY};font-weight:700;margin-bottom:8px;margin-top:4px;">Carga por Abogado (top 8)</div>
-      ${pdfTable(['Abogado','Total','Activos','Finalizados','Avance'],abogProcRows,['auto','10%','12%','14%','20%'])}
+      ${pdfTable(['Abogado','Total','Activos','Finalizados','Avance'],abogProcRows,['34%','10%','12%','14%','28%'])}
     </div>
 
     <!-- ══════════════ MÓDULO 2: MODIFICACIONES ══════════════ -->
@@ -7285,7 +7038,7 @@ function pdfConsolidadoGeneral(){
         {label:'Alertas vencimiento',value:modVenc.length+modHoy.length, color:modVenc.length+modHoy.length>0?PDF_RED:PDF_GREEN, sub:`${mod3d.length} vencen en 3 días`},
       ])}
       <div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:${PDF_PURPLE};font-weight:700;margin-bottom:8px;">Carga por Abogado (top 8)</div>
-      ${pdfTable(['Abogado','Total','Activas','Finalizadas','Avance'],abogModRows,['auto','10%','12%','14%','20%'])}
+      ${pdfTable(['Abogado','Total','Activas','Finalizadas','Avance'],abogModRows,['34%','10%','12%','14%','28%'])}
     </div>
 
     <!-- ══════════════ MÓDULO 3: LIQUIDACIONES ══════════════ -->
@@ -7370,7 +7123,7 @@ function pdfConsolidadoAbogado(){
   const totCie=liq.filter(r=>r.tramite==='Cierre'&&cierreEstadosPend.includes(r.estado)).length;
   rows.push([
     `<b style="color:${PDF_GOLD};">TOTALES PENDIENTES</b>`,
-    `<span style="font-family:monospace;font-weight:800;font-size:9px;">${totP+totM+totLiq+totCie}</span>`,
+    `<span style="font-family:monospace;font-weight:800;font-size:13px;">${totP+totM+totLiq+totCie}</span>`,
     `<span style="color:${PDF_SKY};font-weight:700;">${totP}</span>`,
     `<span style="color:${PDF_PURPLE};font-weight:700;">${totM}</span>`,
     `<span style="color:${PDF_GREEN};font-weight:700;">${totLiq}</span>`,
@@ -7458,27 +7211,13 @@ function pdfConsolidadoPendientesAbogado(){
   document.getElementById('inf-abogado-overlay').classList.add('open');
 }
 
-function pdfAvanceProc(r){
-  var b=r.bitacora||[];
-  if(!b.length) return '<span style="font-size:7px;color:#CBD5E1;font-style:italic;">Sin avance</span>';
-  var u=b.slice().sort(function(a,b2){return String(b2.date||b2.fecha||b2.ts||'').localeCompare(String(a.date||a.fecha||a.ts||''));})[0];
-  var t=(u.text||u.texto||u.msg||'');
-  var f=u.date||u.fecha||'';
-  var fd=f?'<div style="font-size:7px;color:#94A3B8;margin-bottom:1px;font-family:monospace;white-space:nowrap;">'+escHtml(String(f).slice(0,10))+'</div>':'';
-  return fd+'<span style="font-size:7px;color:#334155;white-space:normal;word-break:break-word;line-height:1.4;">'+escHtml(t)+'</span>';
-}
 
-function _diasTranscurridos(fechaAsig){
-  if(!fechaAsig) return '<span style="color:#CBD5E1;font-size:7px;font-style:italic;">Sin fecha</span>';
-  const d=diasHasta(fechaAsig);
-  if(d===null) return '—';
-  const abs=Math.abs(d);
-  const bg=abs>90?'#FEF2F2':abs>60?'#FFF7ED':abs>30?'#FFFBEB':'#ECFDF5';
-  const color=abs>90?'#991B1B':abs>60?'#92400E':abs>30?'#78350F':'#065F46';
-  const border=abs>90?'#FECACA':abs>60?'#FED7AA':abs>30?'#FDE68A':'#A7F3D0';
-  return '<div style="text-align:center;"><span style="display:inline-block;background:'+bg+';border:1px solid '+border+';border-radius:4px;padding:1px 5px;font-size:8px;font-weight:700;color:'+color+';">'+abs+'d</span></div>';
-}
 
+function _liqEsPendiente(r){
+  // Estados que representan un expediente FINALIZADO (no mostrar en informes de pendientes)
+  const ESTADOS_FINALES_LIQ=['liquidado-cerrado','liquidado-pte-cerrar','cierre-contractual'];
+  return !ESTADOS_FINALES_LIQ.includes(r.estado);
+}
 
 function pdfFechaAlerta(r){
   const sinAlerta=estadoSinAlerta(r.tipo,r.estado);
@@ -7518,6 +7257,16 @@ function pdfFechaAlerta(r){
     +'</div>';
 }
 
+function _diasTranscurridos(fechaAsig){
+  if(!fechaAsig) return '<span style="color:#CBD5E1;font-size:7px;font-style:italic;">Sin fecha</span>';
+  const d=diasHasta(fechaAsig);
+  if(d===null) return '—';
+  const abs=Math.abs(d);
+  const bg=abs>90?'#FEF2F2':abs>60?'#FFF7ED':abs>30?'#FFFBEB':'#ECFDF5';
+  const color=abs>90?'#991B1B':abs>60?'#92400E':abs>30?'#78350F':'#065F46';
+  const border=abs>90?'#FECACA':abs>60?'#FED7AA':abs>30?'#FDE68A':'#A7F3D0';
+  return '<div style="text-align:center;"><span style="display:inline-block;background:'+bg+';border:1px solid '+border+';border-radius:4px;padding:2px 6px;font-size:8px;font-weight:700;color:'+color+';white-space:nowrap;min-width:32px;">'+abs+'d</span></div>';
+}
 function _generarPdfPendientesAbogado(abogado){
   const _proc=window._records||[];
   const _mod=window._modRecords||[];
@@ -7603,7 +7352,6 @@ function _generarPdfPendientesAbogado(abogado){
   abrirPdf(`
     ${pdfHeader(`Pendientes — ${escHtml(abogado)}`,`Informe individual de expedientes por tramitar · ${fechaHoy} · ${hora}`)}
     ${pdfIntroBox(`Expedientes <strong>pendientes por tramitar</strong> del abogado <strong>${escHtml(abogado)}</strong>. Total: <strong>${total} pendientes</strong> en los tres módulos.`)}
-
 
     <!-- Alerta de Tiempo Transcurrido -->
     ${(()=>{
@@ -8132,7 +7880,6 @@ function openModalLiq(id=null){
   depDst.value=r?.dependencia||'';
 
   // Fechas y observaciones
-  document.getElementById('liq-f-asignacion').value=r?.fechaAsignacion||'';
   document.getElementById('liq-f-inicio').value=r?.fechaInicio||'';
   document.getElementById('liq-f-terminacion').value=r?.fechaTerminacion||'';
   document.getElementById('liq-f-cierre').value=r?.fechaCierre||'';
@@ -8634,7 +8381,7 @@ function renderLiq(){
           <td style="white-space:nowrap;font-size:12px;">${escHtml(r.abogado||'—')}</td>
           <td style="font-size:11px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.git||'')}">${escHtml((r.git||'').slice(0,22)||'—')}</td>
           <td style="font-size:11px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.dependencia||'')}">${escHtml((r.dependencia||'').slice(0,22)||'—')}</td>
-<td class="date-cell">${fmtDate(r.fechaAsignacion)||'—'}</td>
+          <td class="date-cell">${fmtDate(r.fechaAsignacion)||'—'}</td>
           <td class="date-cell">${fmtDate(r.fechaInicio)||'—'}</td>
           <td class="date-cell">${fmtDate(r.fechaTerminacion)||'—'}</td>
           <td class="date-cell">${fmtDate(r.fechaCierre)||'—'}</td>
@@ -9173,14 +8920,14 @@ function pdfLiq(){
   const liqTram=recsLiq.filter(r=>tramiteStates.includes(r.estado)).length;
   const liqCerrado=recsLiq.filter(r=>r.estado==='liquidado-cerrado').length;
   const liqPte=recsLiq.filter(r=>r.estado==='liquidado-pte-cerrar').length;
-  const liqPendEnviar=recsLiq.filter(r=>_liqEsPendiente(r)).length;
+  const liqPendEnviar=recsLiq.filter(r=>r.estado==='pendiente-enviar').length;
   const liqObs=recsLiq.filter(r=>r.estado==='observaciones-area').length;
   const pctLiqFin=recsLiq.length?Math.round((liqCerrado+liqPte)/recsLiq.length*100):0;
 
   // Métricas CIERRES
   const cieTram=recsCie.filter(r=>tramiteStates.includes(r.estado)).length;
   const cierreCont=recsCie.filter(r=>r.estado==='cierre-contractual').length;
-  const ciePend=recsCie.filter(r=>_liqEsPendiente(r)).length;
+  const ciePend=recsCie.filter(r=>r.estado==='pendiente-enviar').length;
   const pctCieFin=recsCie.length?Math.round(cierreCont/recsCie.length*100):0;
 
   // Barras de estado por trámite
@@ -9200,7 +8947,7 @@ function pdfLiq(){
   };
 
   // Desglose detallado por estado de LIQUIDACIONES
-  const liqPendEnviarN = recsLiq.filter(r=>_liqEsPendiente(r)).length;
+  const liqPendEnviarN = recsLiq.filter(r=>r.estado==='pendiente-enviar').length;
   const liqEnAsesoria  = recsLiq.filter(r=>r.estado==='en-asesoria').length;
   const liqObsArea     = recsLiq.filter(r=>r.estado==='observaciones-area').length;
   const liqRevCoord    = recsLiq.filter(r=>r.estado==='revision-coord').length;
@@ -9210,7 +8957,7 @@ function pdfLiq(){
   const liqRadComp     = recsLiq.filter(r=>r.estado==='radicado-competente').length;
 
   // Desglose detallado por estado de CIERRES
-  const ciePendEnviarN = recsCie.filter(r=>_liqEsPendiente(r)).length;
+  const ciePendEnviarN = recsCie.filter(r=>r.estado==='pendiente-enviar').length;
   const cieEnAsesoria  = recsCie.filter(r=>r.estado==='en-asesoria').length;
   const cieObsArea     = recsCie.filter(r=>r.estado==='observaciones-area').length;
   const cieRevCoord    = recsCie.filter(r=>r.estado==='revision-coord').length;
@@ -9291,7 +9038,7 @@ function pdfLiq(){
 
     <!-- SECCIÓN LIQUIDACIONES -->
     <div style="background:#FFFBEB;border:2px solid #FCD34D;border-radius:12px;padding:16px 20px;margin-bottom:24px;">
-      <div style="font-size:9px;font-weight:700;color:#B45309;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+      <div style="font-size:13px;font-weight:700;color:#B45309;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
         <span style="font-size:18px;">💧</span> LIQUIDACIONES — ${recsLiq.length} expedientes
       </div>
       ${pdfKpiGrid([
@@ -9316,7 +9063,7 @@ function pdfLiq(){
 
     <!-- SECCIÓN CIERRES -->
     <div style="background:#F0FDFA;border:2px solid #99F6E4;border-radius:12px;padding:16px 20px;margin-bottom:24px;">
-      <div style="font-size:9px;font-weight:700;color:#0E7490;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+      <div style="font-size:13px;font-weight:700;color:#0E7490;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
         <span style="font-size:18px;">🔒</span> CIERRES — ${recsCie.length} expedientes
       </div>
       ${pdfKpiGrid([
