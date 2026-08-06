@@ -1501,6 +1501,10 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         <div class="form-section-title">📅 Fechas</div>
         <div class="form-grid">
           <div class="form-group">
+            <label>F. Asignación</label>
+            <input type="date" id="liq-f-asignacion">
+          </div>
+          <div class="form-group">
             <label>F. Finalización</label>
             <input type="date" id="liq-f-inicio">
           </div>
@@ -5175,8 +5179,15 @@ function pdfConclusions(puntos){
 
 /* ── Grid de KPIs ── */
 function pdfKpiGrid(kpis){
-  const cols=Math.min(kpis.length,4);
-  return `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:10px;margin-bottom:18px;">${kpis.map(k=>`<div style="background:white;border:1px solid ${PDF_BORDER};border-radius:8px;padding:14px;border-top:3px solid ${k.color};box-shadow:0 1px 4px rgba(0,0,0,.04);"><div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.1em;color:${PDF_GRAY};margin-bottom:8px;font-weight:600;">${k.label}</div><div style="font-size:26px;font-weight:800;color:${k.color};font-family:'JetBrains Mono',monospace;line-height:1;margin-bottom:4px;">${k.value}</div>${k.sub?`<div style="font-size:9px;color:${PDF_GRAY};border-top:1px solid ${PDF_BORDER};padding-top:5px;margin-top:4px;">${k.sub}</div>`:''}</div>`).join('')}</div>`;
+  const pct=Math.floor(100/Math.min(kpis.length,4))+'%';
+  const cells=kpis.map(k=>`<td style="width:${pct};vertical-align:top;padding:3px;">
+    <div style="background:white;border:1px solid ${PDF_BORDER};border-radius:8px;padding:12px 14px;border-top:3px solid ${k.color};page-break-inside:avoid;break-inside:avoid;">
+      <div style="font-size:7px;text-transform:uppercase;letter-spacing:.07em;color:${PDF_GRAY};margin-bottom:4px;">${k.label}</div>
+      <div style="font-size:22px;font-weight:800;color:${k.color};line-height:1.1;margin-bottom:3px;">${k.value}</div>
+      <div style="font-size:7.5px;color:${PDF_GRAY};border-top:1px solid ${PDF_BORDER};padding-top:4px;margin-top:3px;">${k.sub||''}</div>
+    </div>
+  </td>`).join('');
+  return `<table style="width:100%;border-collapse:collapse;margin-bottom:14px;page-break-inside:avoid;break-inside:avoid;"><tr style="page-break-inside:avoid;break-inside:avoid;">${cells}</tr></table>`;
 }
 
 /* ── Título de sección numerado ── */
@@ -7880,6 +7891,7 @@ function openModalLiq(id=null){
   depDst.value=r?.dependencia||'';
 
   // Fechas y observaciones
+  document.getElementById('liq-f-asignacion').value=r?.fechaAsignacion||'';
   document.getElementById('liq-f-inicio').value=r?.fechaInicio||'';
   document.getElementById('liq-f-terminacion').value=r?.fechaTerminacion||'';
   document.getElementById('liq-f-cierre').value=r?.fechaCierre||'';
