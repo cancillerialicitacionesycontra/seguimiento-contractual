@@ -29,7 +29,6 @@
 html,body{width:100%;margin:0;padding:0;}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
-/* ── SYNC ── */
 #sync-bar{position:fixed;top:0;left:0;right:0;z-index:300;height:3px;background:transparent;}
 #sync-bar.syncing{background:linear-gradient(90deg,var(--accent),var(--gold),var(--accent));background-size:200%;animation:syncAnim 1s linear infinite;}
 @keyframes syncAnim{0%{background-position:0%}100%{background-position:200%}}
@@ -37,7 +36,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .sync-toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:white;padding:10px 16px;border-radius:8px;font-size:12px;z-index:400;display:none;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.3);}
 .sync-toast.show{display:flex;}
 
-/* ── LOGIN ── */
 #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0F1F3D 0%,#1A3260 60%,#1e3a8a 100%);padding:20px;}
 .login-card{background:white;border-radius:16px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,.35);overflow:hidden;}
 .login-top{background:var(--navy);padding:32px;text-align:center;border-bottom:3px solid var(--gold);}
@@ -56,7 +54,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 #lockout-msg{display:none;background:var(--gold-light);color:#92400E;border:1px solid #FDE68A;border-radius:6px;padding:9px 12px;font-size:12px;margin-bottom:14px;}
 .login-footer{text-align:center;margin-top:18px;font-size:11px;color:var(--muted);}
 
-/* ── APP ── */
 #app-screen{display:none;width:100%;min-height:100vh;overflow-x:hidden;}
 #session-bar{background:#1E293B;color:#94A3B8;font-size:11px;text-align:right;padding:4px 32px;font-family:var(--mono);display:flex;justify-content:space-between;align-items:center;}
 #session-timer{color:var(--gold);font-weight:600;}
@@ -70,7 +67,7 @@ header{background:var(--navy);color:white;padding:0 32px;display:flex;align-item
 header h1{font-size:16px;font-weight:600;}
 header .sub{font-size:12px;color:#94A3B8;font-weight:300;}
 .header-right{display:flex;align-items:center;gap:10px;}
-/* ── Campana de notificaciones ── */
+
 .notif-bell-wrap{position:relative;}
 .notif-bell-btn{position:relative;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:white;width:38px;height:38px;border-radius:10px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;}
 .notif-bell-btn:hover{background:rgba(255,255,255,.2);}
@@ -89,7 +86,7 @@ header .sub{font-size:12px;color:#94A3B8;font-weight:300;}
 .notif-title{font-size:12px;font-weight:600;color:#1E293B;margin-bottom:2px;}
 .notif-desc{font-size:11px;color:#64748B;line-height:1.4;}
 .notif-time{font-size:10px;color:#94A3B8;margin-top:3px;font-family:var(--mono);}
-/* ── Botón PDF por fila ── */
+
 .btn-pdf-row{background:none;border:1px solid #BFDBFE;color:#1D4ED8;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;white-space:nowrap;transition:background .15s;}
 .btn-pdf-row:hover{background:#DBEAFE;}
 #total-badge{background:var(--navy-mid);border:1px solid #334155;color:#CBD5E1;font-family:var(--mono);font-size:12px;padding:4px 12px;border-radius:20px;}
@@ -102,14 +99,12 @@ header .sub{font-size:12px;color:#94A3B8;font-weight:300;}
 #logout-btn{background:transparent;border:1px solid #475569;color:#94A3B8;padding:4px 10px;border-radius:6px;font-family:var(--font);font-size:11px;cursor:pointer;}
 #logout-btn:hover{background:#1E293B;color:white;}
 
-/* ── TABS ── */
 .nav-tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;display:flex;gap:4px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;-ms-overflow-style:none;}
 .nav-tabs::-webkit-scrollbar{display:none;}
 .tab-btn{padding:14px 20px;font-family:var(--font);font-size:13px;font-weight:500;border:none;background:transparent;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
 .tab-btn:hover{color:var(--text);}
 .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
 
-/* ── TOOLBAR MEJORADO ── */
 .toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,.04);}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
 .btn-primary{background:var(--accent);color:white;box-shadow:0 2px 8px rgba(37,99,235,.3);}.btn-primary:hover{background:#1D4ED8;box-shadow:0 4px 12px rgba(37,99,235,.4);}
@@ -120,7 +115,6 @@ header .sub{font-size:12px;color:#94A3B8;font-weight:300;}
 .search-wrap input:focus{border-color:var(--accent);background:white;box-shadow:0 0 0 3px rgba(37,99,235,.1);width:280px;}
 .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none;}
 
-/* ── TIPO FILTER MEJORADO ── */
 .tipo-bar{padding:12px 32px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 .tipo-bar-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-right:4px;}
 .tipo-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:white;color:var(--muted);transition:all .2s;}
@@ -129,7 +123,6 @@ header .sub{font-size:12px;color:#94A3B8;font-weight:300;}
 .tipo-chip.active-asesoria{background:var(--sky-light);color:var(--sky);border-color:var(--sky);box-shadow:0 2px 8px rgba(2,132,199,.15);}
 .tipo-chip.active-contractual{background:var(--teal-light);color:var(--teal);border-color:var(--teal);box-shadow:0 2px 8px rgba(8,145,178,.15);}
 
-/* ── TABLE MEJORADA ── */
 .table-wrap{padding:0 32px 32px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
 table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:12px;overflow:hidden;border:1px solid var(--border);font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.06);}
 thead tr{background:linear-gradient(135deg,var(--navy) 0%,#1A3260 100%);color:white;}
@@ -142,7 +135,6 @@ tbody tr.main-row:hover td{background:#EFF6FF!important;box-shadow:inset 3px 0 0
 tbody tr.main-row.expanded td{background:#EFF6FF!important;border-bottom:none;box-shadow:inset 3px 0 0 var(--accent);}
 tbody td{padding:12px 14px;vertical-align:middle;}
 
-/* ── STATS ── */
 .stats-bar{padding:16px 32px;display:flex;gap:12px;flex-wrap:wrap;}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;min-width:148px;transition:all .2s;position:relative;overflow:hidden;cursor:default;}
 .stat-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:12px 0 0 12px;}
@@ -159,7 +151,6 @@ tbody td{padding:12px 14px;vertical-align:middle;}
 .stat-card .stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);display:block;margin-top:3px;}
 .stat-card .stat-icon{font-size:22px;flex-shrink:0;opacity:.8;}
 
-/* ── STATUS BADGES ── */
 .status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.08);}
 .sb-asignado{background:#FEF9C3;color:#92400E;}
 .sb-en-revision-lyc{background:var(--accent-light);color:#1D4ED8;}
@@ -180,7 +171,6 @@ tbody td{padding:12px 14px;vertical-align:middle;}
 .sb-pc-contratado{background:var(--green-light);color:#065F46;box-shadow:0 0 0 1.5px #86EFAC;}
 .sb-pc-cancelado{background:var(--red-light);color:#991B1B;}
 
-/* ── TABLE ── */
 .expand-arrow{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:var(--accent-light);color:var(--accent);font-size:10px;margin-right:6px;transition:transform .2s;vertical-align:middle;}
 .expand-arrow.open{transform:rotate(90deg);}
 tr.accordion-row{display:none;}
@@ -206,18 +196,15 @@ tr.accordion-row td{padding:0!important;border-bottom:1px solid var(--border);}
 .empty-state{text-align:center;padding:56px 20px;color:var(--muted);}
 .empty-state .big-icon{font-size:44px;margin-bottom:14px;display:block;}
 
-/* ── BITÁCORA ── */
 .avance-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;color:var(--muted);}
 .avance-dot{width:7px;height:7px;border-radius:50%;background:var(--border);}
 .avance-dot.has{background:var(--accent);}
 
-/* ── MODALES ── */
 .overlay{display:none;position:fixed;inset:0;background:rgba(15,31,61,.55);z-index:100;align-items:center;justify-content:center;padding:20px;}
 .overlay.open{display:flex;}
 .modal{background:white;border-radius:12px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);}
 .modal.modal-wide{max-width:760px;}
 
-/* ── Informes ── */
 .inf-section{margin-bottom:14px;background:white;border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.04);}
 .inf-section-header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-left:4px solid #3B82F6;background:var(--bg);}
 .inf-section-title{font-size:15px;font-weight:700;color:var(--navy);}
@@ -251,7 +238,6 @@ tr.accordion-row td{padding:0!important;border-bottom:1px solid var(--border);}
 .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);background:white;}
 .form-group textarea{resize:vertical;min-height:70px;}
 
-/* ── BITÁCORA MODAL ── */
 .bit-header{background:var(--bg);border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
 .new-entry-box{border:1.5px solid var(--border);border-radius:8px;padding:14px;margin-bottom:20px;background:white;}
 .new-entry-box.locked{background:var(--bg);border-style:dashed;}
@@ -271,7 +257,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 .entry-del:hover{background:var(--red-light);color:var(--red);}
 .no-entries{text-align:center;padding:28px;color:var(--muted);font-size:13px;}
 
-/* ── ADMIN ── */
 .admin-wrap{padding:24px 32px 40px;}
 .section-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:14px;}
 .users-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:14px;}
@@ -282,10 +267,8 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 .uc-info .urole{margin-top:4px;}
 .uc-actions{margin-left:auto;display:flex;gap:6px;}
 
-/* ── DASHBOARD ── */
 .dash-wrap{padding:0 0 56px;background:var(--bg);}
 
-/* Banner */
 .dash-banner{background:linear-gradient(135deg,var(--navy) 0%,#1A3260 60%,#1e3a8a 100%);padding:28px 36px 24px;border-bottom:4px solid var(--gold);display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;}
 .dash-banner-left h2{color:white;font-size:22px;font-weight:700;margin-bottom:4px;letter-spacing:.01em;}
 .dash-banner-left p{color:#94A3B8;font-size:12px;}
@@ -293,7 +276,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 .dash-banner-right span{display:block;color:#94A3B8;}
 .dash-body{padding:28px 36px 0;}
 
-/* KPIs */
 .dash-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
 @media(max-width:860px){.dash-kpis{grid-template-columns:repeat(2,1fr);}}
 .kpi{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px 18px;overflow:hidden;transition:all .2s;cursor:default;}
@@ -312,12 +294,10 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 .kpi .kl{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600;}
 .kpi .kpct{position:absolute;top:20px;right:20px;font-size:11px;color:var(--border);font-family:var(--mono);font-weight:600;}
 
-/* Divider */
 .dash-divider{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);padding:0 0 12px;border-bottom:2px solid var(--navy);margin-bottom:20px;display:flex;align-items:center;gap:10px;}
 .dash-divider-icon{width:24px;height:24px;background:var(--navy);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
 .dash-divider::after{content:'';flex:1;height:1px;background:var(--border);}
 
-/* Chart cards */
 .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:14px;}
 @media(max-width:860px){.charts-row{grid-template-columns:1fr;}}
 .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);}
@@ -327,7 +307,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 .chart-card-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 10px;border-radius:20px;background:var(--navy);color:white;white-space:nowrap;}
 .chart-card-body{padding:20px 16px;}
 
-/* Estado pills en dashboard */
 .estado-list{display:flex;flex-direction:column;gap:8px;padding:16px 20px;}
 .estado-row{display:flex;align-items:center;gap:10px;}
 .estado-row-label{font-size:12px;color:var(--text);font-weight:500;min-width:160px;}
@@ -336,7 +315,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 .estado-row-count{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--navy);min-width:28px;text-align:right;}
 .estado-row-pct{font-size:10px;color:var(--muted);min-width:34px;text-align:right;font-family:var(--mono);}
 
-/* Tablas dash */
 .dash-tables-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:14px;}
 @media(max-width:860px){.dash-tables-row{grid-template-columns:1fr;}}
 .dash-table-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);}
@@ -356,7 +334,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 .nc{font-family:var(--mono);font-size:12px;font-weight:700;}
 .nc.sky{color:var(--sky);} .nc.teal{color:var(--teal);} .nc.green{color:var(--green);}
 
-/* Avg card */
 .avg-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.04);}
 .avg-card-header{padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
 .avg-card-header h4{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.08em;}
@@ -379,7 +356,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 .inactivity-box p{font-size:13px;color:var(--muted);margin-bottom:20px;}
 .inactivity-box .countdown{font-family:var(--mono);font-size:28px;font-weight:600;color:var(--red);margin-bottom:20px;}
 
-/* ── SEMÁFORO DE VENCIMIENTO ── */
 .semaforo-wrap{padding:12px 32px 0;}
 .semaforo-bar{padding:12px 32px 0;}
 .semaforo-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
@@ -400,7 +376,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 .sema-info strong.naranja{color:#EA580C;}
 .sema-info span{font-size:11px;color:var(--muted);}
 
-/* ── BITÁCORA GENERAL ── */
 .bit-gen-overlay{display:none;position:fixed;inset:0;background:rgba(15,31,61,.55);z-index:100;align-items:center;justify-content:center;padding:20px;}
 .bit-gen-overlay.open{display:flex;}
 .bit-gen-modal{background:white;border-radius:14px;width:100%;max-width:820px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25);}
@@ -437,14 +412,12 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 .bit-entry-text{font-size:12px;color:var(--text);line-height:1.5;white-space:pre-wrap;}
 .bit-no-entries{padding:12px;font-size:12px;color:var(--muted);font-style:italic;text-align:center;}
 
-/* ── PDF MODAL ── */
 .pdf-option{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;margin-bottom:10px;transition:all .15s;}
 .pdf-option:hover{border-color:var(--accent);background:var(--accent-light);}
 .pdf-ico{font-size:28px;flex-shrink:0;margin-top:2px;}
 .pdf-option strong{display:block;font-size:13px;color:var(--navy);margin-bottom:3px;}
 .pdf-option span{font-size:11px;color:var(--muted);line-height:1.5;}
 
-/* ── PROMEDIO ABOGADO ── */
 .avg-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;}
 .avg-card-header{padding:14px 18px;border-bottom:1px solid var(--border);}
 .avg-card-header h4{font-size:12px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:.07em;}
@@ -461,14 +434,8 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 .avg-bar-wrap{display:flex;align-items:center;gap:8px;}
 .avg-bar{height:8px;border-radius:4px;background:var(--accent);min-width:4px;transition:width .4s;}
 
-/* ══════════════════════════════════════════
-   RESPONSIVE — MÓVIL (≤640px)
-   Vista de tarjetas en lugar de tabla,
-   navegación compacta, formulario vertical
-══════════════════════════════════════════ */
 @media(max-width:768px){
 
-  /* ── Header compacto ── */
   header{padding:0 14px;height:56px;}
   header h1{font-size:13px;}
   header .sub{display:none;}
@@ -476,25 +443,20 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   .user-name{display:none;}
   #logout-btn{font-size:10px;padding:3px 8px;}
 
-  /* ── Session bar ── */
   #session-bar{padding:3px 14px;font-size:10px;}
 
-  /* ── Tabs ── */
   .nav-tabs{padding:0 14px;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;}
   .tab-btn{padding:12px 14px;font-size:12px;}
 
-  /* ── Toolbar ── */
   .toolbar{padding:10px 14px;gap:8px;flex-wrap:wrap;}
   .btn{padding:7px 12px;font-size:12px;}
   .search-wrap{margin-left:0;width:100%;order:10;}
   .search-wrap input{width:100%;font-size:13px;}
 
-  /* ── Tipo bar ── */
   .tipo-bar{padding:10px 14px 0;gap:6px;overflow-x:auto;flex-wrap:nowrap;}
   .tipo-bar-label{display:none;}
   .tipo-chip{font-size:11px;padding:5px 12px;white-space:nowrap;flex-shrink:0;}
 
-  /* ── Semáforo ── */
   .semaforo-wrap{padding:10px 14px 0;}
   .semaforo-grid{grid-template-columns:repeat(3,1fr);gap:8px;}
   .sema-card{padding:10px 10px;gap:8px;}
@@ -502,20 +464,16 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   .sema-info span{font-size:10px;}
   .sema-dot{width:10px;height:10px;}
 
-  /* ── Stats bar ── */
   .stats-bar{padding:10px 14px;gap:8px;}
   .stat-card{min-width:calc(50% - 4px);padding:12px 14px;flex:1;}
   .stat-card .stat-num{font-size:22px;}
   .stat-card .stat-label{font-size:9px;}
 
-  /* ── Ocultar tabla en móvil ── */
   .table-wrap{display:none;}
 
-  /* ── Banner abogado en móvil ── */
   #abogado-banner{padding:8px 14px;font-size:12px;}
   #abogado-banner span:last-child{display:none;}
 
-  /* ── Tarjetas móvil ── */
   .mobile-cards{display:flex;flex-direction:column;gap:10px;padding:10px 14px 80px;}
   .mc{background:white;border-radius:12px;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;}
   .mc-head{padding:12px 14px 10px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);background:var(--bg);}
@@ -535,11 +493,9 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   .mc-btn.del{color:var(--red);border-color:#FECACA;}
   .mc-alerta{margin-top:8px;}
 
-  /* ── FAB ── */
   .fab{display:flex;}
   #btn-nuevo{display:none;}
 
-  /* ── Dashboard ── */
   .dash-banner{padding:18px 14px 16px;}
   .dash-banner-left h2{font-size:16px;}
   .dash-banner-right{display:none;}
@@ -555,7 +511,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   .avg-table{font-size:11px;}
   .avg-table thead th,.avg-table tbody td{padding:7px 10px;}
 
-  /* ── Formulario ── */
   .form-grid{grid-template-columns:1fr;}
   .form-group.full{grid-column:1;}
   .modal{max-height:96vh;border-radius:12px 12px 0 0;}
@@ -563,22 +518,18 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   .modal-footer{padding:12px 16px 16px;}
   .form-section-title{font-size:10px;}
 
-  /* ── Admin ── */
   .admin-wrap{padding:16px 14px 40px;}
   .users-grid{grid-template-columns:1fr;}
 
-  /* ── Bitácora general ── */
   .bit-gen-modal{border-radius:12px 12px 0 0;max-height:96vh;}
   .bit-gen-toolbar{flex-direction:column;gap:8px;padding:10px 14px;}
   .bit-gen-filter,.bit-gen-search{width:100%;box-sizing:border-box;}
 
-  /* ── Overlays: anclar al fondo en móvil ── */
   .overlay{padding:0;align-items:flex-end;}
   .overlay .modal{border-radius:16px 16px 0 0;max-height:94vh;}
   .bit-gen-overlay{padding:0;align-items:flex-end;}
 }
 
-/* ── PANEL DETALLE MÓVIL ── */
 .mc-detail-overlay{display:none;position:fixed;inset:0;background:rgba(15,31,61,.5);z-index:150;align-items:flex-end;}
 .mc-detail-overlay.open{display:flex;}
 .mc-detail-panel{background:white;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding-bottom:24px;animation:slideUp .25s ease;}
@@ -607,7 +558,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 .mc-detail-entry-text{font-size:12px;color:var(--text);line-height:1.5;}
 .mc-detail-footer{padding:12px 18px 0;display:flex;gap:10px;border-top:1px solid var(--border);margin-top:4px;}
 
-/* ── FAB: oculto en desktop ── */
 .fab{display:none;position:fixed;bottom:24px;right:20px;z-index:50;width:56px;height:56px;border-radius:50%;background:var(--accent);color:white;border:none;font-size:26px;cursor:pointer;box-shadow:0 4px 20px rgba(37,99,235,.45);align-items:center;justify-content:center;transition:all .2s;}
 .fab:hover{background:#1D4ED8;transform:scale(1.08);}
 .fab:active{transform:scale(.96);}
@@ -618,7 +568,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 <div id="sync-bar"></div>
 <div class="sync-toast" id="sync-toast"><span id="sync-msg">Guardando...</span></div>
 
-<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-card">
     <div class="login-top">
@@ -639,7 +588,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   </div>
 </div>
 
-<!-- APP -->
 <div id="app-screen">
   <div id="session-bar">
     <div id="firebase-status"><span class="fb-dot" id="fb-dot"></span><span id="fb-label">Conectando...</span></div>
@@ -652,7 +600,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
     </div>
     <div class="header-right">
       <span id="total-badge">0 registros</span>
-      <!-- 🔔 Campana de notificaciones -->
+      
       <div class="notif-bell-wrap" id="notif-bell-wrap">
         <button class="notif-bell-btn" id="notif-bell-btn" onclick="toggleNotifPanel()" title="Notificaciones">
           🔔
@@ -688,7 +636,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
     <button class="tab-btn" onclick="showPage('admin')" id="tab-admin" style="display:none">⚙️ Usuarios</button>
   </div>
 
-  <!-- REGISTROS -->
+  
   <div class="page active" id="page-db">
     <div class="toolbar">
       <button class="btn btn-primary" id="btn-nuevo" onclick="openModal()">＋ Nuevo Registro</button>
@@ -704,7 +652,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       </div>
     </div>
 
-    <!-- Banner de vista filtrada para abogados -->
+    
     <div id="abogado-banner" style="display:none;background:linear-gradient(90deg,#E0F2FE,#DBEAFE);border-bottom:2px solid var(--sky);padding:10px 32px;align-items:center;gap:10px;">
       <span style="font-size:18px;">⚖️</span>
       <div>
@@ -720,7 +668,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       <button class="tipo-chip" id="chip-contractual" onclick="setTipo('contractual')">🔷 Proceso Contractual</button>
     </div>
 
-    <!-- Semáforo de vencimiento -->
+    
     <div class="semaforo-wrap">
       <div class="semaforo-title">🚦 Alertas de Vencimiento — clic para filtrar</div>
       <div class="semaforo-grid">
@@ -779,14 +727,14 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       </table>
     </div>
 
-    <!-- Vista móvil: tarjetas -->
+    
     <div class="mobile-cards" id="mobile-cards"></div>
 
-    <!-- FAB para móvil -->
+    
     <button class="fab" id="fab-nuevo" onclick="openModal()" title="Nuevo Registro">＋</button>
   </div>
 
-  <!-- DASHBOARD -->
+  
   <div class="page" id="page-dash">
     <div class="dash-wrap">
       <div class="dash-banner">
@@ -798,7 +746,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       </div>
       <div class="dash-body">
 
-        <!-- KPIs -->
+        
         <div class="dash-kpis">
           <div class="kpi kt">
             <span class="kpct" id="d-pct-total"></span>
@@ -822,10 +770,10 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
         </div>
 
-        <!-- Distribución por estado -->
+        
         <div class="dash-divider"><span class="dash-divider-icon">📊</span>Distribución por Estado</div>
         <div class="charts-row">
-          <!-- Asesoría Previa -->
+          
           <div class="chart-card">
             <div class="chart-card-header">
               <div>
@@ -836,7 +784,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
             </div>
             <div class="estado-list" id="dash-estado-asesoria"></div>
           </div>
-          <!-- Proceso Contractual -->
+          
           <div class="chart-card">
             <div class="chart-card-header">
               <div>
@@ -849,7 +797,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
         </div>
 
-        <!-- Promedio abogado -->
+        
         <div class="dash-divider"><span class="dash-divider-icon">⏱️</span>Tiempo Promedio por Abogado</div>
         <div class="avg-card">
           <div class="avg-card-header">
@@ -867,7 +815,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </table>
         </div>
 
-        <!-- Tablas por responsable -->
+        
         <div class="dash-divider"><span class="dash-divider-icon">👥</span>Detalle por Responsable</div>
         <div class="dash-tables-row">
           <div class="dash-table-card">
@@ -907,7 +855,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
     </div>
   </div>
 
-  <!-- DASHBOARD MODIFICACIONES -->
+  
   <div class="page" id="page-dash-mod">
     <div class="dash-wrap">
       <div class="dash-banner" style="background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);">
@@ -918,7 +866,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         <div class="dash-banner-right"><span id="dash-mod-date-label"></span>Actualización en tiempo real</div>
       </div>
       <div class="dash-body">
-        <!-- KPIs -->
+        
         <div class="dash-kpis">
           <div class="kpi kt">
             <span class="kpct" id="dm-pct-total"></span>
@@ -941,7 +889,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
             <span class="kl">Finalizados</span>
           </div>
         </div>
-        <!-- Distribución por estado -->
+        
         <div class="dash-divider"><span class="dash-divider-icon">📊</span>Distribución por Estado</div>
         <div class="charts-row">
           <div class="chart-card">
@@ -959,7 +907,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
             <div class="estado-list" id="dm-estado-contractual"></div>
           </div>
         </div>
-        <!-- Tablas por responsable -->
+        
         <div class="dash-divider"><span class="dash-divider-icon">👥</span>Detalle por Responsable</div>
         <div class="dash-tables-row">
           <div class="dash-table-card">
@@ -991,11 +939,11 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
     </div>
   </div>
 
-  <!-- DASHBOARD LIQUIDACIONES -->
+  
   <div class="page" id="page-dash-liq">
     <div class="dash-wrap">
 
-      <!-- Banner -->
+      
       <div class="dash-banner" style="background:linear-gradient(135deg,#064E3B 0%,#059669 60%,#0D9488 100%);">
         <div class="dash-banner-left">
           <h2>Dashboard — Liquidaciones y Cierres</h2>
@@ -1009,7 +957,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
 
       <div class="dash-body">
 
-        <!-- KPIs fila 1: Volumen -->
+        
         <div class="dash-divider"><span class="dash-divider-icon">📊</span>Volumen General</div>
         <div class="dash-kpis" style="grid-template-columns:repeat(5,1fr);">
           <div class="kpi kt">
@@ -1039,7 +987,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
         </div>
 
-        <!-- KPIs fila 2: Estado LIQUIDACIONES -->
+        
         <div class="dash-divider"><span class="dash-divider-icon">💧</span>Estado de Liquidaciones</div>
         <div class="dash-kpis" style="grid-template-columns:repeat(3,1fr);">
           <div class="kpi" style="border-top:3px solid var(--green);">
@@ -1059,7 +1007,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
         </div>
 
-        <!-- KPIs fila 3: Estado CIERRES -->
+        
         <div class="dash-divider"><span class="dash-divider-icon">🔒</span>Estado de Cierres</div>
         <div class="dash-kpis" style="grid-template-columns:repeat(2,1fr);">
           <div class="kpi" style="border-top:3px solid var(--teal);">
@@ -1074,7 +1022,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
         </div>
 
-        <!-- Distribución por estado: separada Liquidaciones vs Cierres -->
+        
         <div class="dash-divider"><span class="dash-divider-icon">📋</span>Distribución Detallada</div>
         <div class="charts-row" style="grid-template-columns:1fr 1fr 1fr;">
           <div class="chart-card">
@@ -1100,7 +1048,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
         </div>
 
-        <!-- Tabla por abogado -->
+        
         <div class="dash-divider"><span class="dash-divider-icon">⚖️</span>Carga por Abogado</div>
         <div class="dash-tables-row" style="grid-template-columns:1fr;">
           <div class="dash-table-card">
@@ -1129,7 +1077,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
         </div>
 
-        <!-- Avances recientes -->
+        
         <div class="dash-divider"><span class="dash-divider-icon">📓</span>Últimos Avances Registrados</div>
         <div class="dash-tables-row" style="grid-template-columns:1fr;">
           <div class="dash-table-card">
@@ -1150,7 +1098,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
     </div>
   </div>
 
-  <!-- MODIFICACIONES -->
+  
   <div class="page" id="page-modificaciones">
     <div class="toolbar">
       <button class="btn btn-primary" id="btn-nuevo-mod" onclick="openModalMod()">＋ Nueva Modificación</button>
@@ -1166,7 +1114,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       </div>
     </div>
 
-    <!-- Banner de vista filtrada para abogados -->
+    
     <div id="mod-abogado-banner" style="display:none;background:linear-gradient(90deg,#F5F3FF,#EDE9FE);border-bottom:2px solid var(--purple);padding:10px 32px;align-items:center;gap:10px;">
       <span style="font-size:18px;">⚖️</span>
       <div>
@@ -1176,7 +1124,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       <span style="font-size:11px;color:var(--muted);margin-left:auto;">Solo se muestran las modificaciones asignadas a ti · Solo lectura</span>
     </div>
 
-    <!-- Chips tipo -->
+    
     <div class="tipo-bar">
       <span class="tipo-bar-label">Filtrar por:</span>
       <button class="tipo-chip active-all" id="mod-chip-all" onclick="setModTipo('all')">✏️ Todas</button>
@@ -1184,7 +1132,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       <button class="tipo-chip" id="mod-chip-contractual" onclick="setModTipo('contractual')">🔷 Proceso Contractual</button>
     </div>
 
-    <!-- Semáforo de vencimiento -->
+    
     <div class="semaforo-wrap">
       <div class="semaforo-title">🚦 Alertas de Vencimiento — clic para filtrar</div>
       <div class="semaforo-grid">
@@ -1233,7 +1181,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
     <button class="fab" id="fab-nuevo-mod" onclick="openModalMod()" title="Nueva Modificación">＋</button>
   </div>
 
-  <!-- MODAL MODIFICACIONES -->
+  
   <div class="overlay" id="mod-modal-overlay">
     <div class="modal modal-wide">
       <div class="modal-header">
@@ -1242,7 +1190,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       </div>
       <div class="modal-body">
 
-        <!-- Identificación -->
+        
         <div class="form-section-title">📋 Identificación</div>
         <div class="form-grid">
           <div class="form-group">
@@ -1270,7 +1218,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
         </div>
 
-        <!-- Responsables -->
+        
         <div class="form-section-title">👥 Responsables</div>
         <div class="form-grid">
           <div class="form-group">
@@ -1289,7 +1237,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
         </div>
 
-        <!-- Fechas -->
+        
         <div class="form-section-title">📅 Fechas</div>
         <div class="form-grid">
           <div class="form-group">
@@ -1310,7 +1258,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
         </div>
 
-        <!-- Observaciones -->
+        
         <div class="form-section-title">💬 Notas</div>
         <div class="form-grid">
           <div class="form-group full">
@@ -1327,7 +1275,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
     </div>
   </div>
 
-  <!-- LIQUIDACIONES Y CIERRES -->
+  
   <div class="page" id="page-liquidaciones">
     <div class="toolbar">
       <button class="btn btn-primary" id="btn-nuevo-liq" onclick="openModalLiq()">＋ Nueva Liquidación</button>
@@ -1343,7 +1291,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       </div>
     </div>
 
-    <!-- Banner de vista filtrada para abogados -->
+    
     <div id="liq-abogado-banner" style="display:none;background:linear-gradient(90deg,#F0FDF4,#DCFCE7);border-bottom:2px solid var(--green);padding:10px 32px;align-items:center;gap:10px;">
       <span style="font-size:18px;">⚖️</span>
       <div>
@@ -1353,7 +1301,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       <span style="font-size:11px;color:var(--muted);margin-left:auto;">Solo se muestran las liquidaciones asignadas a ti · Solo lectura</span>
     </div>
 
-    <!-- Chips trámite -->
+    
     <div class="tipo-bar">
       <span class="tipo-bar-label">Filtrar por:</span>
       <button class="tipo-chip active-all" id="liq-chip-all" onclick="setLiqTramite('all')">🔒 Todos</button>
@@ -1413,7 +1361,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
     <button class="fab" id="fab-nuevo-liq" onclick="openModalLiq()" title="Nueva Liquidación">＋</button>
   </div>
 
-  <!-- MODAL LIQUIDACIONES -->
+  
   <div class="overlay" id="liq-modal-overlay">
     <div class="modal modal-wide">
       <div class="modal-header">
@@ -1422,7 +1370,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
       </div>
       <div class="modal-body">
 
-        <!-- Identificación -->
+        
         <div class="form-section-title">📋 Identificación</div>
         <div class="form-grid">
           <div class="form-group">
@@ -1478,7 +1426,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
         </div>
 
-        <!-- Responsables -->
+        
         <div class="form-section-title">👥 Responsables</div>
         <div class="form-grid">
           <div class="form-group">
@@ -1497,7 +1445,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
         </div>
 
-        <!-- Fechas principales -->
+        
         <div class="form-section-title">📅 Fechas</div>
         <div class="form-grid">
           <div class="form-group">
@@ -1514,7 +1462,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
         </div>
 
-        <!-- Fechas de cierre y liquidación -->
+        
         <div class="form-section-title">📅 Fechas de Cierre y Liquidación</div>
         <div class="form-grid">
           <div class="form-group">
@@ -1527,7 +1475,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
           </div>
         </div>
 
-        <!-- Observaciones -->
+        
         <div class="form-section-title">💬 Observaciones / Acta</div>
         <div class="form-grid">
           <div class="form-group full">
@@ -1544,11 +1492,11 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
     </div>
   </div>
 
-  <!-- INFORMES -->
+  
   <div class="page" id="page-informes">
     <div style="padding:28px 32px;max-width:1000px;margin:0 auto;">
 
-      <!-- Header -->
+      
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
         <div style="width:48px;height:48px;background:linear-gradient(135deg,#DC2626,#991B1B);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">📄</div>
         <div>
@@ -1557,7 +1505,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         </div>
       </div>
 
-      <!-- SECCIÓN: PROCESOS -->
+      
       <div class="inf-section">
         <div class="inf-section-header" style="border-color:#3B82F6;">
           <span style="font-size:18px;">📋</span>
@@ -1605,7 +1553,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         </div>
       </div>
 
-      <!-- SECCIÓN: MODIFICACIONES -->
+      
       <div class="inf-section">
         <div class="inf-section-header" style="border-color:#7C3AED;">
           <span style="font-size:18px;">✏️</span>
@@ -1646,7 +1594,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         </div>
       </div>
 
-      <!-- SECCIÓN: LIQUIDACIONES -->
+      
       <div class="inf-section">
         <div class="inf-section-header" style="border-color:#059669;">
           <span style="font-size:18px;">🔒</span>
@@ -1701,7 +1649,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         </div>
       </div>
 
-      <!-- SECCIÓN: CONSOLIDADO GENERAL -->
+      
       <div class="inf-section">
         <div class="inf-section-header" style="border-color:#F59E0B;">
           <span style="font-size:18px;">📁</span>
@@ -1742,7 +1690,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         </div>
       </div>
 
-      <!-- Selector abogado (modal ligero) -->
+      
       <div id="inf-abogado-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,31,61,.5);z-index:200;align-items:center;justify-content:center;">
         <div style="background:white;border-radius:16px;padding:28px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.25);">
           <h3 style="font-size:15px;font-weight:700;color:var(--navy);margin:0 0 16px;">Seleccionar Abogado</h3>
@@ -1756,7 +1704,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         </div>
       </div>
 
-      <!-- SELECTOR DEPENDENCIA LIQUIDACIONES -->
+      
       <div id="inf-liq-dep-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,31,61,.5);z-index:200;align-items:center;justify-content:center;">
         <div style="background:white;border-radius:16px;padding:28px;width:400px;box-shadow:0 20px 60px rgba(0,0,0,.25);">
           <h3 style="font-size:15px;font-weight:700;color:var(--navy);margin:0 0 6px;">🏛️ Informe por Dependencia</h3>
@@ -1771,7 +1719,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         </div>
       </div>
 
-      <!-- SELECTOR GIT LIQUIDACIONES -->
+      
       <div id="inf-liq-git-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,31,61,.5);z-index:200;align-items:center;justify-content:center;">
         <div style="background:white;border-radius:16px;padding:28px;width:400px;box-shadow:0 20px 60px rgba(0,0,0,.25);">
           <h3 style="font-size:15px;font-weight:700;color:var(--navy);margin:0 0 6px;">📂 Informe por GIT</h3>
@@ -1825,14 +1773,14 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
     </div>
   </div>
 
-  <!-- ADMIN -->
+  
   <div class="page" id="page-admin">
     <div class="admin-wrap">
       <p class="section-title">Gestión de Usuarios</p>
       <div style="margin-bottom:16px;"><button class="btn btn-primary" onclick="openAddUser()">＋ Agregar Usuario</button></div>
       <div class="users-grid" id="users-grid"></div>
 
-      <!-- Eliminar liquidaciones -->
+      
       <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:20px 24px;margin-top:24px;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
           <span style="font-size:22px;">🗑️</span>
@@ -1847,7 +1795,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         <span id="liq-clean-status" style="font-size:12px;margin-left:12px;color:#6B7280;"></span>
       </div>
 
-      <!-- Actualizar solo Observaciones de Liquidaciones -->
+      
       <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:20px 24px;margin-top:24px;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
           <span style="font-size:20px;">📝</span>
@@ -1867,13 +1815,12 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   </div>
 </div>
 
-<!-- MODAL REGISTRO -->
 <div class="overlay" id="modal-overlay">
   <div class="modal">
     <div class="modal-header"><h2 id="modal-title">Nuevo Registro</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
     <div class="modal-body">
 
-      <!-- Sección: Identificación -->
+      
       <div class="form-section">
         <div class="form-section-title">🏷️ Identificación</div>
         <div class="form-grid">
@@ -1890,7 +1837,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         </div>
       </div>
 
-      <!-- Sección: Responsables -->
+      
       <div class="form-section">
         <div class="form-section-title">👥 Responsables</div>
         <div class="form-grid">
@@ -2017,7 +1964,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         </div>
       </div>
 
-      <!-- Sección: Fechas -->
+      
       <div class="form-section">
         <div class="form-section-title">📅 Fechas</div>
         <div class="form-grid">
@@ -2032,7 +1979,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         </div>
       </div>
 
-      <!-- Sección: Notas -->
+      
       <div class="form-section">
         <div class="form-section-title">💬 Notas</div>
         <div class="form-grid">
@@ -2047,7 +1994,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   </div>
 </div>
 
-<!-- MODAL BITÁCORA -->
 <div class="overlay" id="bitacora-overlay">
   <div class="modal modal-lg">
     <div class="modal-header"><h2>📓 Bitácora de Avance</h2><button class="modal-close" onclick="closeBitacora()">✕</button></div>
@@ -2074,7 +2020,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   </div>
 </div>
 
-<!-- MODAL USUARIO -->
 <div class="overlay" id="user-overlay">
   <div class="modal" style="max-width:440px;">
     <div class="modal-header"><h2 id="user-modal-title">Agregar Usuario</h2><button class="modal-close" onclick="closeUserModal()">✕</button></div>
@@ -2096,7 +2041,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   </div>
 </div>
 
-<!-- MODAL BITÁCORA GENERAL -->
 <div class="bit-gen-overlay" id="bit-gen-overlay">
   <div class="bit-gen-modal">
     <div class="bit-gen-header">
@@ -2126,7 +2070,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   </div>
 </div>
 
-<!-- BITÁCORA GENERAL LIQUIDACIONES -->
 <div class="bit-gen-overlay" id="bit-gen-liq-overlay">
   <div class="bit-gen-modal">
     <div class="bit-gen-header" style="background:linear-gradient(135deg,#059669,#0D9488);">
@@ -2156,7 +2099,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   </div>
 </div>
 
-<!-- BITÁCORA MODIFICACIONES -->
 <div class="overlay" id="bitacora-mod-overlay">
   <div class="modal modal-lg">
     <div class="modal-header"><h2>📓 Bitácora de Avance — Modificación</h2><button class="modal-close" onclick="closeBitacoraMod()">✕</button></div>
@@ -2183,7 +2125,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   </div>
 </div>
 
-<!-- BITÁCORA GENERAL MODIFICACIONES -->
 <div class="bit-gen-overlay" id="bit-gen-mod-overlay">
   <div class="bit-gen-modal">
     <div class="bit-gen-header" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);">
@@ -2213,7 +2154,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   </div>
 </div>
 
-<!-- MODAL PDF -->
 <div class="overlay" id="pdf-overlay">
   <div class="modal" style="max-width:520px;">
     <div class="modal-header">
@@ -2238,7 +2178,7 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
         </div>
       </div>
 
-      <!-- Informe individual por abogado -->
+      
       <div style="border:1.5px solid var(--accent);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:var(--accent-light);">
         <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:12px;">
           <span class="pdf-ico">👤</span>
@@ -2278,7 +2218,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   </div>
 </div>
 
-<!-- MODAL IMPORTAR EXCEL -->
 <div class="overlay" id="import-overlay">
   <div class="modal" style="max-width:780px;">
     <div class="modal-header">
@@ -2319,7 +2258,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   </div>
 </div>
 
-<!-- PANEL DETALLE MÓVIL -->
 <div class="mc-detail-overlay" id="mc-detail-overlay" onclick="if(event.target===this)closeMcDetail()">
   <div class="mc-detail-panel" id="mc-detail-panel">
     <div class="mc-detail-handle"></div>
@@ -2332,7 +2270,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   </div>
 </div>
 
-<!-- INACTIVIDAD -->
 <div id="inactivity-overlay">
   <div class="inactivity-box">
     <h3>⚠️ ¿Sigues ahí?</h3>
@@ -2342,7 +2279,6 @@ textarea#mod-entry-text:focus,textarea#liq-entry-text:focus{border-color:var(--a
   </div>
 </div>
 
-<!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, updateDoc, getDocs, writeBatch }
@@ -2886,7 +2822,6 @@ function sortByLiq(f){if(sortFieldLiq===f)sortDirLiq=sortDirLiq==='asc'?'desc':'
 /* ═══ TABLA ═══ */
 function sortBy(f){if(sortField===f)sortDir=sortDir==='asc'?'desc':'asc';else{sortField=f;sortDir='asc';}renderTable();}
 
-
 /* ═══════════════════════════════════════════════════════════════════
    🔔 SISTEMA DE NOTIFICACIONES EN TIEMPO REAL
    ════════════════════════════════════════════════════════════════════ */
@@ -3013,7 +2948,6 @@ function checkNotificaciones(){
       '✏️', modVenc);
   }
 }
-
 
 function abrirDetalleNotif(idx){
   const n=_notifs[idx];
@@ -6461,7 +6395,6 @@ function pdfLiqPorAbogado(){
   `,'Liquidaciones por Abogado',mkExcelData(records,'Liquidaciones_Por_Abogado'));
 }
 
-
 function pdfLiqIndividual(abogado){
   const allRecords=(window._liqRecords||[]).filter(r=>normStr(r.abogado)===normStr(abogado));
   if(!allRecords.length){alert(`No hay liquidaciones asignadas a ${abogado}.`);return;}
@@ -6835,7 +6768,6 @@ function pdfLiqGITIndividual(git){
   `,'Liq - GIT '+git.slice(0,35),mkExcelData(allRecords,'Liquidaciones_GIT_'+git.slice(0,30)));
 }
 
-
 /* ═══ INFORMES CONSOLIDADOS ═══ */
 function pdfConsolidadoGeneral(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
@@ -7075,7 +7007,6 @@ function pdfConsolidadoGeneral(){
   `,'Resumen Ejecutivo Global');
 }
 
-
 function pdfConsolidadoAbogado(){
   if(!isAdmin()){alert('Solo los administradores pueden generar este informe.');return;}
   const proc=window._records||[];
@@ -7221,8 +7152,6 @@ function pdfConsolidadoPendientesAbogado(){
   sel.dataset.module='pendientes-global';
   document.getElementById('inf-abogado-overlay').classList.add('open');
 }
-
-
 
 function _liqEsPendiente(r){
   // Estados que representan un expediente FINALIZADO (no mostrar en informes de pendientes)
@@ -7584,7 +7513,6 @@ function pdfConsolidadoVencimiento(){
   `,'Alertas Globales de Vencimiento');
 }
 
-
 function getNextModTicket(){
   const nums=(window._modRecords||[]).map(r=>parseInt(r.ticket||'')).filter(n=>!isNaN(n)&&n>0);
   return nums.length?Math.max(...nums)+1:1;
@@ -7777,7 +7705,7 @@ function renderMod(){
             <button class="icon-btn" onclick="openModalMod('${r.id}')" ${adm?'':'disabled'}>✏️</button>
             <button class="icon-btn del" onclick="deleteModRecord('${r.id}')" ${adm?'':'disabled'}>🗑️</button>
           </div></td>
-        
+
         </tr>
         <tr class="accordion-row" id="${rowId}">
           <td colspan="13">
@@ -8325,7 +8253,6 @@ function renderLiq(){
   const hayFiltros=activeLiqDep||activeLiqGit||activeLiqTramite!=='all'||activeLiqAbogado||activeLiqEstado;
   const btnReset=document.getElementById('btn-reset-liq-filtros');
   if(btnReset) btnReset.style.display=hayFiltros?'inline-block':'none';
-
 
   let data=records.filter(r=>{
     if(abogadoFiltro&&normStr(r.abogado)!==normStr(abogadoFiltro))return false;
@@ -9095,7 +9022,6 @@ function pdfLiq(){
         ${mkEstadoRow('Cierre contractual',        cierreCont,     recsCie.length, true)}
       </div>
     </div>
-
 
     ${pdfSectionTitle('💡','Análisis y Recomendaciones para el Comité')}
     ${pdfConclusions(puntos)}
