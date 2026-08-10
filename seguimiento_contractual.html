@@ -3488,5 +3488,52 @@ const fechaHoy=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numer
     ${pdfFooter()}
   `,'Informe Liquidaciones');}</script>
 
+
+<style>
+.app-footer{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  height:28px;
+  background:#0F1F3D;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  z-index:999;
+  border-top:2px solid #C9A84C;
+  font-family:'Inter',sans-serif;
+  user-select:none;
+  print-color-adjust:exact;
+}
+.app-footer-text{
+  font-size:11px;
+  color:#94A3B8;
+  letter-spacing:.02em;
+}
+.app-footer-name{
+  font-size:11px;
+  color:#C9A84C;
+  font-weight:600;
+  letter-spacing:.03em;
+}
+.app-footer-sep{
+  width:1px;
+  height:12px;
+  background:#2D4A6E;
+}
+/* Compensar el footer fijo en el contenido */
+body{padding-bottom:28px;}
+@media print{.app-footer{display:none;}}
+</style>
+<div class="app-footer">
+  <span class="app-footer-text">Sistema de Seguimiento Contractual · GIT Licitaciones y Contratos</span>
+  <div class="app-footer-sep"></div>
+  <span class="app-footer-text">Estructurado por</span>
+  <span class="app-footer-name">Andrés Felipe Camacho Serrano</span>
+  <div class="app-footer-sep"></div>
+  <span class="app-footer-text">Ministerio de Relaciones Exteriores de Colombia</span>
+</div>
 </body>
 </html>
